@@ -38,6 +38,7 @@ const addProducts = async (req, res) => {
     } = req.body || {};
 
     const Colour = 'Default';
+    console.log(req.body);
 
     // Validation
     if (!productName || !size || !price || !stock || !description || !category) {
