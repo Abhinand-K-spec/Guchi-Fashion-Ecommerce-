@@ -3,7 +3,6 @@ const Category = require('../../model/categorySchema');
 const fs = require('fs');
 const path = require('path');
 const { array } = require('../../middlewares/multer');
-const cloudinary = require('../../config/cloudinary');
 
 const productsinfo = async (req, res) => {
   try {
@@ -23,8 +22,6 @@ const getAddProductPage = async (req, res) => {
     res.redirect('/page-404');
   }
 };
-
-
 
 const addProducts = async (req, res) => {
   try {
@@ -49,6 +46,7 @@ const addProducts = async (req, res) => {
       return res.redirect('/admin/addProducts');
     }
 
+    // Convert everything to arrays if only one variant is selected
     const sizes = Array.isArray(size) ? size : [size];
     const prices = Array.isArray(price) ? price : [price];
     const stocks = Array.isArray(stock) ? stock : [stock];
@@ -60,21 +58,28 @@ const addProducts = async (req, res) => {
       }
     }
 
+    // Product name must be unique
     const existingProduct = await Product.findOne({ productName });
     if (existingProduct) {
       req.flash('msg', 'Product with this name already exists');
       return res.redirect('/admin/addProducts');
     }
 
+    // Get the actual category ID
     const categoryDoc = await Category.findOne({ categoryName: category });
     if (!categoryDoc) {
       req.flash('msg', 'Invalid category name');
       return res.redirect('/admin/addProducts');
     }
 
-    // Upload images to Cloudinary
+    // Handle image uploads
     const imagesBase64 = [croppedImage1, croppedImage2, croppedImage3];
-    const imageUrls = [];
+    const imageFilenames = [];
+
+    const imageDir = path.join(__dirname, '../../public/uploads/product-images');
+    if (!fs.existsSync(imageDir)) {
+      fs.mkdirSync(imageDir, { recursive: true });
+    }
 
     for (let i = 0; i < imagesBase64.length; i++) {
       const base64 = imagesBase64[i];
@@ -83,11 +88,12 @@ const addProducts = async (req, res) => {
         return res.redirect('/admin/addProducts');
       }
 
-      const uploadResponse = await cloudinary.uploader.upload(base64, {
-        folder: 'guchi-products'
-      });
+      const base64Data = base64.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
+      const filename = `product_${Date.now()}_${i}.jpg`;
+      const imagePath = path.join(imageDir, filename);
 
-      imageUrls.push(uploadResponse.secure_url);
+      fs.writeFileSync(imagePath, base64Data, 'base64');
+      imageFilenames.push(filename);
     }
 
     // Build variants array
@@ -96,9 +102,15 @@ const addProducts = async (req, res) => {
       const currentSize = sizes[i];
       const currentPrice = parseFloat(prices[i]);
       const currentStock = parseInt(stocks[i]);
-
-      if (!currentSize || isNaN(currentPrice) || isNaN(currentStock)) continue;
-
+    
+      if (
+        !currentSize ||
+        isNaN(currentPrice) ||
+        isNaN(currentStock)
+      ) {
+        continue; 
+      }
+    
       variants.push({
         Colour,
         Size: currentSize,
@@ -106,10 +118,12 @@ const addProducts = async (req, res) => {
         Stock: currentStock
       });
     }
+    
 
+    // Save product
     const newProduct = new Product({
       productName,
-      Image: imageUrls, // use Cloudinary image URLs
+      Image: imageFilenames,
       Description: description,
       Category: categoryDoc._id,
       Variants: variants
@@ -123,7 +137,6 @@ const addProducts = async (req, res) => {
     res.status(500).render('page-404');
   }
 };
-
 
 const getAllProducts = async (req, res) => {
   try {
