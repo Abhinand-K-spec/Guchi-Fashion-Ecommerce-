@@ -1,7 +1,8 @@
 const Cart = require('../../model/cartSchema');
 const User = require('../../model/userSchema');
-const Product = require('../../model/productSchema');
-
+const Products = require('../../model/productSchema');
+const Address = require('../../model/addressSchema');
+const Orders = require('../../model/ordersSchema')
 
   const cart = async (req, res) => {
     try {
@@ -51,7 +52,7 @@ const Product = require('../../model/productSchema');
         let imagePath = 'images/default.jpg';
         if (product.Image?.length) {
           const raw = product.Image[0];
-          imagePath = raw.startsWith('http') ? raw : `uploads/product-images/${raw}`;
+          imagePath = raw.startsWith('http') ? raw : `${raw}`;
         }
         
   
@@ -120,7 +121,7 @@ const Product = require('../../model/productSchema');
           let imagePath = 'images/default.jpg';
           if (product.Image?.length) {
             const raw = product.Image[0];
-            imagePath = raw.startsWith('http') ? raw : `uploads/product-images/${raw}`;
+            imagePath = raw.startsWith('http') ? raw : `${raw}`;
           }
           return {
             _id: product._id,
@@ -151,7 +152,7 @@ const Product = require('../../model/productSchema');
   
       if (!userId) return res.redirect('/login');
   
-      const product = await Product.findById(productId);
+      const product = await Products.findById(productId);
       if (!product) return res.redirect('/shop');
       if (product.Variants[0]?.Stock <= 0) {
         return res.status(400).json({ error: 'This product is currently out of stock' });
@@ -244,7 +245,7 @@ const Product = require('../../model/productSchema');
           let imagePath = 'images/default.jpg';
           if (product.Image?.length) {
             const raw = product.Image[0];
-            imagePath = raw.startsWith('http') ? raw : `Uploads/product-images/${raw}`;
+            imagePath = raw.startsWith('http') ? raw : `${raw}`;
           }
           return {
             _id: product._id,

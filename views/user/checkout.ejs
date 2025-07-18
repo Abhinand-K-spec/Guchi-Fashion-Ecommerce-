@@ -68,7 +68,7 @@
         <h5>Order Summary</h5>
         <% cartItems.forEach(item => { %>
           <div class="d-flex align-items-center mb-3 border rounded p-2">
-            <img src="/<%= item.image %>" width="60" class="me-3 rounded">
+            <img src="<%= item.image %>" width="60" class="me-3 rounded">
             <div>
               <p class="mb-1"><strong><%= item.name %></strong></p>
               <p class="mb-1">Qty: <%= item.quantity %> | ₹<%= item.price %> each</p>

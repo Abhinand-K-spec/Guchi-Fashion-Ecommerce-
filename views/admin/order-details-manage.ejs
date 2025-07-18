@@ -102,7 +102,7 @@
         <% order.Items.forEach(item => { %>
           <div class="row border rounded p-2 mb-3" style="background-color:#3a3a3a;" id="item-<%= item._id %>">
             <div class="col-md-2 d-flex align-items-center justify-content-center">
-              <img src="/Uploads/product-images/<%= item.product?.Image?.[0] || 'default.jpg' %>" class="img-fluid" alt="Product Image">
+              <img src="<%= item.product?.Image?.[0] || 'default.jpg' %>" class="img-fluid" alt="Product Image">
             </div>
             <div class="col-md-7">
               <h6><%= item.product?.productName || 'Unknown Product' %></h6>

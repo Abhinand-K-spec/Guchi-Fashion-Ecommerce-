@@ -403,7 +403,7 @@ const getProductDetails = async (req, res) => {
         
         cartItems.push({
           name: product.productName,
-          image: product.Image[0] ? `uploads/product-images/${product.Image[0]}` : 'images/default.jpg',
+          image: product.Image[0] ? `${product.Image[0]}` : 'public/uploads/product-images/default.jpg',
           price,
           quantity,
           itemTotal,

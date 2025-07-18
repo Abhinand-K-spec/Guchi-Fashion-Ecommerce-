@@ -75,7 +75,7 @@
           <% products.forEach(product => { %>
             <div class="col-lg-4 col-md-6">
               <div class="product-card">
-                <img src="/uploads/product-images/<%= product.Image[0] %>" alt="<%= product.productName %>" class="product-image">
+                <img src="<%= product.Image[0] %>" alt="<%= product.productName %>" class="product-image">
                 <div class="product-name"><%= product.productName %></div>
                 <div class="product-price">₹<%= product.Variants[0]?.Price || '0.00' %></div>
                 <a href="/product-details/<%= product._id %>" class="btn btn-view">View Details</a>

@@ -111,13 +111,13 @@
     <!-- Images -->
     <div class="col-md-6 text-center">
       <div class="img-zoom-container">
-        <img id="mainProductImage" src="/Uploads/product-images/<%= product.Image[0] %>" alt="<%= product.productName %>" class="main-image"/>
+        <img id="mainProductImage" src="<%= product.Image[0] %>" alt="<%= product.productName %>" class="main-image"/>
         <div id="zoom-result" class="img-zoom-result"></div>
       </div>
       <% if (product.Image.length > 1) { %>
         <div class="d-flex justify-content-center mt-2" id="thumbnailsContainer">
           <% product.Image.slice(1).forEach(img => { %>
-            <img src="/Uploads/product-images/<%= img %>" class="thumbnail" onclick="swapImage(this)" alt="Thumbnail"/>
+            <img src="<%= img %>" class="thumbnail" onclick="swapImage(this)" alt="Thumbnail"/>
           <% }) %>
         </div>
       <% } %>
@@ -193,7 +193,7 @@
         <% recommendedProducts.forEach(item => { %>
           <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
             <div class="recommended-card">
-              <img src="/Uploads/product-images/<%= item.Image[0] %>" alt="<%= item.productName %>"/>
+              <img src="<%= item.Image[0] %>" alt="<%= item.productName %>"/>
               <h6 class="mt-2"><%= item.productName %></h6>
               <p class="text-danger">₹<%= item.Variants[0]?.Price || '0.00' %></p>
               <a href="/product-details/<%= item._id %>" class="btn btn-sm btn-outline-dark">View</a>

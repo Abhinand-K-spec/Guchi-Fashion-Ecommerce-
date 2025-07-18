@@ -3,6 +3,7 @@ const Category = require('../../model/categorySchema');
 const fs = require('fs');
 const path = require('path');
 const { array } = require('../../middlewares/multer');
+const cloudinary = require('../../config/cloudinary')
 
 const productsinfo = async (req, res) => {
   try {
@@ -38,15 +39,13 @@ const addProducts = async (req, res) => {
     } = req.body || {};
 
     const Colour = 'Default';
-    console.log(req.body);
 
-    // Validation
+
     if (!productName || !size || !price || !stock || !description || !category) {
       req.flash('msg', 'All fields are required');
       return res.redirect('/admin/addProducts');
     }
 
-    // Convert everything to arrays if only one variant is selected
     const sizes = Array.isArray(size) ? size : [size];
     const prices = Array.isArray(price) ? price : [price];
     const stocks = Array.isArray(stock) ? stock : [stock];
@@ -58,28 +57,21 @@ const addProducts = async (req, res) => {
       }
     }
 
-    // Product name must be unique
     const existingProduct = await Product.findOne({ productName });
     if (existingProduct) {
       req.flash('msg', 'Product with this name already exists');
       return res.redirect('/admin/addProducts');
     }
 
-    // Get the actual category ID
     const categoryDoc = await Category.findOne({ categoryName: category });
     if (!categoryDoc) {
       req.flash('msg', 'Invalid category name');
       return res.redirect('/admin/addProducts');
     }
 
-    // Handle image uploads
+    // 👉 Cloudinary upload
     const imagesBase64 = [croppedImage1, croppedImage2, croppedImage3];
     const imageFilenames = [];
-
-    const imageDir = path.join(__dirname, '../../public/uploads/product-images');
-    if (!fs.existsSync(imageDir)) {
-      fs.mkdirSync(imageDir, { recursive: true });
-    }
 
     for (let i = 0; i < imagesBase64.length; i++) {
       const base64 = imagesBase64[i];
@@ -88,29 +80,26 @@ const addProducts = async (req, res) => {
         return res.redirect('/admin/addProducts');
       }
 
-      const base64Data = base64.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
-      const filename = `product_${Date.now()}_${i}.jpg`;
-      const imagePath = path.join(imageDir, filename);
+      // Upload to Cloudinary
+      const result = await cloudinary.uploader.upload(base64, {
+        folder: 'products',
+        format: 'jpg',
+        public_id: `product_${Date.now()}_${i}`
+      });
 
-      fs.writeFileSync(imagePath, base64Data, 'base64');
-      imageFilenames.push(filename);
+      imageFilenames.push(result.secure_url);
     }
 
-    // Build variants array
     const variants = [];
     for (let i = 0; i < sizes.length; i++) {
       const currentSize = sizes[i];
       const currentPrice = parseFloat(prices[i]);
       const currentStock = parseInt(stocks[i]);
-    
-      if (
-        !currentSize ||
-        isNaN(currentPrice) ||
-        isNaN(currentStock)
-      ) {
-        continue; 
+
+      if (!currentSize || isNaN(currentPrice) || isNaN(currentStock)) {
+        continue;
       }
-    
+
       variants.push({
         Colour,
         Size: currentSize,
@@ -118,9 +107,7 @@ const addProducts = async (req, res) => {
         Stock: currentStock
       });
     }
-    
 
-    // Save product
     const newProduct = new Product({
       productName,
       Image: imageFilenames,
@@ -137,6 +124,7 @@ const addProducts = async (req, res) => {
     res.status(500).render('page-404');
   }
 };
+
 
 const getAllProducts = async (req, res) => {
   try {
@@ -224,7 +212,6 @@ const getEditProductPage = async (req, res) => {
     res.redirect('/page-404');
   }
 };
-
 const postEditProduct = async (req, res) => {
   try {
     const { productId } = req.params;
@@ -256,28 +243,22 @@ const postEditProduct = async (req, res) => {
     product.Variants[0].Stock = parseInt(stock);
 
     const newImages = [croppedImage1, croppedImage2, croppedImage3];
-    const imageDir = path.join(__dirname, '../../public/uploads/product-images');
-    if (!fs.existsSync(imageDir)) fs.mkdirSync(imageDir, { recursive: true });
-
     const updatedImages = [];
 
-
-    
     for (let i = 0; i < 3; i++) {
       const base64 = newImages[i];
 
       if (base64 && base64.startsWith('data:image')) {
-        if (product.Image[i]) {
-          const oldPath = path.join(imageDir, product.Image[i]);
-          if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-        }
+        // Delete old Cloudinary image if you stored its public_id (optional)
 
-        const base64Data = base64.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
-        const filename = `product_${Date.now()}_${i}.jpg`;
-        const filePath = path.join(imageDir, filename);
-        fs.writeFileSync(filePath, base64Data, 'base64');
-        updatedImages[i] = filename;
+        // Upload to Cloudinary
+        const uploadResult = await cloudinary.uploader.upload(base64, {
+          folder: 'product-images'
+        });
+
+        updatedImages[i] = uploadResult.secure_url;
       } else {
+        // Keep existing image if not changed
         updatedImages[i] = product.Image[i] || '';
       }
     }
@@ -291,7 +272,6 @@ const postEditProduct = async (req, res) => {
     res.status(500).render('page-404');
   }
 };
-
 
 
 

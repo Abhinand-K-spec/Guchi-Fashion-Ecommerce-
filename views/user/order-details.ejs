@@ -98,7 +98,7 @@
     <% order.Items.forEach(item => {
         const product = item.product;
         if (!product || !product.Variants?.[0]) return;
-        const image = product.Image?.[0] ? `/Uploads/product-images/${product.Image[0]}` : '/images/default.jpg';
+        const image = product.Image?.[0] ? `${product.Image[0]}` : '/images/default.jpg';
         const price = product.Variants[0].Price || item.price || 0;
     %>
       <div class="product-card row g-3 align-items-center" id="item-<%= item._id %>">

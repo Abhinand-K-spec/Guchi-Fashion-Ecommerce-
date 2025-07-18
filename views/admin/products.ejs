@@ -175,7 +175,7 @@
             <td><%= product.name %></td>
             <td class="product-images">
               <% product.images.forEach(img => { %>
-                <img src="/uploads/product-images/<%= img %>" alt="Product Image" />
+                <img src="<%= img %>" alt="Product Image" />
               <% }) %>
             </td>
             <td><%= product.category %></td>
