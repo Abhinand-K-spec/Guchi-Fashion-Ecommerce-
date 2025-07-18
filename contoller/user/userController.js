@@ -192,6 +192,7 @@ const signup = async (req, res) => {
   try {
       const { name, email, password } = req.body;
       const findUser = await User.findOne({ email });
+      console.log('Email in signup',email);
 
       if (findUser) {
           return res.render('signup', { msg: 'User already exists' });
