@@ -1,0 +1,46 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f8d1d1;  /* Light pink background */
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    text-align: center;
+}
+
+
+
+img{
+    height: 56vh;
+}
+
+
+
+.error-code {
+    font-size: 80px;
+    margin: 20px 0;
+    font-weight: bold;
+}
+
+.error-description {
+    font-size: 20px;
+    color: #4a4a4a; /* Dark gray color for description */
+}
+
+.error-description a {
+    color: #007bff; /* Link color */
+    text-decoration: none;
+}
+
+.error-description a:hover {
+    text-decoration: underline;
+}

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit Product</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #424344;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 40px auto;
+      background: #faf9f9;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 14px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      margin-bottom: 25px;
+      color: #222;
+      text-align: center;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 20px;
+    }
+
+    label {
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #000;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .image-group {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+
+    .image-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .image-box img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border: 1px solid #000;
+    }
+
+    .submit-btn {
+      background-color: #2563eb;
+      color: white;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 30px;
+      float: right;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.6);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 8% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 500px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    #modalImage {
+      max-width: 100%;
+      max-height: 400px;
+    }
+  </style>
+</head>
+<body>
+<%- include("../partials/admin/header") %>
+
+<div class="container">
+  <h2>Edit Product</h2>
+  <form method="POST" action="/admin/updateProduct/<%= product._id %>" enctype="multipart/form-data">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Product Name</label>
+        <input type="text" name="productName" value="<%= product.productName %>" >
+      </div>
+
+      <div class="form-group">
+        <label>Category</label>
+        <select name="category" >
+          <% categories.forEach(cat => { %>
+            <option value="<%= cat.categoryName %>" <%= cat._id.toString() === product.Category._id.toString() ? 'selected' : '' %>><%= cat.categoryName %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Size</label>
+        <input type="text" name="size" value="<%= product.Variants[0]?.Size %>" >
+      </div>
+
+      <div class="form-group">
+        <label>Price</label>
+        <input type="number" name="price" value="<%= product.Variants[0]?.Price %>" >
+      </div>
+
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" name="stock" value="<%= product.Variants[0]?.Stock %>" min="0" >
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Description</label>
+      <textarea name="description" rows="4" required><%= product.Description %></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Edit Product Images</label>
+      <div class="image-group">
+        <% for (let i = 0; i < product.Image.length; i++) { %>
+          <div class="image-box">
+            <img id="preview<%= i %>" src="/uploads/product-images/<%= product.Image[i] %>" />
+<input type="file" id="newImage<%- i %>" name="newImage<%- i %>" accept="image/*" onchange="handleFileChange(event, <%- i %>)" />
+            <input type="hidden" name="croppedImage<%= i + 1 %>" id="croppedImage<%= i + 1 %>">
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn">Update Product</button>
+  </form>
+</div>
+
+<!-- Modal -->
+<div id="cropperModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <img id="modalImage">
+    <button onclick="applyCrop()" class="submit-btn" style="margin-top: 15px;">Crop & Save</button>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script>
+  let currentIndex = null;
+  let cropper = null;
+
+  function handleFileChange(event, index) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    currentIndex = index;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const modalImage = document.getElementById('modalImage');
+      modalImage.src = e.target.result;
+      document.getElementById('cropperModal').style.display = 'block';
+
+      if (cropper) cropper.destroy();
+      cropper = new Cropper(modalImage, {
+        aspectRatio: NaN,
+        viewMode: 1,
+        autoCropArea: 1
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function applyCrop() {
+    const canvas = cropper.getCroppedCanvas({ width: 800, height: 800 });
+    if (!canvas) return;
+
+    const base64 = canvas.toDataURL('image/jpeg');
+    document.getElementById(`preview${currentIndex}`).src = base64;
+    document.getElementById(`croppedImage${currentIndex + 1}`).value = base64;
+
+    closeModal();
+  }
+
+  function closeModal() {
+    document.getElementById('cropperModal').style.display = 'none';
+    if (cropper) {
+      cropper.destroy();
+      cropper = null;
+    }
+  }
+</script>
+
+</body>
+</html>

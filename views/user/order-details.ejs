@@ -1,0 +1,336 @@
+<%- include('../partials/user/header') %>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Details - Guchi Fashion</title>
+
+  <!-- Bootstrap & Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Axios -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <style>
+    body {
+      background-color: #f4f6f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .order-header {
+      background-color: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      margin-bottom: 30px;
+    }
+    .order-header h3 {
+      font-weight: 600;
+      color: #343a40;
+    }
+    .badge-status {
+      font-size: 1rem;
+    }
+    .product-card {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+    }
+    .product-card img {
+      max-height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .btn-custom {
+      transition: all 0.3s ease;
+    }
+    .btn-custom:hover {
+      transform: scale(1.05);
+    }
+    .form-control:focus, .form-select:focus {
+      box-shadow: 0 0 5px rgba(100, 100, 255, 0.3);
+    }
+    a {
+      text-decoration: none;
+    }
+    .alert-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      max-width: 400px;
+    }
+    .form-select, .form-control {
+      background-color: #fff;
+      color: #343a40;
+      border: 1px solid #ced4da;
+    }
+    .is-invalid {
+      border-color: #dc3545;
+    }
+    .invalid-feedback {
+      color: #dc3545;
+      font-size: 0.875em;
+      display: none;
+    }
+    .is-invalid ~ .invalid-feedback {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="alert-container"></div>
+
+  <div class="container py-5">
+    <!-- Order Header -->
+    <div class="order-header">
+      <div class="d-flex justify-content-between align-items-start flex-wrap">
+        <div>
+          <h3 class="mb-3">Order Details</h3>
+          <p><strong>Order ID:</strong> <%= order.OrderId %></p>
+          <p><strong>Date:</strong> <%= new Date(order.OrderDate).toLocaleString() %></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ordered Items -->
+    <% order.Items.forEach(item => {
+        const product = item.product;
+        if (!product || !product.Variants?.[0]) return;
+        const image = product.Image?.[0] ? `/Uploads/product-images/${product.Image[0]}` : '/images/default.jpg';
+        const price = product.Variants[0].Price || item.price || 0;
+    %>
+      <div class="product-card row g-3 align-items-center" id="item-<%= item._id %>">
+        <div class="col-md-2 text-center">
+          <img src="<%= image %>" alt="Product Image" class="img-fluid" />
+        </div>
+        <div class="col-md-7">
+          <h5 class="mb-2"><%= product.productName %></h5>
+          <p class="mb-1"><strong>Quantity:</strong> <%= item.quantity %></p>
+          <p class="mb-1"><strong>Price:</strong> ₹<%= price %></p>
+          <p><strong>Status:</strong> 
+            <span class="badge 
+              <% if(item.status === 'Delivered') { %> bg-success
+              <% } else if(item.status === 'Cancelled') { %> bg-danger
+              <% } else if(item.status === 'Shipped') { %> bg-primary
+              <% } else if(item.status === 'OutForDelivery') { %> bg-info text-dark
+              <% } else if(item.status === 'Returned') { %> bg-warning text-dark
+              <% } else { %> bg-secondary <% } %>"
+              id="item-status-<%= item._id %>">
+              <%= item.status %>
+            </span>
+          </p>
+          <% if (item.cancelReason) { %>
+            <p class="text-muted"><strong>Cancel Reason:</strong> <%= item.cancelReason %></p>
+          <% } %>
+          <% if (item.returnReason) { %>
+            <p class="text-muted"><strong>Return Reason:</strong> <%= item.returnReason %></p>
+          <% } %>
+          <% if (item.returnRequestedAt) { %>
+            <p class="text-muted"><strong>Return Requested At:</strong> <%= new Date(item.returnRequestedAt).toLocaleString() %></p>
+          <% } %>
+        </div>
+        <div class="col-md-3 text-end">
+          <% if (item.status === 'Pending' && item.status !== 'Cancelled' && item.returnStatus === 'NotRequested') { %>
+            <form class="cancel-item-form mb-2" data-item-id="<%= item._id %>" data-action="/order/<%= order._id %>/cancel-item/<%= item._id %>">
+              <input type="text" name="reason" class="form-control mb-2 cancel-reason" placeholder="Reason for cancellation (required)" required />
+              <div class="invalid-feedback">Please provide a cancellation reason.</div>
+              <button type="submit" class="btn btn-sm btn-danger btn-custom">
+                Cancel This Product
+              </button>
+            </form>
+          <% } %>
+          <% if (item.status === 'Delivered' && item.status !== 'Cancelled' && item.returnStatus === 'NotRequested') { %>
+            <button class="btn btn-sm btn-warning btn-custom return-item-btn mb-2" data-item-id="<%= item._id %>" data-bs-toggle="modal" data-bs-target="#returnOrderModal">
+              Request Return
+            </button>
+          <% } %>
+          <% if (item.status === 'Delivered') { %>
+            <a href="/order/<%= order._id %>/invoice" class="btn btn-outline-secondary btn-sm btn-custom mb-2">
+              <i class="fas fa-download"></i> Download Invoice
+            </a>
+          <% } %>
+          <% if (item.returnStatus !== 'NotRequested') { %>
+            <p><strong>Return Status:</strong> 
+              <span class="badge 
+                <% if(item.returnStatus === 'Return Requested') { %> bg-warning text-dark
+                <% } else if(item.returnStatus === 'Request Approved') { %> bg-success
+                <% } else if(item.returnStatus === 'Request Denied') { %> bg-danger
+                <% } %>">
+                <%= item.returnStatus %>
+              </span>
+            </p>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
+
+    <!-- Return Modal (Single Item Only) -->
+    <div class="modal fade" id="returnOrderModal" tabindex="-1" aria-labelledby="returnOrderModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <form id="return-order-form" class="modal-content p-4">
+          <div class="modal-header border-0 pb-2">
+            <h5 class="modal-title" id="returnOrderModalLabel">Request Return for Item</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <label for="return-reason" class="form-label">Reason for return (required):</label>
+            <select name="reason" id="return-reason" class="form-select" required>
+              <option value="" disabled selected>Select a reason</option>
+              <option value="Changed my mind">Changed my mind</option>
+              <option value="Product damaged">Product damaged</option>
+              <option value="Wrong product received">Wrong product received</option>
+            </select>
+            <div class="invalid-feedback">Please select a return reason.</div>
+          </div>
+          <div class="modal-footer border-0 pt-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-warning">Confirm Return</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const returnModal = new bootstrap.Modal(document.getElementById('returnOrderModal'));
+
+      // Prevent modal from closing when clicking inside
+      const modal = document.getElementById('returnOrderModal');
+      if (modal) {
+        modal.addEventListener('click', e => {
+          if (e.target.closest('.modal-content')) {
+            e.stopPropagation();
+          }
+        });
+      }
+
+      // Prevent dropdown from closing unexpectedly
+      document.querySelectorAll('.form-select').forEach(select => {
+        select.addEventListener('click', e => e.stopPropagation());
+      });
+
+      // Set return form action dynamically for single item
+      document.querySelectorAll('.return-item-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          const itemId = button.dataset.itemId;
+          document.getElementById('return-order-form').dataset.action = `/order/<%= order._id %>/return-item/${itemId}`;
+          document.getElementById('return-order-form').dataset.itemId = itemId;
+          document.getElementById('returnOrderModalLabel').textContent = 'Request Return for Item';
+          document.getElementById('return-reason').value = ''; // Reset reason
+          returnModal.show();
+        });
+      });
+
+      // Handle single item cancellation
+      document.querySelectorAll('.cancel-item-form').forEach(form => {
+        form.addEventListener('submit', async e => {
+          e.preventDefault();
+          const formElement = e.target;
+          const itemId = formElement.dataset.itemId;
+          const reasonInput = formElement.querySelector('.cancel-reason');
+          const reason = reasonInput.value.trim();
+
+          if (!reason) {
+            reasonInput.classList.add('is-invalid');
+            showAlert('danger', 'Please provide a cancellation reason');
+            return;
+          }
+          reasonInput.classList.remove('is-invalid');
+
+          try {
+            console.log(`Sending cancel request: itemId=${itemId}, reason=${reason}`);
+            const response = await axios.post(formElement.dataset.action, { reason });
+            console.log('Cancel Response:', response.data);
+
+            const itemCard = document.getElementById(`item-${itemId}`);
+            itemCard.querySelector('.cancel-item-form')?.remove();
+            itemCard.querySelector('.return-item-btn')?.remove();
+            const badge = itemCard.querySelector(`#item-status-${itemId}`);
+            badge.classList.remove('bg-success', 'bg-primary', 'bg-info', 'bg-warning', 'text-dark');
+            badge.classList.add('bg-danger');
+            badge.textContent = 'Cancelled';
+            if (reason) {
+              itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Cancel Reason:</strong> ${reason}</p>`);
+            }
+            showAlert('success', response.data.message);
+          } catch (error) {
+            console.error('Cancel Error:', error.response?.data || error);
+            showAlert('danger', error.response?.data?.message || 'An error occurred while cancelling the item');
+          }
+        });
+      });
+
+      // Handle single item return
+      document.getElementById('return-order-form')?.addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = e.target;
+        const url = form.dataset.action;
+        const itemId = form.dataset.itemId;
+        const reasonSelect = form.querySelector('#return-reason');
+        const reason = reasonSelect.value;
+
+        if (!reason || reason === '') {
+          reasonSelect.classList.add('is-invalid');
+          showAlert('danger', 'Please select a valid return reason');
+          return;
+        }
+        reasonSelect.classList.remove('is-invalid');
+
+        try {
+          console.log(`Sending return request: url=${url}, itemId=${itemId}, reason=${reason}`);
+          const response = await axios.post(url, { reason });
+          console.log('Return Response:', response.data);
+
+          const itemCard = document.getElementById(`item-${itemId}`);
+          itemCard.querySelector('.return-item-btn')?.remove();
+          itemCard.querySelector('.btn-outline-secondary')?.remove();
+          const statusBadge = itemCard.querySelector(`#item-status-${itemId}`);
+          statusBadge.classList.remove('bg-success', 'bg-primary', 'bg-info');
+          statusBadge.classList.add('bg-warning', 'text-dark');
+          statusBadge.textContent = 'Return Requested';
+          if (reason) {
+            itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Return Reason:</strong> ${reason}</p>`);
+            itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Return Requested At:</strong> ${new Date().toLocaleString()}</p>`);
+          }
+          itemCard.querySelector('.col-md-3').insertAdjacentHTML('beforeend', `
+            <p><strong>Return Status:</strong> <span class="badge bg-warning text-dark">Return Requested</span></p>
+          `);
+          returnModal.hide();
+          showAlert('success', response.data.message);
+        } catch (error) {
+          console.error('Return Error:', error.response?.data || error);
+          showAlert('danger', error.response?.data?.message || 'An error occurred while requesting return');
+        }
+      });
+
+      // Show Bootstrap alerts
+      function showAlert(type, message) {
+        const alertHtml = `
+          <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        `;
+        const alertContainer = document.querySelector('.alert-container');
+        alertContainer.insertAdjacentHTML('beforeend', alertHtml);
+        setTimeout(() => {
+          const alert = alertContainer.querySelector('.alert');
+          if (alert) {
+            alert.classList.add('fade');
+            setTimeout(() => alert.remove(), 500);
+          }
+        }, 3000);
+      }
+    });
+  </script>
+
+  <footer class="text-center mt-5">
+    <%- include('../partials/user/footer') %>
+  </footer>
+</body>

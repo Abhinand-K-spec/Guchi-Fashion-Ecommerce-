@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Add Product</title>
+
+  <!-- Tailwind CSS -->
+  <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+
+  <!-- Cropper.js CSS and JS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
+
+
+
+  <style>
+    .image-preview {
+      max-width: 100%;
+      max-height: 200px;
+      display: none;
+    }
+
+    .cropped-image {
+      max-width: 100%;
+      max-height: 200px;
+      display: none;
+    }
+
+    .image-cropper-container {
+      display: none;
+      margin-bottom: 1rem;
+    }
+  </style>
+  
+</head>
+
+<body class="bg-white text-gray-700 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <%- include("../partials/admin/header") %>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-6">
+    <div class="container mx-auto max-w-screen-xl">
+      <div class="bg-black text-white p-4 rounded-lg shadow">
+        Dashboard
+      </div>
+      <!-- Add your product form here -->
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <%- include("../partials/admin/footer") %>
+
+</body>
+</html>

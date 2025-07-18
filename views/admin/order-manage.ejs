@@ -1,0 +1,154 @@
+<%- include('../partials/admin/header') %>
+
+<style>
+  body {
+    background-color: #1e1e1e;
+    color: #7b7979;
+  }
+
+  .container {
+    background-color: #2a2a2a;
+    border-radius: 10px;
+    padding: 30px;
+    margin-top: 30px;
+  }
+
+  .table {
+    color: #fff;
+    background-color: #2a2a2a;
+  }
+
+  .table th {
+    background-color: #007bff;
+    color: white;
+    text-align: center;
+  }
+
+  .table td {
+    vertical-align: middle;
+    text-align: center;
+  }
+
+  .form-control,
+  .btn,
+  select {
+    border-radius: 5px;
+  }
+
+  .btn-primary,
+  .btn-info {
+    background-color: #007bff;
+    border: none;
+  }
+
+  .btn-secondary {
+    background-color: #6c757d;
+    border: none;
+  }
+
+  .form-control {
+    background-color: #3a3a3a;
+    color: white;
+    border: 1px solid #555;
+  }
+
+  .pagination .page-link {
+    background-color: #3a3a3a;
+    color: #fff;
+    border: 1px solid #444;
+  }
+
+  .pagination .active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+  }
+
+  option {
+    background-color: #2a2a2a;
+    color: white;
+  }
+  .searchinput {
+    color: #fff;
+    background-color: #1e1e1e;
+    border: none;
+  }
+</style>
+
+<div class="container">
+  <h3 class="mb-4 text-white">Order Management</h3>
+
+  <!-- 🔍 Search and Filter -->
+  <form method="GET" class="d-flex gap-3 mb-4" action="/admin/orders">
+    <input type="text" class="searchinput" name="search" placeholder="Search Order ID" value="<%= search %>">
+    <select name="status" class="form-control">
+      <option value="">All Status</option>
+      <option value="Pending" <%= status === 'Pending' ? 'selected' : '' %>>Pending</option>
+      <option value="Shipped" <%= status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+      <option value="Out for Delivery" <%= status === 'Out for Delivery' ? 'selected' : '' %>>Out for Delivery</option>
+      <option value="Delivered" <%= status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+      <option value="Cancelled" <%= status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+    </select>
+    <button type="submit" class="btn btn-primary">Search</button>
+    <a href="/admin/orders" class="btn btn-secondary">Clear</a>
+  </form>
+
+  <!-- 📦 Orders Table -->
+  <table class="table table-bordered table-hover">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>User</th>
+        <th>Date</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (orders.length === 0) { %>
+        <tr>
+          <td colspan="5">No orders found</td>
+        </tr>
+      <% } else { %>
+        <% orders.forEach(order => { %>
+          <tr>
+            <td><%= order.OrderId %></td>
+            <td><%= order.UserId?.name || 'Unknown' %></td>
+            <td><%= new Date(order.OrderDate).toLocaleDateString() %></td>
+            <td>
+              <% if (order.Status === 'Delivered') { %>
+                <span class="badge bg-success">Delivered</span>
+              <% } else if (order.Status === 'Cancelled') { %>
+                <span class="badge bg-danger">Cancelled</span>
+              <% } else if (order.Status === 'Out for Delivery') { %>
+                <span class="badge bg-info text-dark">Out for Delivery</span>
+              <% } else if (order.Status === 'Shipped') { %>
+                <span class="badge bg-primary">Shipped</span>
+              <% } else { %>
+                <span class="badge bg-warning text-dark">Pending</span>
+              <% } %>
+            </td>
+            <td>
+              <a href="/admin/order-details/<%= order._id %>" class="btn btn-sm btn-info">View</a>
+            </td>
+          </tr>
+        <% }) %>
+      <% } %>
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  <% if (totalPages > 1) { %>
+    <nav>
+      <ul class="pagination justify-content-center">
+        <% for (let i = 1; i <= totalPages; i++) { %>
+          <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+            <a class="page-link" href="?page=<%= i %>&search=<%= search %>&status=<%= status %>"><%= i %></a>
+          </li>
+        <% } %>
+      </ul>
+    </nav>
+  <% } %>
+</div>
+
+<%- include('../partials/admin/footer') %>

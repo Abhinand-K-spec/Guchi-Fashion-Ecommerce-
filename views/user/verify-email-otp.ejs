@@ -1,0 +1,61 @@
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="card shadow p-4" style="width: 400px;">
+      <h4 class="mb-3 text-center">Verify Your Email</h4>
+      <p class="text-center text-muted">OTP has been sent to <strong><%= email %></strong></p>
+  
+      <% if (msg && msg.length > 0) { %>
+        <div class="alert alert-danger text-center">
+          <%= msg %>
+        </div>
+      <% } %>
+  
+      <!-- ✅ OTP Verification Form -->
+      <form method="POST" action="/verify-email-otp">
+        <div class="mb-3">
+          <label for="otp" class="form-label">Enter OTP</label>
+          <input type="text" class="form-control" id="otp" name="otp" required />
+        </div>
+  
+        <!-- Countdown Timer -->
+        <p id="timer" class="text-danger small text-center mb-2">
+          Resend OTP in <span id="countdown">60</span> seconds
+        </p>
+  
+        <div class="d-flex justify-content-between mt-3">
+          <a href="/profile" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">Verify</button>
+        </div>
+      </form>
+  
+      <!-- ✅ Separate Resend OTP Form -->
+      <form method="POST" action="/resend-email-otp" id="resendForm" class="text-center mt-3">
+        <button type="submit" class="btn btn-link p-0" id="resendBtn" disabled>Resend OTP</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- ✅ Countdown Timer Script -->
+  <script>
+    let timeLeft = 60;
+    const countdownEl = document.getElementById('countdown');
+    const resendBtn = document.getElementById('resendBtn');
+  
+    const countdownInterval = setInterval(() => {
+      timeLeft--;
+      countdownEl.textContent = timeLeft;
+  
+      if (timeLeft <= 0) {
+        clearInterval(countdownInterval);
+        countdownEl.textContent = '0';
+        resendBtn.removeAttribute('disabled');
+        document.getElementById('timer').textContent = '';
+      }
+    }, 1000);
+  </script>
+  

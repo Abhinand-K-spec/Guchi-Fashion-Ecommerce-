@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title><%= product.productName %> | Male-Fashion</title>
+
+  <!-- Fonts & CSS -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <style>
+    body {
+      font-family: 'Nunito Sans', sans-serif;
+    }
+    .breadcrumb-area {
+      background-color: #f8f9fa;
+      padding: 15px 0;
+      margin-bottom: 20px;
+    }
+    .breadcrumb a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .breadcrumb a:hover {
+      text-decoration: underline;
+    }
+    .main-image {
+      max-width: 100%;
+      height: 70vh;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      padding: 8px;
+      margin-bottom: 15px;
+      cursor: crosshair;
+    }
+    .thumbnail {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border: 1px solid #ccc;
+      margin: 0 5px;
+      cursor: pointer;
+    }
+    .thumbnail:hover {
+      border-color: #ff6b6b;
+    }
+    .rating-stars i {
+      color: #f8d14b;
+      margin-right: 2px;
+    }
+    .discount-price {
+      text-decoration: line-through;
+      color: #999;
+      margin-left: 10px;
+    }
+    .out-of-stock {
+      color: red;
+      font-weight: bold;
+    }
+    .recommended {
+      margin-top: 60px;
+    }
+    .recommended-card {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+    .recommended-card img {
+      height: 140px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    .img-zoom-container {
+      position: relative;
+    }
+    .img-zoom-result {
+      border: 1px solid #d4d4d4;
+      width: 300px;
+      height: 300px;
+      position: absolute;
+      top: 0;
+      left: 105%;
+      background-repeat: no-repeat;
+      background-size: 800px 800px;
+      display: none;
+      z-index: 99;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Breadcrumb -->
+<div class="container breadcrumb-area">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="/">Home</a></li>
+      <li class="breadcrumb-item"><a href="/shop">Shop</a></li>
+      <li class="breadcrumb-item active" aria-current="page"><%= product.productName %></li>
+    </ol>
+  </nav>
+</div>
+
+<!-- Product Details -->
+<div class="container mt-4 mb-5">
+  <div class="row">
+    <!-- Images -->
+    <div class="col-md-6 text-center">
+      <div class="img-zoom-container">
+        <img id="mainProductImage" src="/Uploads/product-images/<%= product.Image[0] %>" alt="<%= product.productName %>" class="main-image"/>
+        <div id="zoom-result" class="img-zoom-result"></div>
+      </div>
+      <% if (product.Image.length > 1) { %>
+        <div class="d-flex justify-content-center mt-2" id="thumbnailsContainer">
+          <% product.Image.slice(1).forEach(img => { %>
+            <img src="/Uploads/product-images/<%= img %>" class="thumbnail" onclick="swapImage(this)" alt="Thumbnail"/>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Info -->
+    <div class="col-md-6">
+      <h2><%= product.productName %></h2>
+      <p class="text-muted">Category: <%= product.Category?.categoryName || 'Uncategorized' %></p>
+      <p class="text-muted">SKU: <%= product._id %></p>
+      <div class="rating-stars mb-2">
+        <% const stars = product.rating || 4; %>
+        <% for (let i = 1; i <= 5; i++) { %>
+          <i class="fa <%= i <= stars ? 'fa-star' : 'fa-star-o' %>"></i>
+        <% } %>
+        <span>(<%= product.reviews?.length || 0 %> reviews)</span>
+      </div>
+      <% const price = product.Variants[0]?.Price || 0; %>
+      <% const discount = product.discount || 0; %>
+      <% const discountedPrice = price - (price * discount / 100); %>
+      <h4 class="text-danger fw-bold" id="priceDisplay">₹<%= discountedPrice.toFixed(2) %></h4>
+      <p id="stockDisplay"><strong>Stock:</strong> <%= product.Variants[0]?.Stock || 0 %> available</p>
+
+      <p><strong>Size:</strong>
+        <select id="sizeSelector" class="form-select w-auto d-inline-block">
+          <% 
+            const uniqueSizes = [...new Set(product.Variants.map(v => v.Size))];
+            uniqueSizes.forEach(size => { 
+          %>
+            <option value="<%= size %>"><%= size %></option>
+          <% }) %>
+        </select>
+      </p>
+
+      <p><strong>Material:</strong> <%= product.Material || 'Cotton Blend' %></p>
+      <p><strong>Weight:</strong> <%= product.Weight || '500g approx.' %></p>
+      <p><strong>Dimensions:</strong> <%= product.Dimensions || 'Standard Fit' %></p>
+      <p><strong>Return Policy:</strong> 7-day return policy*</p>
+      <p><%= product.Description || 'No description available.' %></p>
+     
+      <% if ((product.Variants[0]?.Stock || 0) > 0) { %>
+        <form action="/addToCart/<%= product._id %>" method="POST">
+          <button class="btn btn-danger" id="addToCartBtn">Add to Cart</button>
+        </form>
+      <% } else { %>
+        <button class="btn btn-danger" disabled id="addToCartBtn">Out of Stock</button>
+        <p class="out-of-stock mt-2">This product is currently out of stock</p>
+      <% } %>
+
+      <% if (product.reviews && product.reviews.length > 0) { %>
+        <hr class="my-4"/>
+        <h5>Customer Reviews</h5>
+        <% product.reviews.forEach(review => { %>
+          <div class="border rounded p-3 mb-3">
+            <strong><%= review.name %></strong>
+            <div class="rating-stars mb-1">
+              <% for (let i = 1; i <= 5; i++) { %>
+                <i class="fa <%= i <= review.rating ? 'fa-star' : 'fa-star-o' %>"></i>
+              <% } %>
+            </div>
+            <p class="mb-0"><%= review.comment %></p>
+          </div>
+        <% }) %>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Recommended -->
+  <% if (recommendedProducts && recommendedProducts.length > 0) { %>
+    <div class="recommended">
+      <h5>Recommended for you</h5>
+      <div class="row">
+        <% recommendedProducts.forEach(item => { %>
+          <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="recommended-card">
+              <img src="/Uploads/product-images/<%= item.Image[0] %>" alt="<%= item.productName %>"/>
+              <h6 class="mt-2"><%= item.productName %></h6>
+              <p class="text-danger">₹<%= item.Variants[0]?.Price || '0.00' %></p>
+              <a href="/product-details/<%= item._id %>" class="btn btn-sm btn-outline-dark">View</a>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+</div>
+<!-- JS -->
+<script>
+  const mainImg = document.getElementById("mainProductImage");
+  const result = document.getElementById("zoom-result");
+
+  function imageZoom(img, resultBox) {
+    const zoom = 2;
+    resultBox.style.display = "block";
+    resultBox.style.backgroundImage = `url('${img.src}')`;
+
+    function moveLens(e) {
+      const rect = img.getBoundingClientRect();
+      const x = e.pageX - rect.left - window.pageXOffset;
+      const y = e.pageY - rect.top - window.pageYOffset;
+
+      const posX = x / img.width * 100;
+      const posY = y / img.height * 100;
+
+      resultBox.style.backgroundPosition = `${posX}% ${posY}%`;
+    }
+
+    img.addEventListener("mousemove", moveLens);
+    resultBox.addEventListener("mousemove", moveLens);
+
+    img.addEventListener("mouseleave", () => {
+      resultBox.style.display = "none";
+    });
+  }
+
+  mainImg.addEventListener("mouseenter", () => imageZoom(mainImg, result));
+
+  function swapImage(clickedThumb) {
+    const tempSrc = mainImg.src;
+    mainImg.src = clickedThumb.src;
+    clickedThumb.src = tempSrc;
+    result.style.backgroundImage = `url('${mainImg.src}')`;
+  }
+
+  const variants = <%- JSON.stringify(product.Variants) %>;
+  const productDiscount = <%= product.discount || 0 %>;
+
+  const sizeSelector = document.getElementById('sizeSelector');
+  const priceDisplay = document.getElementById('priceDisplay');
+  const stockDisplay = document.getElementById('stockDisplay');
+  const addToCartBtn = document.getElementById('addToCartBtn');
+
+  function updateVariantDetails(selectedSize) {
+    const variant = variants.find(v => v.Size === selectedSize);
+    if (variant) {
+      const discountedPrice = variant.Price - (variant.Price * productDiscount / 100);
+      priceDisplay.innerText = `₹${discountedPrice.toFixed(2)}`;
+      stockDisplay.innerHTML = variant.Stock <= 0
+        ? '<span class="out-of-stock">Out of Stock</span>'
+        : `<strong>Stock:</strong> ${variant.Stock} available`;
+
+      if (addToCartBtn) {
+        addToCartBtn.disabled = variant.Stock <= 0;
+        addToCartBtn.innerText = variant.Stock <= 0 ? "Out of Stock" : "Add to Cart";
+      }
+    }
+  }
+
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const savedSize = localStorage.getItem('selectedSize');
+    if (savedSize && [...sizeSelector.options].some(opt => opt.value === savedSize)) {
+      sizeSelector.value = savedSize;
+      updateVariantDetails(savedSize);
+    } else {
+      updateVariantDetails(sizeSelector.value);
+    }
+  });
+
+
+  sizeSelector?.addEventListener('change', function () {
+    const selectedSize = this.value;
+    localStorage.setItem('selectedSize', selectedSize);
+    updateVariantDetails(selectedSize);
+  });
+</script>
+
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+
+<script>
+  document.querySelector('form[action^="/addToCart"]')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const form = this;
+    const response = await fetch(form.action, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (response.ok) {
+      window.location.href = '/shop';
+    } else {
+      const data = await response.json();
+      alert(data.error || 'Something went wrong');
+    }
+  });
+</script>
+
+</body>
+</html>

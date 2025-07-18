@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OTP Verification</title>
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <!-- Google Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <!-- jQuery and SweetAlert2 -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: #e5e7eb;
+      color: #111827;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header, footer {
+      background-color: #1e40af;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header .logo, footer .footer-info {
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      margin-left: 16px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+    }
+    nav a .material-icons {
+      font-size: 20px;
+      margin-right: 4px;
+    }
+    nav a:hover, nav a:focus {
+      text-decoration: underline;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+    .otp-card {
+      background: white;
+      padding: 40px 32px;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+    }
+    .otp-card h2 {
+      font-weight: 600;
+      font-size: 1.25rem;
+      margin-bottom: 24px;
+    }
+    .otp-input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 1rem;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      outline-offset: 2px;
+      transition: border-color 0.3s ease;
+      margin-bottom: 24px;
+    }
+    .otp-input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.3);
+    }
+    .otp-input.is-invalid {
+      border-color: #dc2626;
+    }
+    .invalid-feedback {
+      display: none;
+      color: #dc2626;
+      font-size: 0.875rem;
+      margin-top: -20px;
+      margin-bottom: 20px;
+    }
+    .otp-input.is-invalid ~ .invalid-feedback {
+      display: block;
+    }
+    .timeout-text {
+      font-weight: 700;
+      margin-bottom: 28px;
+      font-size: 1rem;
+    }
+    button.submit-btn {
+      background-color: #0f4c75;
+      color: white;
+      border: none;
+      padding: 14px 44px;
+      border-radius: 12px;
+      font-size: 1.125rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    button.submit-btn:hover,
+    button.submit-btn:focus {
+      background-color: #093c5a;
+      box-shadow: 0 6px 12px rgba(15,76,117,0.5);
+      outline: none;
+    }
+    .wrong-email {
+      margin-top: 20px;
+      font-size: 0.95rem;
+      color: #374151;
+    }
+    .wrong-email a {
+      color: #4bafaf;
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+    .wrong-email a:hover,
+    .wrong-email a:focus {
+      text-decoration: underline;
+    }
+    @media (max-width: 767px) {
+      header, footer {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+      }
+      nav a {
+        margin-left: 0;
+        margin-right: 16px;
+      }
+      .otp-card {
+        padding: 32px 24px;
+        max-width: 100%;
+      }
+    }
+    @media (min-width: 768px) and (max-width: 1439px) {
+      header, footer {
+        padding: 16px 48px;
+      }
+    }
+    @media (min-width: 1440px) {
+      header, footer {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="otp-card" role="region" aria-labelledby="otp-form-title">
+      <h2 id="otp-form-title">Please enter the OTP sent to your email</h2>
+      <form id="otpForm" novalidate>
+        <input
+          type="text"
+          name="otp"
+          id="input-otp"
+          maxlength="6"
+          class="otp-input"
+          aria-required="true"
+          aria-label="One-time password input"
+          pattern="\d{6}"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          placeholder="Enter 6-digit OTP"
+        />
+        <div class="invalid-feedback">Please enter a valid 6-digit OTP.</div>
+        <p class="timeout-text">
+          Please wait <span id="countdown">40</span> seconds before requesting another code.
+        </p>
+        <button type="submit" class="submit-btn" aria-label="Submit OTP">Submit</button>
+      </form>
+      <p class="wrong-email">
+        Wrong Email?
+        <a href="/resend-otp" role="button" tabindex="0">Resend</a>
+      </p>
+    </section>
+  </main>
+
+  <script>
+    let timeLeft = 40;
+    const countdownSpan = document.getElementById('countdown');
+    const timeoutText = document.querySelector('.timeout-text');
+
+    function startCountdown() {
+      const countdownInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft > 0) {
+          countdownSpan.textContent = timeLeft;
+        } else {
+          clearInterval(countdownInterval);
+          timeoutText.textContent = "You can now request a new code.";
+        }
+      }, 1000);
+    }
+
+    window.onload = startCountdown;
+
+    document.getElementById('otpForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      const otpInput = document.getElementById('input-otp');
+      const otp = otpInput.value.trim();
+      const invalidFeedback = otpInput.nextElementSibling;
+
+      // Client-side validation
+      if (!otp || !/^\d{6}$/.test(otp)) {
+        otpInput.classList.add('is-invalid');
+        invalidFeedback.style.display = 'block';
+        Swal.fire({
+          icon: 'error',
+          title: 'Invalid Input',
+          text: 'Please enter a valid 6-digit OTP.',
+        });
+        return;
+      }
+
+      otpInput.classList.remove('is-invalid');
+      invalidFeedback.style.display = 'none';
+
+      try {
+        const response = await $.ajax({
+          type: 'POST',
+          url: '/verify-otp',
+          data: { otp },
+          contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+          processData: true
+        });
+
+        if (response.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'OTP Verification Successful',
+            text: response.message || 'Your OTP was verified successfully!',
+            showConfirmButton: false,
+            timer: 1500
+          }).then(() => {
+            window.location.href = response.redirect || '/login';
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Verification Failed',
+            text: response.message || 'An error occurred during verification.',
+          });
+        }
+      } catch (error) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Server Error',
+          text: 'Something went wrong. Please try again later.',
+        });
+      }
+    });
+
+    // Real-time validation for OTP input
+    document.getElementById('input-otp').addEventListener('input', function () {
+      const otp = this.value.trim();
+      const invalidFeedback = this.nextElementSibling;
+      if (otp && /^\d{6}$/.test(otp)) {
+        this.classList.remove('is-invalid');
+        this.classList.add('is-valid');
+        invalidFeedback.style.display = 'none';
+      } else {
+        this.classList.remove('is-valid');
+        this.classList.add('is-invalid');
+        invalidFeedback.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

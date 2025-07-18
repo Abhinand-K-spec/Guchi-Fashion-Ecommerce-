@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Category</title>
+  <%- include("../../views/partials/admin/header") %>
+  <style>
+    body {
+      background-color: #f8fafc;
+    }
+    .edit-category-container {
+      margin-top: 50px;
+      padding: 30px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .form-label {
+      font-weight: 500;
+    }
+    .form-control {
+      font-size: 16px;
+      padding: 10px 15px;
+    }
+    .update-btn {
+      background-color: #2563eb;
+      border: none;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    .error-message {
+      color: #dc2626;
+      background-color: #fee2e2;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-8 edit-category-container">
+        <h3 class="mb-4">Edit Category</h3>
+
+        <% if (typeof error !== 'undefined') { %>
+          <div class="error-message">
+            <%= error %>
+          </div>
+        <% } %>
+
+        <form method="post" action="/admin/editCategory/<%= category._id %>">
+          <div class="mb-4">
+            <label for="product_name" class="form-label">Name</label>
+            <input type="text" name="categoryName" value="<%= category.categoryName %>" class="form-control" />
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control" rows="4"><%= category.description %></textarea>
+          </div>
+
+          <div class="text-end">
+            <button class="update-btn" type="submit">Update Category</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <%- include("../../views/partials/admin/footer") %>
+</body>
+</html>
