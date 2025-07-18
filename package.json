@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cloudinary": "^2.7.0",
     "connect-flash": "^0.1.1",
     "connect-mongo": "^5.1.0",
     "dotenv": "^16.5.0",
@@ -20,6 +21,7 @@
     "mongodb": "^6.17.0",
     "mongoose": "^8.15.1",
     "multer": "^2.0.1",
+    "multer-storage-cloudinary": "^4.0.0",
     "nocache": "^4.0.0",
     "nodemailer": "^7.0.3",
     "passport": "^0.7.0",
