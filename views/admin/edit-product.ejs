@@ -178,7 +178,7 @@
         <% for (let i = 0; i < product.Image.length; i++) { %>
           <div class="image-box">
             <img id="preview<%= i %>" src="<%= product.Image[i] %>" />
-                <input type="file" id="newImage<%- i %>" name="newImage<%- i %>" accept="image/*" onchange="handleFileChange(event, <%- i %>)" />
+                <input type="file" id="newImage<%- i %>" name="newImage<%- i %>" accept="image/*" onchange=`handleFileChange(event, <%- i %>)` />
             <input type="hidden" name="croppedImage<%= i + 1 %>" id="croppedImage<%= i + 1 %>">
           </div>
         <% } %>
