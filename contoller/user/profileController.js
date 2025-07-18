@@ -165,29 +165,30 @@ const getEditProfile = async(req,res)=>{
 
 
 
-
   const uploadProfileImage = async (req, res) => {
     try {
       const userId = req.session.user;
-     
   
       if (!userId || !req.file) return res.redirect('/profile');
   
-      const profileImagePath = 'uploads/profile-images/' + req.file.filename;
-    
+      const cloudinaryUrl = req.file.path;        
+      const publicId = req.file.filename;       
   
       const updateResult = await User.findByIdAndUpdate(userId, {
-        profileImage: profileImagePath
+        profileImage: cloudinaryUrl,
+        profileImagePublicId: publicId 
       });
   
-      console.log("Update Result:", updateResult);
+      console.log("Updated user with image:", updateResult);
       res.redirect('/editProfile');
   
     } catch (err) {
-      console.error(' Upload error:', err);
+      console.error('Profile image upload failed:', err);
       res.status(500).render('page-404');
     }
   };
+  
+  
   
 
 
