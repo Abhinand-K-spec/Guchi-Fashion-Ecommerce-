@@ -69,7 +69,6 @@ const addProducts = async (req, res) => {
       return res.redirect('/admin/addProducts');
     }
 
-    // 👉 Cloudinary upload
     const imagesBase64 = [croppedImage1, croppedImage2, croppedImage3];
     const imageFilenames = [];
 
@@ -80,7 +79,6 @@ const addProducts = async (req, res) => {
         return res.redirect('/admin/addProducts');
       }
 
-      // Upload to Cloudinary
       const result = await cloudinary.uploader.upload(base64, {
         folder: 'products',
         format: 'jpg',
@@ -206,12 +204,13 @@ const getEditProductPage = async (req, res) => {
 
     if (!product) return res.status(404).render('page-404');
 
-    res.render('edit-product', { product, categories });
+    res.render('edit-product', { product, categories,query:req.query });
   } catch (error) {
     console.error('Error in getEditProductPage:', error);
     res.redirect('/page-404');
   }
 };
+
 const postEditProduct = async (req, res) => {
   try {
     const { productId } = req.params;
@@ -230,35 +229,51 @@ const postEditProduct = async (req, res) => {
     const product = await Product.findById(productId);
     if (!product) return res.status(404).render('page-404');
 
-    product.productName = productName;
-    product.Description = description;
+    if (!productName || !size || !price || !stock || !description || !category) {
+      req.flash('msg', 'All fields are required');
+      return res.redirect(`/admin/edit-product/${productId}`);
+    }
 
     const categoryDoc = await Category.findOne({ categoryName: category });
-    if (!categoryDoc) return res.status(400).send('Invalid category');
+    if (!categoryDoc) {
+      req.flash('msg', 'Invalid category');
+      return res.redirect(`/admin/edit-product/${productId}`);
+    }
+
+    // Convert to arrays
+    const sizeArray = Array.isArray(size) ? size : [size];
+    const priceArray = Array.isArray(price) ? price : [price];
+    const stockArray = Array.isArray(stock) ? stock : [stock];
+
+    for (let i = 0; i < priceArray.length; i++) {
+      if (parseFloat(priceArray[i]) < 0 || parseInt(stockArray[i]) < 0) {
+        req.flash('msg', 'Price and Stock cannot be negative');
+        return res.redirect(`/admin/edit-product/${productId}`);
+      }
+    }
+
+    product.productName = productName;
+    product.Description = description;
     product.Category = categoryDoc._id;
 
-    if (product.Variants.length === 0) product.Variants.push({});
-    product.Variants[0].Size = size;
-    product.Variants[0].Price = parseFloat(price);
-    product.Variants[0].Stock = parseInt(stock);
+    product.Variants = sizeArray.map((sz, index) => ({
+      Colour: 'Default', // 🔥 Match `addProducts` structure
+      Size: sz,
+      Price: parseFloat(priceArray[index] || 0),
+      Stock: parseInt(stockArray[index] || 0)
+    }));
 
     const newImages = [croppedImage1, croppedImage2, croppedImage3];
     const updatedImages = [];
 
     for (let i = 0; i < 3; i++) {
       const base64 = newImages[i];
-
       if (base64 && base64.startsWith('data:image')) {
-        // Delete old Cloudinary image if you stored its public_id (optional)
-
-        // Upload to Cloudinary
         const uploadResult = await cloudinary.uploader.upload(base64, {
           folder: 'product-images'
         });
-
         updatedImages[i] = uploadResult.secure_url;
       } else {
-        // Keep existing image if not changed
         updatedImages[i] = product.Image[i] || '';
       }
     }
@@ -272,6 +287,8 @@ const postEditProduct = async (req, res) => {
     res.status(500).render('page-404');
   }
 };
+
+
 
 
 

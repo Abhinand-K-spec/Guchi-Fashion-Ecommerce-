@@ -242,7 +242,7 @@
     result.style.backgroundImage = `url('${mainImg.src}')`;
   }
 
-  const variants = `<%- JSON.stringify(product.Variants) %>`;
+  const variants = JSON.parse(`<%- JSON.stringify(product.Variants) %>`);
   const productDiscount = `<%= product.discount || 0 %>`;
 
   const sizeSelector = document.getElementById('sizeSelector');
