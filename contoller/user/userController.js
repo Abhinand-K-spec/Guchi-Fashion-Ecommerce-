@@ -192,7 +192,6 @@ const signup = async (req, res) => {
   try {
       const { name, email, password } = req.body;
       const findUser = await User.findOne({ email });
-      console.log('Email in signup',email);
 
       if (findUser) {
           return res.render('signup', { msg: 'User already exists' });
@@ -208,8 +207,8 @@ const signup = async (req, res) => {
 
       req.session.otp = otp;
       req.session.userData = { name, email, password };
-      res.render('verify-otp');
       console.log('OTP sent', otp); 
+      res.render('verify-otp');
 
   } catch (error) {
       console.error('Error signing up', error);
