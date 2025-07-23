@@ -76,7 +76,7 @@ router.get('/shopnow', userController.getShopPage)
 router.get('/shop', userController.getShopPage);
 
 router.get('/checkout', userAuth, userController.checkout);
-router.post('/place-order', userAuth, cartController.placeOrder);
+router.post('/place-order', userAuth, orderController.placeOrder);
 
 //order management------------------------------------------------------------------------------------->
 router.get('/orders', userAuth, orderController.listOrders);
@@ -85,6 +85,7 @@ router.post('/order/:id/cancel', userAuth, orderController.cancelOrder);
 router.get('/order/:id/invoice', userAuth, orderController.downloadInvoice);
 router.post('/order/:orderId/cancel-item/:itemId', userAuth, orderController.cancelItem);
 router.post('/order/:orderId/return-item/:itemId', userAuth, orderController.requestReturnItem);
+router.get('/createorder',userAuth,orderController.createOrder);
 //----------------------------------------------------------------------------------------------------->
 
 module.exports = router;

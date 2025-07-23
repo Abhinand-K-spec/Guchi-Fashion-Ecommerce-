@@ -9,6 +9,7 @@
 
   <!-- Optional Font Awesome for icons -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <!-- Custom CSS -->
   <link rel="stylesheet" href="/styles/style.css" />
@@ -25,6 +26,8 @@
   </style>
 </head>
 
+<body>
+
 <div class="container mt-5">
   <h3>Checkout</h3>
   <form action="/place-order" method="POST">
@@ -40,7 +43,7 @@
                   <input class="form-check-input me-2" type="radio" name="selectedAddressId" value="<%= address._id %>" <%= i === 0 ? 'checked' : '' %> required>
                   <label class="form-check-label">
                     <strong><%= address.name %></strong><br>
-                    <%= address.line1 %>, <%= address.town %>, <%= address.city %>, <%= address.state %> - <%= address.postCode %><br>
+                    <%= address.line1 %> <%= address.town %>, <%= address.city %>, <%= address.state %> - <%= address.postCode %><br>
                     Phone: <%= address.phone %><br>
                     <% if (address.alternativePhone) { %>
                       Alt: <%= address.alternativePhone %>
@@ -61,7 +64,20 @@
         <a href="/add-address" class="btn btn-sm btn-outline-primary mt-2">
           <i class="fas fa-plus"></i> Add New Address
         </a>
+         <!-- Payment Method Selection -->
+         <div class="mb-3 mt-5">
+          <h6>Payment Method</h6>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="radio" name="orderway" id="cashOnDelivery" value="Cash On Delivery" checked required>
+            <label class="form-check-label" for="cashOnDelivery">Cash On Delivery</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="orderway" id="onlinePayment" value="Online Payment" required>
+            <label class="form-check-label" for="onlinePayment">Online Payment</label>
+          </div>
+        </div>
       </div>
+      
 
       <!-- Order Summary -->
       <div class="col-md-6">
@@ -81,6 +97,8 @@
         <% }) %>
 
         <hr>
+       
+        <hr>
         <p><strong>Subtotal:</strong> ₹<%= subtotal %></p>
         <p><strong>Discount:</strong> ₹<%= discount %></p>
         <p><strong>Taxes:</strong> ₹<%= tax %></p>
@@ -91,11 +109,135 @@
           <p class="text-danger">Please remove out-of-stock items to proceed.</p>
         <% } %>
         <button type="submit" class="btn btn-success w-100 mt-3" <%= hasOutOfStock ? 'disabled' : '' %>>
-          <i class="fas fa-shopping-bag me-1"></i> Place Order (Cash on Delivery)
+          <i class="fas fa-shopping-bag me-1"></i> Place Order
         </button>
       </div>
     </div>
   </form>
 </div>
 
-<%- include('../partials/user/footer') %>
+</body>
+<script>
+  // Ensure jQuery and Razorpay are loaded
+  if (typeof $ === 'undefined') {
+    console.error('jQuery is not loaded.');
+  }
+  if (typeof Razorpay === 'undefined') {
+    console.error('Razorpay checkout.js is not loaded.');
+  }
+
+  // Handle form submission
+  document.getElementById('paymentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const paymentMethodInput = document.querySelector('input[name="orderway"]:checked');
+    const selectedAddressInput = document.querySelector('input[name="selectedAddressId"]:checked');
+    const finalTotal =`<%= typeof finalTotal !== 'undefined' ? finalTotal : 0 %>`;
+
+    if (!paymentMethodInput) {
+      alert('Please select a payment method.');
+      return;
+    }
+    if (!selectedAddressInput) {
+      alert('Please select a delivery address.');
+      return;
+    }
+    if (finalTotal <= 0) {
+      alert('Invalid order amount.');
+      return;
+    }
+
+    const paymentMethod = paymentMethodInput.value;
+    const selectedAddressId = selectedAddressInput.value;
+
+    if (paymentMethod === 'Online Payment') {
+      $.ajax({
+        url: '/place-order',
+        method: 'POST',
+        data: {
+          orderway: paymentMethod,
+          selectedAddressId: selectedAddressId,
+          finalTotal: finalTotal
+        },
+        success: function(response) {
+          if (!response.id || !response.amount || !response.currency) {
+            alert('Invalid response from server.');
+            console.error('Invalid response:', response);
+            return;
+          }
+
+          const options = {
+            key: '<%= razorpayKeyId %>', // Passed from backend
+            amount: response.amount,
+            currency: response.currency,
+            name: "Guchi Men's Fashion",
+            description: 'Payment for order',
+            image: '/guchi-logo.png',
+            order_id: response.id,
+            handler: function(response) {
+              $.ajax({
+                url: '/verify-payment',
+                method: 'POST',
+                data: {
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
+                  userId: '<%= userId %>'
+                },
+                success: function(verifyResponse) {
+                  if (verifyResponse.status === 'success') {
+                    alert('Payment verified successfully!');
+                    window.location.href = '/order-succes?orderId=' + encodeURIComponent(verifyResponse.orderId);
+                  } else {
+                    alert('Payment verification failed: ' + verifyResponse.message);
+                  }
+                },
+                error: function(error) {
+                  alert('Payment verification failed.');
+                  console.error('Verification error:', error);
+                }
+              });
+            },
+            prefill: {
+              name: '<%= addresses.length > 0 ? addresses[0].name : "" %>',
+              email: '<%= user.email %>', // Passed from backend
+              contact: '<%= addresses.length > 0 ? addresses[0].phone : "" %>'
+            },
+            theme: {
+              color: '#F37254'
+            },
+            modal: {
+              ondismiss: function() {
+                console.log('Razorpay checkout closed.');
+              }
+            }
+          };
+
+          try {
+            const rzp1 = new Razorpay(options);
+            rzp1.on('payment.failed', function(response) {
+              alert('Payment failed: ' + response.error.description);
+            });
+            rzp1.open();
+          } catch (error) {
+            alert('Failed to initialize Razorpay.');
+            console.error('Razorpay error:', error);
+          }
+        },
+        error: function(error) {
+          alert('Failed to process order.');
+          console.error('Order error:', error);
+        }
+      });
+    } else {
+      // Submit form for Cash on Delivery
+      this.submit();
+    }
+  });
+</script>
+
+<footer>
+  <%- include('../partials/user/footer') %>
+</footer>
+
+

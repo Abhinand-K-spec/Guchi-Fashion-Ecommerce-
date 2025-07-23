@@ -7,6 +7,7 @@ const Orders = require('../../model/ordersSchema')
   const cart = async (req, res) => {
     try {
       const userId = req.session.user;
+      
      
       const user = await User.findById(userId).lean();
   
@@ -67,7 +68,7 @@ const Orders = require('../../model/ordersSchema')
         });
   
 
-        if (variant?.Stock >= item.quantity) {
+        if (variant?.Stock >= item.quantity ) {
           totalPrice += itemTotal;
           validItems.push(item);
         }
@@ -100,9 +101,10 @@ const Orders = require('../../model/ordersSchema')
     const getCartData = async (req, res) => {
       try {
         const userId = req.session.user;
-        if (!userId) return res.json({ success: false, message: 'User not logged in' });
-    
+
+        
         const cartData = await Cart.findOne({ user: userId }).populate('items.product').lean();
+        
     
         if (!cartData || !cartData.items.length) {
           return res.json({ success: true, cartItems: [], totalPrice: 0 });
@@ -300,86 +302,6 @@ const Orders = require('../../model/ordersSchema')
     };
 
 
-      const placeOrder = async (req, res) => {
-        try {
-          const userId = req.session.user;
-          const { selectedAddressId } = req.body;
-      
-          if (!selectedAddressId) return res.redirect('/checkout');
-      
-          const cart = await Cart.findOne({ user: userId }).populate('items.product').lean();
-          if (!cart || !cart.items.length) return res.redirect('/checkout');
-      
-          const selectedAddress = await Address.findById(selectedAddressId).lean();
-          if (!selectedAddress) return res.status(400).send("Invalid address selected");
-      
-          const orderItems = [];
-          const stockUpdates = [];
-      
-          for (const item of cart.items) {
-            const product = item.product;
-            const variant = product?.Variants?.[0];
-      
-            if (!product || !variant || variant.Stock < item.quantity) continue;
-      
-            orderItems.push({
-              product: product._id,
-              quantity: item.quantity,
-              price: variant.Price
-            });
-      
-            // Prepare stock update
-            stockUpdates.push({
-              productId: product._id,
-              newStock: variant.Stock - item.quantity
-            });
-          }
-      
-          if (orderItems.length === 0) return res.redirect('/cart');
-      
-          const order = new Orders({
-            UserId: userId,
-            Address: {
-              name: selectedAddress.name,
-              line1: selectedAddress.line1,
-              city: selectedAddress.city,
-              state: selectedAddress.state,
-              town: selectedAddress.town,
-              postCode: selectedAddress.postCode,
-              phone: selectedAddress.phone,
-              alternativePhone: selectedAddress.alternativePhone
-            },
-            Items: orderItems,
-            OrderDate: new Date(),
-            OrderId: `ORD-${Date.now()}`,
-            Status: 'Pending'
-          });
-      
-          await order.save();
-      
-          
-          for (const update of stockUpdates) {
-            await Products.updateOne(
-              { _id: update.productId },
-              { $set: { "Variants.0.Stock": update.newStock } }
-            );
-          }
-      
-          await Cart.findOneAndUpdate({ user: userId }, { items: [] });
-      
-          const fullOrder = await Orders.findById(order._id).populate('Items.product').lean();
-      
-          res.render('order-succes', {
-            orderId: order.OrderId 
-          });
-          
-      
-        } catch (err) {
-          console.error('Place order error:', err);
-          res.status(500).render('page-404');
-        }
-      };
-    
 
 module.exports = {
     cart,
@@ -387,5 +309,5 @@ module.exports = {
     addToCart,
     removeFromCart,
     updateCartQuantity,
-    placeOrder
+    
 }

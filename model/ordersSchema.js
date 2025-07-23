@@ -10,6 +10,8 @@ const OrdersSchema = new Schema({
   PaymentId: {
     type: Schema.Types.ObjectId,
     ref: 'Payment'
+  },paymentMethod:{
+    type: String
   },
   Address: {
     name: String,

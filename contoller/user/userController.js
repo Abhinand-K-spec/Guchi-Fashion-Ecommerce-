@@ -192,6 +192,7 @@ const signup = async (req, res) => {
   try {
       const { name, email, password } = req.body;
       const findUser = await User.findOne({ email });
+  
 
       if (findUser) {
           return res.render('signup', { msg: 'User already exists' });
@@ -234,7 +235,7 @@ const verifyOtp = async (req, res) => {
     console.log("SESSION:", req.session);
     const userOtp = req.body.otp?.trim();
 
-    // Validate OTP input
+    
     if (!userOtp || !/^\d{6}$/.test(userOtp)) {
       return res.status(400).json({ success: false, message: 'Please enter a valid 6-digit OTP.' });
     }
@@ -429,6 +430,8 @@ const getProductDetails = async (req, res) => {
         tax,
         finalTotal,
         user,
+        userId:req.session.user,
+        razorpayKeyId: process.env.RAZORPAY_KEY_ID,
         activePage: 'cart'
       });
   

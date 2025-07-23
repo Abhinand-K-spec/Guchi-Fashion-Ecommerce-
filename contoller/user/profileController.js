@@ -114,6 +114,7 @@ const getEditProfile = async(req,res)=>{
   
       if (!emailSent) {
         req.flash('msg', 'Failed to send OTP');
+        console.log('here otp varification rendered')
         return res.redirect('/profile');
       }
   
