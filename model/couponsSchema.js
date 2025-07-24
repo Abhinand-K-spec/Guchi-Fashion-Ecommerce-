@@ -30,6 +30,8 @@ const CouponsSchema = new Schema({
   ExpiryDate: {
     type: Date,
     required: true,
+  },StartDate : {
+    type:String
   },
   CouponName: {
     type: String,
@@ -37,11 +39,13 @@ const CouponsSchema = new Schema({
   },
   CouponCode: {
     type: String,
-    required: true,
     unique: true,
   },
+  IsListed:{
+    type:Boolean
+  }
 });
 
 const Coupons = mongoose.model('Coupons', CouponsSchema);
 
-export default Coupons;
+module.exports = Coupons;

@@ -5,6 +5,7 @@ const costumerController = require('../contoller/admin/costumerController');
 const categoryController = require('../contoller/admin/categoryController');
 const productsController = require('../contoller/admin/productsController');
 const orderController = require('../contoller/admin/orderController');
+const couponController = require('../contoller/admin/couponController');
 const { userAuth, adminAuth } = require('../middlewares/auth');
 const upload = require('../middlewares/multer');
 
@@ -44,5 +45,16 @@ router.post('/approve-return/:orderId', adminAuth, orderController.approveReturn
 router.post('/reject-return/:orderId', adminAuth, orderController.rejectReturn);
 router.post('/order-details/:orderId/cancel-item/:itemId', adminAuth, orderController.cancelSingleItem);
 router.post('/order-details/:orderId/return-item/:itemId', adminAuth, orderController.returnSingleItem);
+
+//Coupon management -------------------------------------------------------------->
+router.get('/coupon',adminAuth,couponController.coupon);
+router.post('/addCoupon',userAuth,couponController.addCoupon)
+router.get('/coupons', couponController.coupon);
+router.post('/addCoupon', couponController.addCoupon);
+router.get('/unlistCoupon/:couponId', adminAuth, couponController.unlist);
+router.get('/listCoupon/:couponId', adminAuth, couponController.list);
+// router.get('/editCoupon/:id', couponController.editCoupon);
+// router.post('/updateCoupon/:id', couponController.updateCoupon);
+
 
 module.exports = router;
