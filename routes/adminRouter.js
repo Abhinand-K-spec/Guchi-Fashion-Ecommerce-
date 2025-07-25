@@ -6,6 +6,7 @@ const categoryController = require('../contoller/admin/categoryController');
 const productsController = require('../contoller/admin/productsController');
 const orderController = require('../contoller/admin/orderController');
 const couponController = require('../contoller/admin/couponController');
+const offerController = require('../contoller/admin/offerController')
 const { userAuth, adminAuth } = require('../middlewares/auth');
 const upload = require('../middlewares/multer');
 
@@ -55,6 +56,11 @@ router.get('/unlistCoupon/:couponId', adminAuth, couponController.unlist);
 router.get('/listCoupon/:couponId', adminAuth, couponController.list);
 // router.get('/editCoupon/:id', couponController.editCoupon);
 // router.post('/updateCoupon/:id', couponController.updateCoupon);
+
+
+router.post('/addCategoryOffer/:id', offerController.addCategoryOffer);
+router.post('/removeCategoryOffer/:id', offerController.removeCategoryOffer);
+
 
 
 module.exports = router;

@@ -30,7 +30,7 @@
       color: #ffffff;
     }
 
-    input[type="text"], textarea, .form-control {
+    input[type="text"], input[type="date"], input[type="number"], textarea, .form-control {
       width: 100%;
       background-color: #2c2c2e;
       border: 1px solid #3a3a3c;
@@ -41,11 +41,13 @@
     }
 
     input[type="text"]::placeholder,
+    input[type="date"]::placeholder,
+    input[type="number"]::placeholder,
     textarea::placeholder {
       color: #999;
     }
 
-    input[type="text"]:focus, textarea:focus {
+    input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, textarea:focus {
       border-color: #0a84ff;
       outline: none;
       color: #fff;
@@ -88,6 +90,20 @@
       color: #ccc;
     }
 
+    .action-btn {
+      background-color: #dc2626;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .action-btn:hover {
+      background-color: #b91c1c;
+    }
+
     table {
       width: 100%;
       margin-top: 10px;
@@ -108,16 +124,6 @@
       background-color: #2c2c2e;
       font-weight: 600;
       color: #ffffff;
-    }
-
-    .action-btn {
-      background-color: #dc2626;
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 500;
     }
 
     .pagination {
@@ -160,6 +166,28 @@
     .gap-2 {
       gap: 10px;
     }
+
+    .offer-input {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .offer-submit {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+
+    .offer-display {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .offer-form {
+      display: flex;
+      flex-direction: column;
+      max-width: 200px;
+    }
   </style>
 </head>
 <body>
@@ -188,8 +216,8 @@
           <th>Name</th>
           <th>Description</th>
           <th>Status</th>
+          <th>Offer</th>
           <th>Actions</th>
-          <th>Edit</th>
         </tr>
       </thead>
       <tbody>
@@ -199,13 +227,21 @@
             <td><%= category.description %></td>
             <td><%= category.isListed ? 'Listed' : 'Unlisted' %></td>
             <td>
-              <form action="/admin/<%= category.isListed ? 'unlistCategory' : 'listCategory' %>?id=<%= category._id %>" method="POST">
-                <button class="action-btn"><%= category.isListed ? 'Unlist' : 'List' %></button>
-              </form>
+              <div id="offer-<%= category._id %>" class="offer-display">
+                <% if (category.offer) { %>
+                  <span><%= category.offer.Discount %>%</span>
+                  <button class="action-btn btn-sm" onclick="removeOffer('<%= category._id %>', '<%= category.offer._id %>', '<%= currentPage %>')">Remove</button>
+                <% } else { %>
+                  <button class="btn btn-primary btn-sm offer-btn" onclick="showOfferInput('<%= category._id %>')">Add Offer</button>
+                <% } %>
+              </div>
             </td>
             <td>
-              <form action="/admin/editCategory/<%= category._id %>" method="GET">
-                <button class="btn btn-primary">Edit</button>
+              <form action="/admin/<%= category.isListed ? 'unlistCategory' : 'listCategory' %>?id=<%= category._id %>&page=<%= currentPage %>" method="POST" style="display: inline;">
+                <button class="action-btn btn-sm"><%= category.isListed ? 'Unlist' : 'List' %></button>
+              </form>
+              <form action="/admin/editCategory/<%= category._id %>?page=<%= currentPage %>" method="GET" style="display: inline;">
+                <button class="btn btn-primary btn-sm">Edit</button>
               </form>
             </td>
           </tr>
@@ -289,6 +325,100 @@
           el.innerText = '';
           el.style.display = 'none';
         }
+      });
+    }
+
+    function showOfferInput(categoryId) {
+      const offerDiv = document.getElementById(`offer-${categoryId}`);
+      offerDiv.innerHTML = `
+        <div class="offer-form">
+          <input type="text" class="offer-input" id="offerName-${categoryId}" placeholder="Offer Name" />
+          <input type="date" class="offer-input" id="startDate-${categoryId}" />
+          <input type="date" class="offer-input" id="endDate-${categoryId}" />
+          <input type="number" class="offer-input" id="discount-${categoryId}" placeholder="Discount %" min="0" max="100" />
+          <input type="number" class="offer-input" id="minPrice-${categoryId}" placeholder="Min Price (optional)" min="0" />
+          <input type="number" class="offer-input" id="maxPrice-${categoryId}" placeholder="Max Price (optional)" min="0" />
+          <button class="btn btn-primary btn-sm offer-submit" onclick="submitOffer('${categoryId}', '<%= currentPage %>')">Submit</button>
+        </div>
+      `;
+    }
+
+    function submitOffer(categoryId, page) {
+      const offerDiv = document.getElementById(`offer-${categoryId}`);
+      const offerName = document.getElementById(`offerName-${categoryId}`).value.trim();
+      const startDate = document.getElementById(`startDate-${categoryId}`).value;
+      const endDate = document.getElementById(`endDate-${categoryId}`).value;
+      const discount = document.getElementById(`discount-${categoryId}`).value.trim();
+      const minPrice = document.getElementById(`minPrice-${categoryId}`).value.trim();
+      const maxPrice = document.getElementById(`maxPrice-${categoryId}`).value.trim();
+
+      if (!offerName || !startDate || !endDate || !discount) {
+        alert('Offer name, start date, end date, and discount are required.');
+        return;
+      }
+
+      if (isNaN(discount) || discount < 0 || discount > 100) {
+        alert('Discount must be between 0 and 100.');
+        return;
+      }
+
+      if (new Date(startDate) > new Date(endDate)) {
+        alert('Start date cannot be later than end date.');
+        return;
+      }
+
+      if (minPrice && (isNaN(minPrice) || minPrice < 0)) {
+        alert('Minimum price must be a non-negative number.');
+        return;
+      }
+
+      if (maxPrice && (isNaN(maxPrice) || maxPrice < 0)) {
+        alert('Maximum price must be a non-negative number.');
+        return;
+      }
+
+      if (minPrice && maxPrice && parseFloat(minPrice) > parseFloat(maxPrice)) {
+        alert('Minimum price cannot be greater than maximum price.');
+        return;
+      }
+
+      fetch(`/admin/addCategoryOffer/${categoryId}?page=${page}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          OfferName: offerName,
+          StartDate: startDate,
+          EndDate: endDate,
+          Discount: discount,
+          MinPrice: minPrice || null,
+          MaxPrice: maxPrice || null
+        })
+      })
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(err => { throw new Error(err.error); });
+        }
+        location.reload();
+      })
+      .catch(error => {
+        alert(error.message || 'Failed to add offer');
+      });
+    }
+
+    function removeOffer(categoryId, offerId, page) {
+      fetch(`/admin/removeCategoryOffer/${categoryId}?page=${page}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offerId })
+      })
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(err => { throw new Error(err.error); });
+        }
+        location.reload();
+      })
+      .catch(error => {
+        alert(error.message || 'Failed to remove offer');
       });
     }
   </script>
