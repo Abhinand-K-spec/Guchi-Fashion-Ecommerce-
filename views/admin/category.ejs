@@ -183,10 +183,43 @@
       gap: 5px;
     }
 
-    .offer-form {
-      display: flex;
-      flex-direction: column;
-      max-width: 200px;
+    /* Modal styling */
+    .modal-content {
+      background-color: #212124;
+      color: #eaeaea;
+      border: 1px solid #3a3a3c;
+      border-radius: 10px;
+    }
+
+    .modal-header {
+      background-color: #2c2c2e;
+      border-bottom: 1px solid #444;
+    }
+
+    .modal-title {
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .modal-footer {
+      border-top: 1px solid #444;
+    }
+
+    .btn-close {
+      background-color: #444;
+      opacity: 1;
+    }
+
+    .btn-close:hover {
+      background-color: #555;
+    }
+
+    #offer-error {
+      margin-bottom: 15px;
     }
   </style>
 </head>
@@ -228,11 +261,11 @@
             <td><%= category.isListed ? 'Listed' : 'Unlisted' %></td>
             <td>
               <div id="offer-<%= category._id %>" class="offer-display">
-                <% if (category.offer) { %>
+                <% if (category.offer && category.offer.Discount !== undefined) { %>
                   <span><%= category.offer.Discount %>%</span>
                   <button class="action-btn btn-sm" onclick="removeOffer('<%= category._id %>', '<%= category.offer._id %>', '<%= currentPage %>')">Remove</button>
                 <% } else { %>
-                  <button class="btn btn-primary btn-sm offer-btn" onclick="showOfferInput('<%= category._id %>')">Add Offer</button>
+                  <button class="btn btn-primary btn-sm offer-btn" data-bs-toggle="modal" data-bs-target="#offerModal" onclick="showOfferInput('<%= category._id %>')">Add Offer</button>
                 <% } %>
               </div>
             </td>
@@ -253,6 +286,28 @@
       <% for (let i = 1; i <= totalPages; i++) { %>
         <a href="?page=<%= i %>" class="<%= i === currentPage ? 'active' : '' %>"><%= i %></a>
       <% } %>
+    </div>
+  </div>
+
+  <!-- Offer Modal -->
+  <div class="modal fade" id="offerModal" tabindex="-1" aria-labelledby="offerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="offerModalLabel">Add Offer</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <span id="offer-error" class="error"></span>
+          <div id="offerFormContainer" class="offer-form">
+            <!-- Form will be dynamically inserted here -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary offer-submit" id="submitOfferBtn">Submit</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -319,7 +374,7 @@
     }
 
     function clearErrorMsg() {
-      ['name-error', 'description-error'].forEach(id => {
+      ['name-error', 'description-error', 'offer-error'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
           el.innerText = '';
@@ -328,57 +383,79 @@
       });
     }
 
+    let currentCategoryId = null;
+    let currentPage = '<%= currentPage %>';
+
     function showOfferInput(categoryId) {
-      const offerDiv = document.getElementById(`offer-${categoryId}`);
-      offerDiv.innerHTML = `
-        <div class="offer-form">
-          <input type="text" class="offer-input" id="offerName-${categoryId}" placeholder="Offer Name" />
-          <input type="date" class="offer-input" id="startDate-${categoryId}" />
-          <input type="date" class="offer-input" id="endDate-${categoryId}" />
-          <input type="number" class="offer-input" id="discount-${categoryId}" placeholder="Discount %" min="0" max="100" />
-          <input type="number" class="offer-input" id="minPrice-${categoryId}" placeholder="Min Price (optional)" min="0" />
-          <input type="number" class="offer-input" id="maxPrice-${categoryId}" placeholder="Max Price (optional)" min="0" />
-          <button class="btn btn-primary btn-sm offer-submit" onclick="submitOffer('${categoryId}', '<%= currentPage %>')">Submit</button>
-        </div>
+      console.log('Opening modal for categoryId:', categoryId); // Debugging
+      currentCategoryId = categoryId;
+      const offerFormContainer = document.getElementById('offerFormContainer');
+      offerFormContainer.innerHTML = `
+        <input type="text" class="offer-input" id="offerName-${categoryId}" placeholder="Offer Name" />
+        <input type="date" class="offer-input" id="startDate-${categoryId}" />
+        <input type="date" class="offer-input" id="endDate-${categoryId}" />
+        <input type="number" class="offer-input" id="discount-${categoryId}" placeholder="Discount %" min="0" max="100" />
+        <input type="number" class="offer-input" id="minPrice-${categoryId}" placeholder="Min Price (optional)" min="0" />
+        <input type="number" class="offer-input" id="maxPrice-${categoryId}" placeholder="Max Price (optional)" min="0" />
       `;
     }
 
+    // Handle submit button click
+    document.getElementById('submitOfferBtn').addEventListener('click', () => {
+      console.log('Submit button clicked, currentCategoryId:', currentCategoryId); // Debugging
+      if (!currentCategoryId) {
+        displayErrorMessage('offer-error', 'No category selected.');
+        return;
+      }
+      submitOffer(currentCategoryId, currentPage);
+    });
+
+    // Clear form on modal close
+    document.getElementById('offerModal').addEventListener('hidden.bs.modal', () => {
+      console.log('Modal closed, clearing form'); // Debugging
+      document.getElementById('offerFormContainer').innerHTML = '';
+      document.getElementById('offer-error').innerText = '';
+      document.getElementById('offer-error').style.display = 'none';
+      currentCategoryId = null;
+    });
+
     function submitOffer(categoryId, page) {
-      const offerDiv = document.getElementById(`offer-${categoryId}`);
-      const offerName = document.getElementById(`offerName-${categoryId}`).value.trim();
-      const startDate = document.getElementById(`startDate-${categoryId}`).value;
-      const endDate = document.getElementById(`endDate-${categoryId}`).value;
-      const discount = document.getElementById(`discount-${categoryId}`).value.trim();
-      const minPrice = document.getElementById(`minPrice-${categoryId}`).value.trim();
-      const maxPrice = document.getElementById(`maxPrice-${categoryId}`).value.trim();
+      console.log('Submitting offer for categoryId:', categoryId, 'page:', page); // Debugging
+      clearErrorMsg();
+      const offerName = document.getElementById(`offerName-${categoryId}`)?.value.trim();
+      const startDate = document.getElementById(`startDate-${categoryId}`)?.value;
+      const endDate = document.getElementById(`endDate-${categoryId}`)?.value;
+      const discount = document.getElementById(`discount-${categoryId}`)?.value.trim();
+      const minPrice = document.getElementById(`minPrice-${categoryId}`)?.value.trim();
+      const maxPrice = document.getElementById(`maxPrice-${categoryId}`)?.value.trim();
 
       if (!offerName || !startDate || !endDate || !discount) {
-        alert('Offer name, start date, end date, and discount are required.');
+        displayErrorMessage('offer-error', 'Offer name, start date, end date, and discount are required.');
         return;
       }
 
       if (isNaN(discount) || discount < 0 || discount > 100) {
-        alert('Discount must be between 0 and 100.');
+        displayErrorMessage('offer-error', 'Discount must be between 0 and 100.');
         return;
       }
 
       if (new Date(startDate) > new Date(endDate)) {
-        alert('Start date cannot be later than end date.');
+        displayErrorMessage('offer-error', 'Start date cannot be later than end date.');
         return;
       }
 
       if (minPrice && (isNaN(minPrice) || minPrice < 0)) {
-        alert('Minimum price must be a non-negative number.');
+        displayErrorMessage('offer-error', 'Minimum price must be a non-negative number.');
         return;
       }
 
       if (maxPrice && (isNaN(maxPrice) || maxPrice < 0)) {
-        alert('Maximum price must be a non-negative number.');
+        displayErrorMessage('offer-error', 'Maximum price must be a non-negative number.');
         return;
       }
 
       if (minPrice && maxPrice && parseFloat(minPrice) > parseFloat(maxPrice)) {
-        alert('Minimum price cannot be greater than maximum price.');
+        displayErrorMessage('offer-error', 'Minimum price cannot be greater than maximum price.');
         return;
       }
 
@@ -395,32 +472,40 @@
         })
       })
       .then(res => {
+        console.log('Fetch response status:', res.status); // Debugging
         if (!res.ok) {
           return res.json().then(err => { throw new Error(err.error); });
         }
+        const modal = bootstrap.Modal.getInstance(document.getElementById('offerModal'));
+        modal.hide();
         location.reload();
       })
       .catch(error => {
-        alert(error.message || 'Failed to add offer');
+        console.error('Fetch error:', error); // Debugging
+        displayErrorMessage('offer-error', error.message || 'Failed to add offer');
       });
     }
 
     function removeOffer(categoryId, offerId, page) {
+      console.log('Removing offer for categoryId:', categoryId, 'offerId:', offerId); // Debugging
       fetch(`/admin/removeCategoryOffer/${categoryId}?page=${page}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ offerId })
       })
       .then(res => {
+        console.log('Remove offer response status:', res.status); // Debugging
         if (!res.ok) {
           return res.json().then(err => { throw new Error(err.error); });
         }
         location.reload();
       })
       .catch(error => {
+        console.error('Remove offer error:', error); // Debugging
         alert(error.message || 'Failed to remove offer');
       });
     }
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

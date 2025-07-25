@@ -60,7 +60,8 @@ router.get('/listCoupon/:couponId', adminAuth, couponController.list);
 
 router.post('/addCategoryOffer/:id', offerController.addCategoryOffer);
 router.post('/removeCategoryOffer/:id', offerController.removeCategoryOffer);
-
+router.post('/addProductOffer/:id', offerController.addProductOffer);
+router.post('/removeProductOffer/:id', offerController.removeProductOffer);
 
 
 module.exports = router;
