@@ -62,6 +62,26 @@
       margin-top: 20px;
     }
     .cart__total .primary-btn.hide { display: none; }
+    .price-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .product-price {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+    .offer-percentage {
+      color: #e74c3c;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    .regular-price {
+      font-size: 0.9rem;
+      color: #999;
+      text-decoration: line-through;
+    }
   </style>
 </head>
 
@@ -95,7 +115,16 @@
                     <td class="cart__product__item__title">
                       <h6><%= item.name %></h6>
                     </td>
-                    <td class="cart__price">₹<%= item.price %></td>
+                    <td class="cart__price">
+                      <% if (item.offer) { %>
+                        <div class="price-container">
+                          <span class="product-price">₹<%= item.price.toFixed(2) %></span>
+
+                        </div>
+                      <% } else { %>
+                        <span class="product-price">₹<%= item.price.toFixed(2) %></span>
+                      <% } %>
+                    </td>
                     <td class="cart__quantity">
                       <% if (item.stock > 0) { %>
                         <div class="pro-qty" data-stock="<%= item.stock %>">
@@ -107,7 +136,7 @@
                         <span class="text-danger">Out of Stock</span>
                       <% } %>
                     </td>
-                    <td class="cart__total">₹<%= item.itemTotal %></td>
+                    <td class="cart__total">₹<%= item.itemTotal.toFixed(2) %></td>
                     <td class="cart__close">
                       <button class="remove-from-cart" data-id="<%= item._id %>">
                         <i class="fa fa-close"></i>
@@ -130,7 +159,7 @@
             <div class="cart__total">
               <h6>Cart total</h6>
               <ul>
-                <li>Subtotal <span class="subtotal">₹<%= totalPrice %></span></li>
+                <li>Subtotal <span class="subtotal">₹<%= totalPrice.toFixed(2) %></span></li>
               </ul>
               <% const hasOutOfStock = cartItems.some(item => item.stock === 0 || item.stock < item.quantity); %>
               <% if (hasOutOfStock) { %>
@@ -181,7 +210,7 @@
     const hasOutOfStock = cartItems.some(item => item.stock === 0 || item.stock < item.quantity);
 
     // Update subtotal
-    subtotalEl.textContent = `₹${totalPrice}`;
+    subtotalEl.textContent = `₹${totalPrice.toFixed(2)}`;
 
     // Update proceed button visibility
     if (hasOutOfStock) {
@@ -204,6 +233,7 @@
       const row = tbody.querySelector(`tr[data-product-id="${item._id}"]`);
       if (row) {
         const qtyCell = row.querySelector('.cart__quantity');
+        const priceCell = row.querySelector('.cart__price');
         const totalCell = row.querySelector('.cart__total');
         if (item.stock > 0) {
           qtyCell.innerHTML = `
@@ -216,7 +246,14 @@
         } else {
           qtyCell.innerHTML = '<span class="text-danger">Out of Stock</span>';
         }
-        totalCell.textContent = `₹${item.itemTotal}`;
+        priceCell.innerHTML = item.offer
+          ? `<div class="price-container">
+               <span class="product-price">₹${item.price.toFixed(2)}</span>
+               <span class="offer-percentage">${item.offer.Discount}% OFF</span>
+               <span class="regular-price">₹${item.originalPrice.toFixed(2)}</span>
+             </div>`
+          : `<span class="product-price">₹${item.price.toFixed(2)}</span>`;
+        totalCell.textContent = `₹${item.itemTotal.toFixed(2)}`;
       }
     });
 

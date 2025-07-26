@@ -70,10 +70,7 @@ const orderDetails = async (req, res) => {
 
     if (!order) return res.render('page-404');
 
-    if (order.UserId.toString() !== userId.toString()) {
-      console.error("useid is not matching")
-      return res.status(403).render('page-404');
-    }
+    
 
     order.Items = order.Items.filter(item => item.product);
 

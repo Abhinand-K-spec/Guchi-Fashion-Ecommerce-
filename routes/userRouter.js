@@ -77,6 +77,7 @@ router.get('/shop', userController.getShopPage);
 
 router.get('/checkout', userAuth, userController.checkout);
 router.post('/place-order', userAuth, cartController.placeOrder);
+router.post('/validate-coupon',userController.validateCoupon);
 
 //order management------------------------------------------------------------------------------------->
 router.get('/orders', userAuth, orderController.listOrders);

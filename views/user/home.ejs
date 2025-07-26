@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="description" content="Male_Fashion Template">
-  <meta name="keywords" content="Male_Fashion, unica, creative, html">
+  <meta name="keywords" content="Male_Fashion, personally, creative, html">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Home | Guchi</title>
@@ -39,6 +39,19 @@
       border-radius: 6px;
     }
 
+    .offer-badge {
+      position: absolute;
+      top: 1px;
+      left: 1px;
+      background-color: #e11d59;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 11;
+    }
+
     .wishlist-btn {
       position: absolute;
       top: 10px;
@@ -60,6 +73,10 @@
       margin-bottom: 30px;
     }
 
+    .product-content-wrap {
+      text-align: center;
+    }
+
     .product-content-wrap h6 {
       font-size: 18px;
       color: #333;
@@ -69,7 +86,22 @@
     .product-content-wrap h5 {
       font-size: 16px;
       color: #ff6b6b;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    .price-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .regular-price {
+      font-size: 12px;
+      color: #999;
+      text-decoration: line-through;
+      margin-left: 8px;
     }
 
     .product-content-wrap a {
@@ -101,7 +133,6 @@
           <div class="row">
             <div class="col-xl-5 col-lg-7 col-md-8">
               <div class="hero__text">
-                <!-- <h6>Summer Collection</h6> -->
                 <h2>Fall - Winter Collections 2025</h2>
                 <p>A specialist label creating luxury outfits. Ethically created.</p>
                 <a href="/shopnow" class="primary-btn">Shop now <span class="arrow_right"></span></a>
@@ -128,16 +159,26 @@
               <div class="product-img-action-wrap">
                 <div class="product-img">
                   <a href="/product-details/<%= product._id %>">
-                    <img src="<%= product.Image[0] %>" alt="<%= product.productName %>">
+                    <img src="<%= product.Image[0] || '/img/default-product.jpg' %>" alt="<%= product.productName %>">
                   </a>
                 </div>
-                <!-- <a href="/add-to-wishlist/<%= product._id %>" class="wishlist-btn">
+                <% if (product.offer) { %>
+                  <span class="offer-badge"><%= product.offer.Discount %>% OFF</span>
+                <% } %>
+                <a href="/add-to-wishlist/<%= product._id %>" class="wishlist-btn">
                   <i class="fas fa-heart"></i>
-                </a> -->
+                </a>
               </div>
               <div class="product-content-wrap">
                 <h6><%= product.productName %></h6>
-                <h5>₹<%= product.Variants[0]?.Price %></h5>
+                <% if (product.offer) { %>
+                  <div class="price-container">
+                    <h5>₹<%= product.Variants[0].salePrice.toFixed(2) %></h5>
+                    <span class="regular-price">₹<%= product.Variants[0].Price.toFixed(2) %></span>
+                  </div>
+                <% } else { %>
+                  <h5>₹<%= product.Variants[0].Price.toFixed(2) %></h5>
+                <% } %>
                 <a href="/product-details/<%= product._id %>">View Details</a>
               </div>
             </div>
@@ -150,9 +191,16 @@
   <!-- Footer -->
   <%- include("../partials/user/footer") %>
 
+  <!-- JavaScript Libraries -->
+  <script src="/js/jquery-3.3.1.min.js"></script>
+  <script src="/js/bootstrap.min.js"></script>
+  <script src="/js/jquery.nice-select.min.js"></script>
+  <script src="/js/jquery.nicescroll.min.js"></script>
+  <script src="/js/jquery.magnific-popup.min.js"></script>
+  <script src="/js/jquery.countdown.min.js"></script>
+  <script src="/js/jquery.slicknav.js"></script>
+  <script src="/js/mixitup.min.js"></script>
+  <script src="/js/owl.carousel.min.js"></script>
+  <script src="/js/main.js"></script>
 </body>
 </html>
-
-
-
-

@@ -36,6 +36,7 @@ const addCoupon = async (req, res) => {
         const {
             CouponName,
             CouponCode,
+            Discount,
             UsageLimit,
             StartDate,
             EndDate,
@@ -43,12 +44,12 @@ const addCoupon = async (req, res) => {
             MaxCartValue,
         } = req.body;
 
-        console.log('coupon code of coupon :',req.body.CouponCode)
+        console.log('Coupon data received:', req.body);
 
         // Check if coupon code already exists
         const existingCoupon = await Coupon.findOne({ CouponCode });
         if (existingCoupon) {
-            console.log('checking existing coupon:',Coupon.findOne({ CouponCode }))
+            console.log('Existing coupon found:', existingCoupon);
             return res.status(400).json({ error: 'Coupon code already exists' });
         }
 
@@ -59,19 +60,26 @@ const addCoupon = async (req, res) => {
             return res.status(400).json({ error: 'Start Date cannot be later than End Date' });
         }
 
+        // Validate discount
+        const discountValue = parseFloat(Discount);
+        if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
+            return res.status(400).json({ error: 'Discount must be between 0 and 100' });
+        }
+
         // Create new coupon
         const newCoupon = new Coupon({
             UserId: userId || null,
             CouponName,
-            CouponCode,
+            CouponCode: CouponCode.toUpperCase(),
+            Discount: discountValue,
             UsageLimit,
             StartDate: start,
             ExpiryDate: end,
-            MinCartValue,
-            MaxCartValue,
-            IsListed: true // Default to listed for new coupons
+            MinCartValue: MinCartValue || 0,
+            MaxCartValue: MaxCartValue || null,
+            IsListed: true
         });
-        console.log(newCoupon)
+        console.log('New coupon to save:', newCoupon);
 
         await newCoupon.save();
         res.redirect('/admin/coupons?page=1'); 
@@ -81,32 +89,27 @@ const addCoupon = async (req, res) => {
     }
 };
 
-
-
-
 const unlist = async (req, res) => {
-  try {
-    const couponId = req.params.couponId;
-    await Coupon.findByIdAndUpdate(couponId, { IsListed: false });
-    res.redirect('/admin/coupon');
-  } catch (error) {
-    console.error('Error in unlist:', error);
-    res.redirect('/page-404');
-  }
+    try {
+        const couponId = req.params.couponId;
+        await Coupon.findByIdAndUpdate(couponId, { IsListed: false });
+        res.redirect('/admin/coupons');
+    } catch (error) {
+        console.error('Error in unlist:', error);
+        res.redirect('/page-404');
+    }
 };
 
 const list = async (req, res) => {
-  try {
-    const couponId = req.params.couponId;
-    await Coupon.findByIdAndUpdate(couponId, { IsListed: true });
-    res.redirect('/admin/coupon');
-  } catch (error) {
-    console.error('Error in list:', error);
-    res.redirect('/page-404');
-  }
+    try {
+        const couponId = req.params.couponId;
+        await Coupon.findByIdAndUpdate(couponId, { IsListed: true });
+        res.redirect('/admin/coupons');
+    } catch (error) {
+        console.error('Error in list:', error);
+        res.redirect('/page-404');
+    }
 };
-
-
 
 // const editCoupon = async (req, res) => {
 //     try {
@@ -115,7 +118,7 @@ const list = async (req, res) => {
 //         if (!coupon) {
 //             return res.status(404).json({ error: 'Coupon not found' });
 //         }
-//         res.render('editCoupon', { coupon }); // Assume editCoupon.ejsexists for editing
+//         res.render('editCoupon', { coupon, currentPage: req.query.page || 1 });
 //     } catch (error) {
 //         console.error('Error in editCoupon:', error);
 //         res.render('page-404');
@@ -128,6 +131,7 @@ const list = async (req, res) => {
 //         const {
 //             CouponName,
 //             CouponCode,
+//             Discount,
 //             UsageLimit,
 //             StartDate,
 //             EndDate,
@@ -141,14 +145,20 @@ const list = async (req, res) => {
 //             return res.status(400).json({ error: 'Start Date cannot be later than End Date' });
 //         }
 
+//         const discountValue = parseFloat(Discount);
+//         if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
+//             return res.status(400).json({ error: 'Discount must be between 0 and 100' });
+//         }
+
 //         const updatedCoupon = await Coupon.findByIdAndUpdate(id, {
 //             CouponName,
-//             CouponCode,
+//             CouponCode: CouponCode.toUpperCase(),
+//             Discount: discountValue,
 //             UsageLimit,
 //             StartDate: start,
-//             EndDate: end,
-//             MinCartValue,
-//             MaxCartValue,
+//             ExpiryDate: end,
+//             MinCartValue: MinCartValue || 0,
+//             MaxCartValue: MaxCartValue || null,
 //         }, { new: true, runValidators: true });
 
 //         if (!updatedCoupon) {
@@ -164,7 +174,7 @@ const list = async (req, res) => {
 module.exports = {
     coupon,
     addCoupon,
-    // editCoupon,
+   // editCoupon,
     // updateCoupon,
     unlist,
     list

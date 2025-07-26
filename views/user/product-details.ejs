@@ -74,7 +74,6 @@
       object-fit: contain;
       margin-bottom: 10px;
     }
-
     .img-zoom-container {
       position: relative;
     }
@@ -89,6 +88,28 @@
       background-size: 800px 800px;
       display: none;
       z-index: 99;
+    }
+    .price-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .product-price {
+      color: #e74c3c;
+      font-weight: bold;
+      font-size: 1.5rem;
+    }
+    .regular-price {
+      font-size: 1rem;
+      color: #999;
+      text-decoration: line-through;
+      margin-left: 8px;
+    }
+    .offer-percentage {
+      color: #e74c3c;
+      font-weight: bold;
+      font-size: 1rem;
+      margin-left: 8px;
     }
   </style>
 </head>
@@ -111,7 +132,7 @@
     <!-- Images -->
     <div class="col-md-6 text-center">
       <div class="img-zoom-container">
-        <img id="mainProductImage" src="<%= product.Image[0] %>" alt="<%= product.productName %>" class="main-image"/>
+        <img id="mainProductImage" src="<%= product.Image[0] || '/img/default-product.jpg' %>" alt="<%= product.productName %>" class="main-image"/>
         <div id="zoom-result" class="img-zoom-result"></div>
       </div>
       <% if (product.Image.length > 1) { %>
@@ -135,20 +156,28 @@
         <% } %>
         <span>(<%= product.reviews?.length || 0 %> reviews)</span>
       </div>
-      <% const price = product.Variants[0]?.Price || 0; %>
-      <% const discount = product.discount || 0; %>
-      <% const discountedPrice = price - (price * discount / 100); %>
-      <h4 class="text-danger fw-bold" id="priceDisplay">₹<%= discountedPrice.toFixed(2) %></h4>
+      <% if (product.offer) { %>
+        <div class="price-container">
+          <h4 class="product-price" id="priceDisplay">₹<%= product.Variants[0].salePrice.toFixed(2) %></h4>
+          <span class="offer-percentage"><%= product.offer.Discount %>% OFF</span>
+          <span class="regular-price">₹<%= product.Variants[0].Price.toFixed(2) %></span>
+        </div>
+      <% } else { %>
+        <h4 class="product-price" id="priceDisplay">₹<%= product.Variants[0].Price.toFixed(2) %></h4>
+      <% } %>
       <p id="stockDisplay"><strong>Stock:</strong> <%= product.Variants[0]?.Stock || 0 %> available</p>
 
       <p><strong>Size:</strong>
         <select id="sizeSelector" class="form-select w-auto d-inline-block">
           <% 
-            const uniqueSizes = [...new Set(product.Variants.map(v => v.Size))];
-            uniqueSizes.forEach(size => { 
-          %>
-            <option value="<%= size %>"><%= size %></option>
-          <% }) %>
+            const uniqueSizes = [...new Set(product.Variants.map(v => v.Size).filter(size => size))];
+            if (uniqueSizes.length === 0) { %>
+              <option value="">Select Size</option>
+          <% } else { %>
+            <% uniqueSizes.forEach(size => { %>
+              <option value="<%= size %>"><%= size %></option>
+            <% }) %>
+          <% } %>
         </select>
       </p>
 
@@ -243,7 +272,7 @@
   }
 
   const variants = <%- JSON.stringify(product.Variants) %>;
-  const productDiscount = <%= product.discount || 0 %>;
+  const productOffer = <%= product.offer ? JSON.stringify(product.offer) : 'null' %>;
 
   const sizeSelector = document.getElementById('sizeSelector');
   const priceDisplay = document.getElementById('priceDisplay');
@@ -253,8 +282,16 @@
   function updateVariantDetails(selectedSize) {
     const variant = variants.find(v => v.Size === selectedSize);
     if (variant) {
-      const discountedPrice = variant.Price - (variant.Price * productDiscount / 100);
-      priceDisplay.innerText = `₹${discountedPrice.toFixed(2)}`;
+      const price = variant.Price || 0;
+      const salePrice = productOffer ? price * (1 - productOffer.Discount / 100) : price;
+      const priceHTML = productOffer
+        ? `<div class="price-container">
+             <h4 class="product-price">₹${salePrice.toFixed(2)}</h4>
+             <span class="offer-percentage">${productOffer.Discount}% OFF</span>
+             <span class="regular-price">₹${price.toFixed(2)}</span>
+           </div>`
+        : `<h4 class="product-price">₹${price.toFixed(2)}</h4>`;
+      priceDisplay.innerHTML = priceHTML;
       stockDisplay.innerHTML = variant.Stock <= 0
         ? '<span class="out-of-stock">Out of Stock</span>'
         : `<strong>Stock:</strong> ${variant.Stock} available`;
@@ -266,17 +303,15 @@
     }
   }
 
-
   window.addEventListener('DOMContentLoaded', () => {
     const savedSize = localStorage.getItem('selectedSize');
     if (savedSize && [...sizeSelector.options].some(opt => opt.value === savedSize)) {
       sizeSelector.value = savedSize;
       updateVariantDetails(savedSize);
     } else {
-      updateVariantDetails(sizeSelector.value);
+      updateVariantDetails(sizeSelector.value || '');
     }
   });
-
 
   sizeSelector?.addEventListener('change', function () {
     const selectedSize = this.value;

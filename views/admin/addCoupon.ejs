@@ -1,4 +1,5 @@
 <%- include("../partials/admin/header") %>
+<head>
     <title>Coupon Management - Admin Panel</title>
     <style>
         body {
@@ -20,10 +21,10 @@
             width: 30%;
             display: inline-block;
             vertical-align: top;
-            margin-right: 3%; /* Adjusted spacing */
+            margin-right: 3%;
         }
         .form-group:nth-child(3n) {
-            margin-right: 0; /* Remove margin from the last input in a row */
+            margin-right: 0;
         }
         .form-row {
             margin-bottom: 10px;
@@ -36,18 +37,18 @@
         }
         input, select {
             width: 100%;
-            padding: 5px; /* Slightly reduced padding */
+            padding: 5px;
             box-sizing: border-box;
             border: 1px solid #444;
             border-radius: 4px;
             background: #333;
             color: #fff;
-            font-size: 13px; /* Slightly smaller font */
+            font-size: 13px;
         }
         .btn {
             background-color: #007bff;
             color: white;
-            padding: 7px 12px; /* Smaller button padding */
+            padding: 7px 12px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
@@ -95,7 +96,7 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="couponName">Coupon Name:</label>
-                    <input type="text" id="couponName" name="CouponName" >
+                    <input type="text" id="couponName" name="CouponName">
                     <span class="error" id="couponNameError">Coupon Name is required.</span>
                 </div>
                 <div class="form-group">
@@ -105,7 +106,7 @@
                 </div>
                 <div class="form-group">
                     <label for="usageLimit">Usage Limit:</label>
-                    <input type="number" id="usageLimit" name="UsageLimit" >
+                    <input type="number" id="usageLimit" name="UsageLimit" min="1">
                     <span class="error" id="usageLimitError">Usage Limit must be at least 1.</span>
                 </div>
             </div>
@@ -117,11 +118,13 @@
                 </div>
                 <div class="form-group">
                     <label for="endDate">End Date:</label>
-                    <input type="date" id="endDate" name="EndDate" >
+                    <input type="date" id="endDate" name="EndDate">
                     <span class="error" id="endDateError">End Date is required and must be after Start Date.</span>
                 </div>
-                <div class="form-group" style="visibility: hidden; height: 0;">
-                    <input type="text" style="display: none;">
+                <div class="form-group">
+                    <label for="discount">Discount (%):</label>
+                    <input type="number" id="discount" name="Discount" min="0" max="100" step="0.01">
+                    <span class="error" id="discountError">Discount must be between 0 and 100.</span>
                 </div>
             </div>
             <div class="form-row">
@@ -141,8 +144,8 @@
         </form>
 
         <div class="table-container">
-            <div class="d-flex ">
-                <h2  class="">Coupon Management</h2>
+            <div class="d-flex">
+                <h2>Coupon Management</h2>
                 <div class="p-2" style="margin-bottom: 10px;">
                     <input type="text" id="searchCoupons" placeholder="Search coupons" style="width: 200px; padding: 6px; margin-right: 10px;">
                     <button class="btn" onclick="searchCoupons()">Search</button>
@@ -154,6 +157,7 @@
                     <tr>
                         <th>Coupon Name</th>
                         <th>Coupon Code</th>
+                        <th>Discount (%)</th>
                         <th>Usage Limit</th>
                         <th>Start Date</th>
                         <th>End Date</th>
@@ -166,6 +170,7 @@
                         <tr>
                             <td><%= coupon.CouponName %></td>
                             <td><%= coupon.CouponCode %></td>
+                            <td><%= coupon.Discount ? coupon.Discount.toFixed(2) : 'N/A' %></td>
                             <td><%= coupon.UsageLimit %></td>
                             <td><%= new Date(coupon.StartDate).toLocaleDateString() %></td>
                             <td><%= new Date(coupon.ExpiryDate).toLocaleDateString() %></td>
@@ -173,14 +178,13 @@
                             <td>
                                 <% if (coupon.IsListed) { %>
                                     <a href="/admin/unlistCoupon/<%= coupon._id %>" onclick="return confirm('Are you sure you want to unlist this coupon?')">
-                                      <button class="btn btn-danger">Unlist</button>
+                                        <button class="btn btn-danger">Unlist</button>
                                     </a>
-                                  <% } else { %>
+                                <% } else { %>
                                     <a href="/admin/listCoupon/<%= coupon._id %>" onclick="return confirm('Are you sure you want to list this coupon?')">
-                                      <button class="btn btn-danger">List</button>
+                                        <button class="btn btn-danger">List</button>
                                     </a>
-                                  <% } %>
-                                    
+                                <% } %>
                             </td>
                         </tr>
                     <% }) %>
@@ -242,6 +246,15 @@
                 document.getElementById('endDateError').style.display = 'none';
             }
 
+            // Discount validation
+            const discount = parseFloat(document.getElementById('discount').value);
+            if (isNaN(discount) || discount < 0 || discount > 100) {
+                document.getElementById('discountError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('discountError').style.display = 'none';
+            }
+
             return isValid;
         }
 
@@ -258,12 +271,6 @@
             document.getElementById('searchCoupons').value = '';
             const rows = document.querySelectorAll('#couponTable tr');
             rows.forEach(row => row.style.display = '');
-        }
-
-        function unlistCoupon(couponId, currentPage) {
-            if (confirm('Are you sure you want to unlist this coupon?')) {
-                window.location.href = `/admin/unlistCoupon/${couponId}?page=${currentPage}`;
-            }
         }
     </script>
 </body>
