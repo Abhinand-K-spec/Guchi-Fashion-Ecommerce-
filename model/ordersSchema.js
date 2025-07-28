@@ -11,6 +11,15 @@ const OrdersSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Payment'
   },
+  PaymentMethod:{
+    type:String,
+    enum:['Online','COD','Wallet'],
+    required:true
+  },
+  PaymentStatus:{
+    type:String
+  },
+  addressId: { type: mongoose.Schema.Types.ObjectId, ref: 'address' },
   Address: {
     name: String,
     phone: String,
@@ -43,13 +52,13 @@ const OrdersSchema = new Schema({
       status: {
         type: String,
         enum: ['Pending','Returned','Delivered','Cancelled','Shipped','OutForDelivery'],
-        default: 'Pending' // Tracks 'Confirmed', 'Cancelled', or 'Return Requested'
+        default: 'Pending' 
       },
       cancelReason: {
-        type: String // Reason for item cancellation
+        type: String 
       },
       returnReason: {
-        type: String // Reason for item return
+        type: String 
       },
      
       returnStatus: {
@@ -58,12 +67,12 @@ const OrdersSchema = new Schema({
         default: 'NotRequested'
       },
       returnRequestedAt: {
-        type: Date // Timestamp for return request
+        type: Date 
       }
     }
   ],
   OrderId: {
-    type: String // Readable string like 'ORD123456'
+    type: String 
   },
   OrderDate: {
     type: Date,
@@ -73,7 +82,7 @@ const OrdersSchema = new Schema({
     type: String
   },
   returnStatus: {
-    type: String // Added to track overall order return status (e.g., 'Pending')
+    type: String 
   },
   ReturnReason: {
     type: String
@@ -82,7 +91,7 @@ const OrdersSchema = new Schema({
     type: Date
   }
 }, {
-  timestamps: true // adds createdAt and updatedAt automatically
+  timestamps: true 
 });
 
 const Orders = mongoose.model('Orders', OrdersSchema);

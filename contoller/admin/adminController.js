@@ -77,10 +77,6 @@ const loadUsers = async(req,res)=>{
 }
 
 
-
-
-
-
 module.exports = {
     loadLogin,
     loadDashboard,

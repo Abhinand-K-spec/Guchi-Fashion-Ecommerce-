@@ -1,6 +1,7 @@
 const Orders = require('../../model/ordersSchema');
 const User = require('../../model/userSchema');
 const Product = require('../../model/productSchema');
+const Wallet = require('../../model/walletSchema');
 
 const getAdminOrders = async (req, res) => {
   try {
@@ -25,6 +26,7 @@ const getAdminOrders = async (req, res) => {
       .limit(limit)
       .lean();
 
+      // console.log('get admin orders id:',orders.OrderId)
     res.render('order-manage', {
       orders,
       currentPage: page,
@@ -46,7 +48,7 @@ const getOrderDetails = async (req, res) => {
       .populate('Items.product')
       .lean();
     if (!order) return res.status(404).render('page-404');
-
+    
     res.render('order-details-manage', { order, activePage: 'order' });
   } catch (err) {
     console.error('Error loading order details:', err);
@@ -56,23 +58,45 @@ const getOrderDetails = async (req, res) => {
 
 const approveReturn = async (req, res) => {
   try {
+    // console.log('inside approve return')
     const { orderId } = req.params;
     const { productId } = req.query;
-
+    
+    
     const order = await Orders.findById(orderId).populate('Items.product');
     if (!order) return res.status(404).send('Order not found');
-
+    // console.log('after order find');
+    
     const item = order.Items.find(item => item.product?._id.toString() === productId);
     if (!item) return res.status(404).send('Item not found in order');
     if (item.returnStatus !== 'Return Requested') return res.status(400).send('Item return not requested');
-
+    // console.log('after item')
     await Product.updateOne(
       { _id: item.product, 'Variants.0': { $exists: true } },
       { $inc: { 'Variants.0.Stock': item.quantity } }
     );
-
+    // console.log('after product update')
+    
     item.returnStatus = 'Request Approved';
     item.status = 'Returned';
+    if (order.PaymentMethod === 'Online') {
+      // console.log('inside payment online :',order.PaymentMethod);
+      const refundAmount = item.quantity * item.price;
+      let wallet = await Wallet.findOne({ UserId: order.UserId });
+      if (!wallet) {
+        wallet = new Wallet({ UserId: order.UserId, Balance: 0, Transaction: [] });
+      }
+      // console.log('refundAmount :',refundAmount)
+      wallet.Balance += refundAmount;
+      wallet.Transaction.push({
+        TransactionAmount: refundAmount,
+        TransactionType: 'credit',
+        description: `Refund for returned item ${item.product.productName} in order ${order._id}`,
+        TransactionDate: new Date()
+      });
+      wallet.UpdatedAt = new Date();
+      await wallet.save();
+    }
     await order.save();
 
     res.redirect(`/admin/order-details/${orderId}`);
@@ -130,6 +154,23 @@ const cancelSingleItem = async (req, res) => {
     if (product && product.Variants?.[0]) {
       product.Variants[0].Stock += item.quantity;
       await product.save();
+    }
+
+    if (order.PaymentMethod === 'Online' && order.PaymentStatus === 'Completed') {
+      const refundAmount = item.quantity * item.price;
+      let wallet = await Wallet.findOne({ UserId: order.UserId });
+      if (!wallet) {
+        wallet = new Wallet({ UserId: order.UserId, balance: 0, transactions: [] });
+      }
+      wallet.balance += refundAmount;
+      wallet.transactions.push({
+        amount: refundAmount,
+        type: 'credit',
+        description: `Refund for cancelled item ${item.product.productName} in order ${order._id}`,
+        date: new Date()
+      });
+      wallet.UpdatedAt = new Date();
+      await wallet.save();
     }
 
     const allCancelled = order.Items.every(i => i.status === 'Cancelled');
@@ -216,6 +257,22 @@ const updateItemStatus = async (req, res) => {
       if (product && product.Variants?.[0]) {
         product.Variants[0].Stock += item.quantity;
         await product.save();
+      }
+      if (order.PaymentMethod === 'Online' && order.PaymentStatus === 'Completed') {
+        const refundAmount = item.quantity * item.price;
+        let wallet = await Wallet.findOne({ UserId: order.UserId });
+        if (!wallet) {
+          wallet = new Wallet({ UserId: order.UserId, balance: 0, transactions: [] });
+        }
+        wallet.balance += refundAmount;
+        wallet.transactions.push({
+          amount: refundAmount,
+          type: 'credit',
+          description: `Refund for cancelled item ${item.product.productName} in order ${order._id}`,
+          date: new Date()
+        });
+        wallet.UpdatedAt = new Date();
+        await wallet.save();
       }
     }
 

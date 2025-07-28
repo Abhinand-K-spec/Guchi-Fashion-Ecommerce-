@@ -1,4 +1,3 @@
-```html
 <%- include('../partials/user/header') %>
 <head>
   <meta charset="UTF-8" />
@@ -8,6 +7,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="/styles/style.css" />
   <link rel="icon" href="/images/favicon.png" type="image/png" />
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
     a { text-decoration: none; }
     .edit-link { font-size: 0.9rem; }
@@ -21,6 +21,8 @@
     .coupon-error { color: #dc3545; font-size: 0.9rem; margin-top: 0.5rem; }
     .coupon-success { color: #28a745; font-size: 0.9rem; margin-top: 0.5rem; }
     .coupon-eligibility { font-size: 0.8rem; color: #6c757d; }
+    .payment-method-container { margin-top: 1rem; }
+    .payment-error { color: #dc3545; font-size: 0.9rem; margin-top: 0.5rem; }
   </style>
 </head>
 
@@ -49,7 +51,7 @@
                   </div>
                   <div>
                     <a href="/edit-address/<%= address._id %>" class="btn btn-sm btn-outline-secondary edit-link">
-                      <i class="fas fa-edit"></i> 
+                      <i class="fas fa-edit"></i>
                     </a>
                   </div>
                 </div>
@@ -108,6 +110,29 @@
           <p><strong>Delivery Charge:</strong> ₹<span id="deliveryCharge"><%= deliveryCharge.toFixed(2) %></span></p>
           <p><strong>Final Total:</strong> ₹<span id="finalTotal"><%= finalTotal.toFixed(2) %></span></p>
 
+          <!-- Payment Method Selection -->
+          <div class="payment-method-container">
+            <h5>Payment Method</h5>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="paymentMethod" id="paymentCOD" value="COD" checked required>
+              <label class="form-check-label" for="paymentCOD">
+                Cash on Delivery
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="paymentMethod" id="paymentOnline" value="Online">
+              <label class="form-check-label" for="paymentOnline">
+                Online Payment
+              </label>
+            </div>
+            <p id="paymentError" class="payment-error" style="display: none;"></p>
+          </div>
+
+          <!-- Hidden Inputs for Razorpay -->
+          <input type="hidden" name="razorpayPaymentId" id="razorpayPaymentId">
+          <input type="hidden" name="razorpayOrderId" id="razorpayOrderId">
+          <input type="hidden" name="razorpaySignature" id="razorpaySignature">
+
           <!-- Coupon Modal -->
           <div class="modal fade" id="couponModal" tabindex="-1" aria-labelledby="couponModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -159,7 +184,7 @@
           <% if (hasOutOfStock) { %>
             <p class="text-danger">Please remove out-of-stock items to proceed.</p>
           <% } %>
-          <button type="submit" class="btn btn-success w-100 mt-3" <%= hasOutOfStock ? 'disabled' : '' %>>
+          <button type="submit" class="btn btn-success w-100 mt-3" id="placeOrderButton" <%= hasOutOfStock ? 'disabled' : '' %>>
             <i class="fas fa-shopping-bag me-1"></i> Place Order (Cash on Delivery)
           </button>
         </div>
@@ -181,15 +206,24 @@
       const deliveryChargeEl = document.getElementById('deliveryCharge');
       const finalTotalEl = document.getElementById('finalTotal');
       const checkoutForm = document.getElementById('checkoutForm');
+      const placeOrderButton = document.getElementById('placeOrderButton');
+      const paymentCOD = document.getElementById('paymentCOD');
+      const paymentOnline = document.getElementById('paymentOnline');
+      const paymentError = document.getElementById('paymentError');
+      const razorpayPaymentId = document.getElementById('razorpayPaymentId');
+      const razorpayOrderId = document.getElementById('razorpayOrderId');
+      const razorpaySignature = document.getElementById('razorpaySignature');
 
       const originalSubtotal = <%= subtotal %>;
       const originalItemDiscount = <%= totalItemDiscount %>;
       const originalTax = <%= tax %>;
       const deliveryCharge = <%= deliveryCharge %>;
       const userId = '<%= userId || "" %>';
+      const razorpayKey = '<%= process.env.RAZORPAY_KEY_ID %>'; // Ensure this is set in backend
       let appliedCouponCode = '';
+      let orderId = ''; // Added from second code
 
-      console.log('Checkout script loaded', { userId, couponButton: !!couponButton });
+      console.log('Checkout script loaded', { userId, couponButton: !!couponButton, razorpayKey });
 
       if (!couponButton) {
         console.error('Coupon button not found');
@@ -204,6 +238,150 @@
         couponError.style.display = 'block';
         return;
       }
+
+      // Update Place Order button text based on payment method
+      const updatePlaceOrderButton = () => {
+        if (paymentCOD.checked) {
+          placeOrderButton.innerHTML = '<i class="fas fa-shopping-bag me-1"></i> Place Order (Cash on Delivery)';
+        } else if (paymentOnline.checked) {
+          placeOrderButton.innerHTML = '<i class="fas fa-credit-card me-1"></i> Proceed to Payment (Online)';
+        }
+      };
+
+      // Initialize button text
+      updatePlaceOrderButton();
+
+      // Update button text on payment method change
+      paymentCOD.addEventListener('change', updatePlaceOrderButton);
+      paymentOnline.addEventListener('change', updatePlaceOrderButton);
+
+      // Handle form submission
+      checkoutForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log('Form submission initiated', { paymentMethod: paymentCOD.checked ? 'COD' : 'Online' });
+
+        if (!paymentCOD.checked && !paymentOnline.checked) {
+          paymentError.textContent = 'Please select a payment method.';
+          paymentError.style.display = 'block';
+          console.error('No payment method selected');
+          return;
+        }
+
+        paymentError.style.display = 'none';
+
+        if (paymentOnline.checked) {
+          try {
+            // Send request to create Razorpay order
+            console.log('Online payment');
+            const response = await fetch('/place-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId,
+                selectedAddressId: document.querySelector('input[name="selectedAddressId"]:checked').value,
+                coupon: couponInput.value.trim(),
+                paymentMethod: 'Online',
+                finalTotal: parseFloat(finalTotalEl.textContent)
+              })
+            });
+
+            const result = await response.json();
+            console.log('Place order response:', result);
+
+            if (!response.ok || !result.success) {
+              paymentError.textContent = result.message || 'Failed to initiate payment.';
+              paymentError.style.display = 'block';
+              return;
+            }
+
+            orderId = result.order.id; // Added from second code
+
+            // Open Razorpay checkout
+            const options = {
+              key: razorpayKey,
+              amount: result.order.amount,
+              currency: 'INR',
+              name: 'My E-Commerce Site',
+              description: 'Order Payment',
+              image: '/guchi-logo.png',
+              order_id: result.order.id,
+              handler: async function (response) {
+                console.log('Payment success:', response);
+                // Set hidden inputs for verification
+                razorpayPaymentId.value = response.razorpay_payment_id;
+                razorpayOrderId.value = response.razorpay_order_id;
+                razorpaySignature.value = response.razorpay_signature;
+
+                // Verify payment with backend
+                try {
+                  const verifyResponse = await fetch('/verify-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      razorpay_payment_id: response.razorpay_payment_id,
+                      razorpay_order_id: response.razorpay_order_id,
+                      razorpay_signature: response.razorpay_signature,
+                      userId,
+                      selectedAddressId: document.querySelector('input[name="selectedAddressId"]:checked').value,
+                      coupon: couponInput.value.trim(),
+                      finalTotal: parseFloat(finalTotalEl.textContent)
+                    })
+                  });
+
+                  const verifyResult = await verifyResponse.json();
+                  console.log('Payment verification response:', verifyResult);
+
+                  if (verifyResult.success) {
+                    // Redirect to order confirmation (updated from second code)
+                    window.location.href = '/order-success/' + verifyResult.orderId;
+                  } else {
+                    paymentError.textContent = verifyResult.message || 'Payment verification failed.';
+                    paymentError.style.display = 'block';
+                  }
+                } catch (err) {
+                  console.error('Payment verification error:', err);
+                  paymentError.textContent = 'Error verifying payment. Please try again.';
+                  paymentError.style.display = 'block';
+                }
+              },
+              prefill: {
+                name: '<%= addresses[0]?.name || "" %>',
+                contact: '<%= addresses[0]?.phone || "" %>',
+                email: 'usermail'
+              },
+              notes: {
+                address: '<%= addresses[0]?.town + ", " + addresses[0]?.city + ", " + addresses[0]?.state + " - " + addresses[0]?.postCode || "" %>'
+              },
+              theme: {
+                color: '#28a745'
+              },
+              modal: {
+                ondismiss: function () {
+                  console.log('Razorpay checkout dismissed');
+                  paymentError.textContent = 'Payment cancelled. Please try again.';
+                  paymentError.style.display = 'block';
+                }
+              }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.on('payment.failed', (response) => {
+              console.error('Payment failed:', response.error);
+              paymentError.textContent = response.error.description || 'Payment failed. Please try again.';
+              paymentError.style.display = 'block';
+              window.location.href = `/order-failure/${orderId}`; // Updated from second code
+            });
+            rzp.open();
+          } catch (err) {
+            console.error('Error initiating online payment:', err);
+            paymentError.textContent = 'Error initiating payment. Please try again.';
+            paymentError.style.display = 'block';
+          }
+        } else {
+          // COD: Submit form normally
+          checkoutForm.submit();
+        }
+      });
 
       // Copy coupon code to clipboard
       document.getElementById('couponModal').addEventListener('click', function(e) {
@@ -310,8 +488,7 @@
             }
 
             const discountPercentage = result.discount;
-            // Calculate discount based on final total (before coupon)
-            const baseFinalTotal = originalSubtotal + originalTax + deliveryCharge;
+            const baseFinalTotal = originalSubtotal - originalItemDiscount + originalTax + deliveryCharge;
             const couponDiscount = baseFinalTotal * (discountPercentage / 100);
             const finalTotal = baseFinalTotal - couponDiscount;
 
@@ -324,7 +501,7 @@
             couponSuccess.textContent = `Coupon applied! ${discountPercentage}% off (₹${couponDiscount.toFixed(2)})`;
             couponSuccess.style.display = 'block';
             setTimeout(() => couponSuccess.style.display = 'none', 3000);
-            
+            console.log('Coupon applied:', { couponDiscount, finalTotal, baseFinalTotal });
           } catch (err) {
             console.error('Error applying coupon:', {
               message: err.message,
@@ -343,11 +520,10 @@
             couponSuccess.style.display = 'none';
           }
         } else {
-          // Remove coupon
           couponInput.value = '';
           appliedCouponCode = '';
           discountEl.textContent = '0.00';
-          finalTotalEl.textContent = (originalSubtotal + originalTax + deliveryCharge).toFixed(2);
+          finalTotalEl.textContent = (originalSubtotal - originalItemDiscount + originalTax + deliveryCharge).toFixed(2);
           this.textContent = 'Apply';
           couponError.style.display = 'none';
           couponSuccess.textContent = 'Coupon removed.';

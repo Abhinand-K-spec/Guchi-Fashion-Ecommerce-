@@ -2,6 +2,7 @@ const Orders = require('../../model/ordersSchema');
 const Products = require('../../model/productSchema');
 const Address = require('../../model/addressSchema');
 const User = require('../../model/userSchema');
+const Wallet = require('../../model/walletSchema');
 const PDFDocument = require('pdfkit');
 const mongoose = require('mongoose');
 const path = require('path');
@@ -34,7 +35,6 @@ const listOrders = async (req, res) => {
       .limit(limit)
       .lean();
 
-    
     const filteredOrders = orders.filter(order => order.Items.some(item => item.product));
     const userData = userId ? await User.findById(userId) : null;
 
@@ -70,8 +70,6 @@ const orderDetails = async (req, res) => {
 
     if (!order) return res.render('page-404');
 
-    
-
     order.Items = order.Items.filter(item => item.product);
 
     res.render('order-details', {
@@ -87,11 +85,14 @@ const orderDetails = async (req, res) => {
 
 const cancelOrder = async (req, res) => {
   try {
+    console.log('here cancel order');
+    
     const order = await Orders.findById(req.params.id).populate('Items.product');
     if (!order || order.Status !== 'Pending') {
       return res.status(400).json({ success: false, message: 'Order not found or not in Pending status' });
     }
 
+    let refundAmount = 0;
     for (const item of order.Items) {
       if (item.status !== 'Cancelled' && item.returnStatus === 'NotRequested') {
         const product = item.product;
@@ -101,6 +102,7 @@ const cancelOrder = async (req, res) => {
           await product.save();
           item.status = 'Cancelled';
           item.cancelReason = req.body.reason || 'No reason provided';
+          refundAmount += item.price * item.quantity; // Calculate refund for this item
         }
       }
     }
@@ -109,6 +111,22 @@ const cancelOrder = async (req, res) => {
     if (allCancelled) {
       order.Status = 'Cancelled';
       order.CancelReason = req.body.reason || 'No reason provided';
+    }
+
+    // Refund to wallet if payment method is Wallet
+    if (order.PaymentMethod === 'Wallet' && refundAmount > 0) {
+      let wallet = await Wallet.findOne({ UserId: order.UserId });
+      if (!wallet) {
+        wallet = new Wallet({ UserId: order.UserId, Balance: 0, Transaction: [] });
+      }
+      wallet.Balance += refundAmount;
+      wallet.Transaction.push({
+        TransactionAmount: refundAmount,
+        TransactionType: 'credit',
+        Description: `Refund for cancelled order ID: ${order.OrderId}`,
+        Date: new Date()
+      });
+      await wallet.save();
     }
 
     await order.save();
@@ -121,6 +139,7 @@ const cancelOrder = async (req, res) => {
 
 const cancelItem = async (req, res) => {
   try {
+    // console.log('here cancel item')
     const { orderId, itemId } = req.params;
     const userId = req.session.user;
     const { reason } = req.body;
@@ -154,6 +173,23 @@ const cancelItem = async (req, res) => {
       await product.save();
     }
 
+    // Refund to wallet if payment method is Wallet
+    if (order.PaymentMethod === 'Wallet' || order.PaymentMethod === 'Online') {
+      const refundAmount = item.price * item.quantity;
+      let wallet = await Wallet.findOne({ UserId: order.UserId });
+      if (!wallet) {
+        wallet = new Wallet({ UserId: order.UserId, Balance: 0, Transaction: [] });
+      }
+      wallet.Balance += refundAmount;
+      wallet.Transaction.push({
+        TransactionAmount: refundAmount,
+        TransactionType: 'credit',
+        Description: `Refund for cancelled item in order ID: ${order.OrderId}`,
+        Date: new Date()
+      });
+      await wallet.save();
+    }
+
     const allCancelled = order.Items.every(i => i.status === 'Cancelled');
     if (allCancelled) {
       order.Status = 'Cancelled';
@@ -173,8 +209,6 @@ const requestReturnItem = async (req, res) => {
     const { orderId, itemId } = req.params;
     const userId = req.session.user;
     const { reason } = req.body;
-
-    console.log('Request return item:', { orderId, itemId, userId, reason });
 
     if (!reason || reason.trim() === '') {
       return res.status(400).json({ success: false, message: 'Return reason is required' });
@@ -210,10 +244,8 @@ const requestReturnItem = async (req, res) => {
     item.returnStatus = 'Return Requested';
     item.returnReason = reason;
     item.returnRequestedAt = new Date();
-    console.log('Item updated:', { itemId, returnStatus: item.returnStatus, returnReason: item.returnReason });
 
     await order.save();
-    console.log('Order saved successfully:', { orderId });
     return res.status(200).json({ success: true, message: 'Return request submitted successfully' });
   } catch (error) {
     console.error('Error requesting item return:', error.message, error.stack);
