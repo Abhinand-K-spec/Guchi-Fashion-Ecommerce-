@@ -141,7 +141,7 @@
   
       if (referralVal === '') {
         error4.style.display = 'none';
-        return true; // Referral code is optional
+        return true; 
       } else if (!referralPattern.test(referralVal)) {
         error4.style.display = 'block';
         error4.innerHTML = 'Referral code must be 8 characters (letters and numbers only)';

@@ -20,6 +20,16 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET
 });
 
+
+function generateReferralCode() {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = 'REF-';
+  for (let i = 0; i < 8; i++) {
+    code += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return code;
+}
+
 const getProductOffer = async (product) => {
   try {
     if (!product || !product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
@@ -227,7 +237,7 @@ async function sendVerification(email, otp) {
 
 const signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, referralCode } = req.body; 
     const findUser = await User.findOne({ email });
     console.log('Email in signup:', email);
     if (findUser) {
@@ -240,7 +250,7 @@ const signup = async (req, res) => {
       return res.json({ 'error': 'email-error' });
     }
     req.session.otp = otp;
-    req.session.userData = { name, email, password };
+    req.session.userData = { name, email, password, referralCode }; 
     res.render('verify-otp');
     console.log('OTP sent:', otp);
   } catch (error) {
@@ -261,8 +271,6 @@ const securePassword = async (password) => {
 
 const verifyOtp = async (req, res) => {
   try {
-    console.log("BODY:", req.body);
-    console.log("SESSION:", req.session);
     const userOtp = req.body.otp?.trim();
     if (!userOtp || !/^\d{6}$/.test(userOtp)) {
       return res.status(400).json({ success: false, message: 'Please enter a valid 6-digit OTP.' });
@@ -273,11 +281,54 @@ const verifyOtp = async (req, res) => {
     if (userOtp === req.session.otp) {
       const user = req.session.userData;
       const passwordhash = await securePassword(user.password);
+      
+      
+      let referralCode = generateReferralCode();
+      let existingUser = await User.findOne({ referalCode: referralCode });
+      while (existingUser) {
+        referralCode = generateReferralCode();
+        existingUser = await User.findOne({ referalCode: referralCode });
+      }
+
       const saveUserData = new User({
         name: user.name,
         email: user.email,
-        password: passwordhash
+        password: passwordhash,
+        referalCode: referralCode // Set referral code
       });
+
+      // Process referralCode if provided
+      if (user.referralCode) {
+        const referrer = await User.findOne({ 
+          referalCode: user.referralCode.toUpperCase(),
+          isBlocked: false 
+        });
+        if (referrer) {
+          saveUserData.referedBy = referrer._id;
+          // Update referrer's referals field (assuming it's a single ObjectId)
+          await User.findByIdAndUpdate(referrer._id, {
+            $set: { referals: saveUserData._id }
+            // Use $push: { referals: saveUserData._id } if referals is an array
+          });
+
+          // Reward referrer with a coupon
+          const referralCoupon = new Coupon({
+            CouponCode: `REF-${referrer._id}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+            CouponName: `${referrer.name}'s Referral Reward`,
+            Discount: 10,
+            MinCartValue: 500,
+            StartDate: new Date(),
+            ExpiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+            IsListed: true,
+            UserId: referrer._id,
+            UsageLimit: 1,
+            UsedBy: [],
+            CreatedAt: new Date()
+          });
+          await referralCoupon.save();
+        }
+      }
+
       await saveUserData.save();
       req.session.user = saveUserData._id;
       delete req.session.otp;
@@ -417,8 +468,6 @@ const getShopPage = async (req, res) => {
   }
 };
 
-
-
 const checkout = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -504,8 +553,6 @@ const checkout = async (req, res) => {
     res.status(500).render('page-404');
   }
 };
-
-
 
 const validateCoupon = async (req, res) => {
   try {
@@ -608,15 +655,13 @@ const validateCoupon = async (req, res) => {
   }
 };
 
-
-
 const placeOrder = async (req, res) => {
   try {
-    const {  selectedAddressId, coupon, paymentMethod } = req.body;
+    const { selectedAddressId, coupon, paymentMethod } = req.body;
     const userId = req.session.user;
    
     const cart = await Cart.findOne({ user: userId }).populate('Items.product').lean();
-    console.log('cart in place order:',cart)
+    console.log('cart in place order:', cart);
     if (!cart || !cart.Items.length) {
       console.log('Cart empty or not found for user:', userId);
       return res.status(400).json({ success: false, message: 'Cart is empty.' });
@@ -684,7 +729,7 @@ const placeOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Order amount must be at least ₹1.00 after discounts.' });
     }
     const order = new Orders({
-      UserId: userId, // Match schema field
+      UserId: userId,
       addressId: selectedAddressId,
       Address: {
         name: selectedAddress.name,
@@ -885,14 +930,14 @@ const getPaymentSuccess = async (req, res) => {
     
     const userId = req.session.user;
     const user = await User.findById(userId).lean();
-    const address = await Address.findOne({userId}).lean();
-    console.log('address in payment success',address)
+    const address = await Address.findOne({ userId }).lean();
+    console.log('address in payment success', address);
     res.render('razorOrderSuccess', {
       order,
       user,
       address,
       activePage: 'orders',
-      successMessage : 'Payment Successfull'
+      successMessage: 'Payment Successful'
     });
   } catch (err) {
     console.error('Payment success page error:', err);
@@ -903,10 +948,9 @@ const getPaymentSuccess = async (req, res) => {
 const getPaymentFailure = async (req, res) => {
   try {
     const orderId = req.params.orderId;
-    console.log('paymentfailure :',req.params.orderId)
-
+    console.log('paymentfailure:', req.params.orderId);
     const order = await Orders.findById(orderId).populate('Items.product').lean();
-    console.log('Order id in db',order._id)
+    console.log('Order id in db', order._id);
     if (!order) {
       return res.status(404).render('page-404');
     }
@@ -926,7 +970,6 @@ const getPaymentFailure = async (req, res) => {
 const getOrderSuccess = async (req, res) => {
   try {
     const orderId = req.params.orderId;
-    
     const order = await Orders.findById(orderId).populate('Items.product').lean();
     if (!order) {
       return res.status(404).render('page-404');
@@ -1108,28 +1151,6 @@ const getOrders = async (req, res) => {
   }
 };
 
-const getAdminOrders = async (req, res) => {
-  try {
-    const userId = req.session.user;
-    const user = await User.findById(userId).lean();
-    if (!user || !user.isAdmin) {
-      return res.status(403).render('page-404', { message: 'Unauthorized access' });
-    }
-    const orders = await Orders.find()
-      .populate('UserId', 'name email')
-      .populate('Items.product')
-      .sort({ OrderDate: -1 })
-      .lean();
-    res.render('admin-orders', {
-      user,
-      orders,
-      activePage: 'admin-orders'
-    });
-  } catch (err) {
-    console.error('Get admin orders error:', err);
-    res.status(500).render('page-404');
-  }
-};
 
 module.exports = {
   loadHomePage,
@@ -1161,5 +1182,5 @@ module.exports = {
   removeFromWishlist,
   getWishlist,
   getOrders,
-  getAdminOrders
+ 
 };
