@@ -85,6 +85,24 @@
         margin-top: 85px;
       }
     }
+
+    /* Added styles for referral code field and copy button */
+    .referral-code-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+      gap: 10px;
+    }
+
+    .referral-code-input {
+      max-width: 200px;
+      font-size: 0.9rem;
+    }
+
+    .copy-btn {
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -97,7 +115,14 @@
       </div>
 
       <div class="username-text"><%= user.name.toUpperCase() %></div>
-   
+      
+      <!-- Added referral code field and copy button -->
+      <div class="referral-code-wrapper">
+        <input type="text" class="form-control referral-code-input" value="<%= user.referalCode || '' %>" readonly placeholder="No referral code">
+        <button class="btn btn-primary copy-btn" onclick="copyReferralCode(this)">
+          <i class="fas fa-copy"></i> Copy
+        </button>
+      </div>
       
       <div class="right-panel mt-3">
         <h5 class="mb-4 text-center">Address</h5>
@@ -128,7 +153,30 @@
   </div>
 
   <%- include('../partials/user/footer') %>
+
+  <!-- Added JavaScript for copy functionality -->
+  <script>
+    function copyReferralCode(button) {
+      const input = button.previousElementSibling;
+      const referralCode = input.value;
+      if (referralCode) {
+        navigator.clipboard.writeText(referralCode).then(() => {
+          button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+          button.classList.remove('btn-primary');
+          button.classList.add('btn-success');
+          setTimeout(() => {
+            button.innerHTML = '<i class="fas fa-copy"></i> Copy';
+            button.classList.remove('btn-success');
+            button.classList.add('btn-primary');
+          }, 2000);
+        }).catch(err => {
+          console.error('Failed to copy referral code:', err);
+          alert('Failed to copy referral code.');
+        });
+      } else {
+        alert('No referral code available.');
+      }
+    }
+  </script>
 </body>
 </html>
-
-

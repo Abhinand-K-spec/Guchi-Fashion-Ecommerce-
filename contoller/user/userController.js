@@ -417,6 +417,8 @@ const getShopPage = async (req, res) => {
   }
 };
 
+
+
 const checkout = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -432,6 +434,7 @@ const checkout = async (req, res) => {
       IsListed: true,
       $or: [{ UserId: null }, { UserId: userId }]
     }).lean();
+
     const wallet = await Wallet.findOne({ userId }).lean() || { balance: 0 };
     let subtotal = 0;
     let totalItemDiscount = 0;
@@ -501,6 +504,8 @@ const checkout = async (req, res) => {
     res.status(500).render('page-404');
   }
 };
+
+
 
 const validateCoupon = async (req, res) => {
   try {
@@ -603,11 +608,15 @@ const validateCoupon = async (req, res) => {
   }
 };
 
+
+
 const placeOrder = async (req, res) => {
   try {
-    const { userId, selectedAddressId, coupon, paymentMethod } = req.body;
+    const {  selectedAddressId, coupon, paymentMethod } = req.body;
+    const userId = req.session.user;
    
     const cart = await Cart.findOne({ user: userId }).populate('Items.product').lean();
+    console.log('cart in place order:',cart)
     if (!cart || !cart.Items.length) {
       console.log('Cart empty or not found for user:', userId);
       return res.status(400).json({ success: false, message: 'Cart is empty.' });
@@ -638,7 +647,7 @@ const placeOrder = async (req, res) => {
       const quantity = item.quantity;
       const itemTotal = price * quantity;
       orderItems.push({
-        product: product._id, // Use 'product' to match schema
+        product: product._id, 
         quantity,
         price,
         status: 'Pending'

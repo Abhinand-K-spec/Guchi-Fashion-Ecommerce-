@@ -51,7 +51,12 @@ const userSchema = new Schema({
         type: String
     },
     referals: {
-        type: String // fixed typo: was `string`
+        type: Schema.Types.ObjectId, 
+        ref: 'User' 
+    },
+    referedBy:{
+        type:Schema.Types.ObjectId,
+        ref: 'User'
     },
     createdAt: {
         type: Date,

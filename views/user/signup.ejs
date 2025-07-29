@@ -8,29 +8,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <style>
     .alert {
-  padding: 10px;
-  border-radius: 4px;
-  margin: 10px 0;
-  font-weight: bold;
-  text-align: center;
-}
-a{
-  text-decoration: none;
-}
-
-.alert-danger {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      font-weight: bold;
+      text-align: center;
+    }
+    a {
+      text-decoration: none;
+    }
+    .alert-danger {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="left">
       <h2>Get Started Now</h2>
-      <form id="signform" method="post" action="/signup" >
+      <form id="signform" method="post" action="/signup">
         <label for="name">Name</label>
         <input type="text" name="name" id="name" placeholder="Enter your name" />
         <div id="err1" class="inputerror"></div>
@@ -43,13 +41,17 @@ a{
         <input type="password" name="password" id="password" placeholder="Enter your password" />
         <div id="err3" class="inputerror"></div>
 
+        <label for="referralCode">Referral Code (Optional)</label>
+        <input type="text" name="referralCode" id="referralCode" placeholder="Enter referral code" />
+        <div id="err4" class="inputerror"></div>
+
         <% if (locals.msg && msg.length > 0) { %>
           <div id="message" class="alert alert-danger text-center">
             <%= msg %>
           </div>
         <% } %>  
 
-        <button  type="submit">Signup</button>
+        <button type="submit">Signup</button>
       </form>
 
       <div class="divider"><span>or</span></div>
@@ -76,13 +78,15 @@ a{
     const nameid = document.getElementById('name');
     const emailid = document.getElementById('email');
     const password = document.getElementById('password');
+    const referralCode = document.getElementById('referralCode');
     const error1 = document.getElementById('err1');
     const error2 = document.getElementById('err2');
     const error3 = document.getElementById('err3');
+    const error4 = document.getElementById('err4');
     const signform = document.getElementById('signform'); 
   
     function nameValidate() {
-      const nameval = nameid.value.trim(); // FIXED
+      const nameval = nameid.value.trim();
       const namepattern = /^[A-Za-z\s]+$/;
   
       if (nameval === '') {
@@ -130,20 +134,37 @@ a{
         return true;
       }
     }
+
+    function referralCodeValidate() {
+      const referralVal = referralCode.value.trim();
+      const referralPattern = /^[A-Z0-9]{8}$/;
+  
+      if (referralVal === '') {
+        error4.style.display = 'none';
+        return true; // Referral code is optional
+      } else if (!referralPattern.test(referralVal)) {
+        error4.style.display = 'block';
+        error4.innerHTML = 'Referral code must be 8 characters (letters and numbers only)';
+        return false;
+      } else {
+        error4.style.display = 'none';
+        return true;
+      }
+    }
   
     document.addEventListener('DOMContentLoaded', function () {
       signform.addEventListener('submit', function (e) {
         const isNameValid = nameValidate();
         const isEmailValid = emailValidate();
         const isPasswordValid = passwordValidate();
+        const isReferralCodeValid = referralCodeValidate();
   
         // Prevent form submit if any validation fails
-        if (!isNameValid || !isEmailValid || !isPasswordValid) {
+        if (!isNameValid || !isEmailValid || !isPasswordValid || !isReferralCodeValid) {
           e.preventDefault(); 
         }
       });
     });
   </script>
-  
 </body>
 </html>
