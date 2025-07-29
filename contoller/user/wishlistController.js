@@ -36,6 +36,7 @@ const getWishlist = async (req, res) => {
 
 const addToCartFromWishlist = async (req, res) => {
   try {
+    console.log('addToCart came')
     const { userId, productId } = req.body;
     if (!userId || !productId) {
       return res.status(400).json({ success: false, message: 'User ID and Product ID are required' });
@@ -51,11 +52,11 @@ const addToCartFromWishlist = async (req, res) => {
       cart = new Cart({ user: userId, items: [] });
     }
 
-    const existingItem = cart.items.find(item => item.product.toString() === productId);
+    const existingItem = cart.Items.find(item => item.product.toString() === productId);
     if (existingItem) {
       existingItem.quantity += 1;
     } else {
-      cart.items.push({ product: productId, quantity: 1 });
+      cart.Items.push({ product: productId, quantity: 1 });
     }
 
     await cart.save();
