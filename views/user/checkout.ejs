@@ -213,7 +213,7 @@
       const razorpayPaymentId = document.getElementById('razorpayPaymentId');
       const razorpayOrderId = document.getElementById('razorpayOrderId');
       const razorpaySignature = document.getElementById('razorpaySignature');
-
+  
       const originalSubtotal = <%= subtotal %>;
       const originalItemDiscount = <%= totalItemDiscount %>;
       const originalTax = <%= tax %>;
@@ -222,23 +222,23 @@
       const razorpayKey = '<%= process.env.RAZORPAY_KEY_ID %>'; // Ensure this is set in backend
       let appliedCouponCode = '';
       let orderId = ''; // Added from second code
-
+  
       console.log('Checkout script loaded', { userId, couponButton: !!couponButton, razorpayKey });
-
+  
       if (!couponButton) {
         console.error('Coupon button not found');
         couponError.textContent = 'Coupon button not found. Please refresh the page.';
         couponError.style.display = 'block';
         return;
       }
-
+  
       if (!userId) {
         console.error('User ID not defined');
         couponError.textContent = 'Please log in to apply coupons.';
         couponError.style.display = 'block';
         return;
       }
-
+  
       // Update Place Order button text based on payment method
       const updatePlaceOrderButton = () => {
         if (paymentCOD.checked) {
@@ -247,28 +247,28 @@
           placeOrderButton.innerHTML = '<i class="fas fa-credit-card me-1"></i> Proceed to Payment (Online)';
         }
       };
-
+  
       // Initialize button text
       updatePlaceOrderButton();
-
+  
       // Update button text on payment method change
       paymentCOD.addEventListener('change', updatePlaceOrderButton);
       paymentOnline.addEventListener('change', updatePlaceOrderButton);
-
+  
       // Handle form submission
       checkoutForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         console.log('Form submission initiated', { paymentMethod: paymentCOD.checked ? 'COD' : 'Online' });
-
+  
         if (!paymentCOD.checked && !paymentOnline.checked) {
           paymentError.textContent = 'Please select a payment method.';
           paymentError.style.display = 'block';
           console.error('No payment method selected');
           return;
         }
-
+  
         paymentError.style.display = 'none';
-
+  
         if (paymentOnline.checked) {
           try {
             // Send request to create Razorpay order
@@ -284,18 +284,18 @@
                 finalTotal: parseFloat(finalTotalEl.textContent)
               })
             });
-
+  
             const result = await response.json();
             console.log('Place order response:', result);
-
+  
             if (!response.ok || !result.success) {
               paymentError.textContent = result.message || 'Failed to initiate payment.';
               paymentError.style.display = 'block';
               return;
             }
-
+  
             orderId = result.order.id; // Added from second code
-
+  
             // Open Razorpay checkout
             const options = {
               key: razorpayKey,
@@ -311,7 +311,7 @@
                 razorpayPaymentId.value = response.razorpay_payment_id;
                 razorpayOrderId.value = response.razorpay_order_id;
                 razorpaySignature.value = response.razorpay_signature;
-
+  
                 // Verify payment with backend
                 try {
                   const verifyResponse = await fetch('/verify-payment', {
@@ -327,10 +327,10 @@
                       finalTotal: parseFloat(finalTotalEl.textContent)
                     })
                   });
-
+  
                   const verifyResult = await verifyResponse.json();
                   console.log('Payment verification response:', verifyResult);
-
+  
                   if (verifyResult.success) {
                     // Redirect to order confirmation (updated from second code)
                     window.location.href = '/order-success/' + verifyResult.orderId;
@@ -363,7 +363,7 @@
                 }
               }
             };
-
+  
             const rzp = new Razorpay(options);
             rzp.on('payment.failed', (response) => {
               console.error('Payment failed:', response.error);
@@ -382,14 +382,14 @@
           checkoutForm.submit();
         }
       });
-
+  
       // Copy coupon code to clipboard
       document.getElementById('couponModal').addEventListener('click', function(e) {
         if (e.target.classList.contains('copy-coupon')) {
           e.preventDefault();
           const code = e.target.dataset.code;
           console.log('Attempting to copy coupon code:', code);
-
+  
           if (!code) {
             console.error('No coupon code in data-code attribute');
             couponError.textContent = 'No coupon code available to copy.';
@@ -397,7 +397,7 @@
             couponSuccess.style.display = 'none';
             return;
           }
-
+  
           try {
             if (navigator.clipboard && window.isSecureContext) {
               navigator.clipboard.writeText(code).then(() => {
@@ -445,12 +445,12 @@
           }
         }
       });
-
+  
       // Handle coupon apply/remove
       couponButton.addEventListener('click', async function(e) {
         e.preventDefault();
         console.log('Coupon button clicked', { buttonText: this.textContent, couponCode: couponInput.value });
-
+  
         if (this.textContent.trim() === 'Apply') {
           const couponCode = couponInput.value.trim().toUpperCase();
           if (!couponCode) {
@@ -460,7 +460,7 @@
             couponSuccess.style.display = 'none';
             return;
           }
-
+  
           try {
             console.log('Sending fetch request to /validate-coupon', { couponCode, subtotal: originalSubtotal, userId });
             const response = await fetch('/validate-coupon', {
@@ -468,40 +468,61 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ couponCode, subtotal: originalSubtotal, userId })
             });
-
+  
             console.log('Fetch response status:', response.status, { ok: response.ok });
-
+  
             if (!response.ok) {
               const errorText = await response.text();
               console.error('Validate coupon response error:', { status: response.status, errorText });
               throw new Error(`Server error: ${response.status} - ${errorText}`);
             }
-
+  
             const result = await response.json();
             console.log('Validate coupon response:', result);
-
+  
             if (!result.valid) {
               couponError.textContent = result.message || 'Invalid coupon code.';
               couponError.style.display = 'block';
               couponSuccess.style.display = 'none';
               return;
             }
-
+  
             const discountPercentage = result.discount;
             const baseFinalTotal = originalSubtotal - originalItemDiscount + originalTax + deliveryCharge;
-            const couponDiscount = baseFinalTotal * (discountPercentage / 100);
-            const finalTotal = baseFinalTotal - couponDiscount;
-
-            discountEl.textContent = couponDiscount.toFixed(2);
+            const totalCouponDiscount = baseFinalTotal * (discountPercentage / 100);
+            const items = <%= JSON.stringify(cartItems) %>; // Access cartItems from EJS
+  
+            // Distribute discount equally across items based on their price contribution
+            let distributedDiscount = 0;
+            items.forEach(item => {
+              const itemContribution = (item.price * item.quantity) / originalSubtotal;
+              const itemDiscount = totalCouponDiscount * itemContribution;
+              item.discount = Math.round(itemDiscount * 100) / 100; // Store discount per item
+              distributedDiscount += item.discount;
+            });
+  
+            // Adjust the last item to account for rounding differences
+            if (items.length > 0) {
+              const adjustment = totalCouponDiscount - distributedDiscount;
+              items[items.length - 1].discount += adjustment;
+            }
+  
+            // Update UI with distributed discounts
+            let finalTotal = baseFinalTotal;
+            items.forEach(item => {
+              finalTotal -= item.discount;
+            });
+  
+            discountEl.textContent = totalCouponDiscount.toFixed(2);
             finalTotalEl.textContent = finalTotal.toFixed(2);
             couponInput.value = couponCode;
             appliedCouponCode = couponCode;
             this.textContent = 'Remove';
             couponError.style.display = 'none';
-            couponSuccess.textContent = `Coupon applied! ${discountPercentage}% off (₹${couponDiscount.toFixed(2)})`;
+            couponSuccess.textContent = `Coupon applied! ${discountPercentage}% off (₹${totalCouponDiscount.toFixed(2)}) distributed across items`;
             couponSuccess.style.display = 'block';
             setTimeout(() => couponSuccess.style.display = 'none', 3000);
-            console.log('Coupon applied:', { couponDiscount, finalTotal, baseFinalTotal });
+            console.log('Coupon applied with distributed discount:', { totalCouponDiscount, finalTotal, baseFinalTotal, items });
           } catch (err) {
             console.error('Error applying coupon:', {
               message: err.message,
@@ -532,7 +553,7 @@
           console.log('Coupon removed');
         }
       });
-
+  
       // Prevent form submission on Enter key in coupon input
       couponInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {

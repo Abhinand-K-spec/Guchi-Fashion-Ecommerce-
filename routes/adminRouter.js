@@ -6,7 +6,8 @@ const categoryController = require('../contoller/admin/categoryController');
 const productsController = require('../contoller/admin/productsController');
 const orderController = require('../contoller/admin/orderController');
 const couponController = require('../contoller/admin/couponController');
-const offerController = require('../contoller/admin/offerController')
+const offerController = require('../contoller/admin/offerController');
+const salesController = require('../contoller/admin/salesController')
 const { userAuth, adminAuth } = require('../middlewares/auth');
 const upload = require('../middlewares/multer');
 
@@ -62,6 +63,11 @@ router.post('/addCategoryOffer/:id', offerController.addCategoryOffer);
 router.post('/removeCategoryOffer/:id', offerController.removeCategoryOffer);
 router.post('/addProductOffer/:id', offerController.addProductOffer);
 router.post('/removeProductOffer/:id', offerController.removeProductOffer);
+
+
+router.get('/sales', salesController.getSalesReport);
+router.get('/sales/download', salesController.downloadSalesReport);
+
 
 
 module.exports = router;

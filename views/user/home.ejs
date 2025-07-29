@@ -165,7 +165,7 @@
                 <% if (product.offer) { %>
                   <span class="offer-badge"><%= product.offer.Discount %>% OFF</span>
                 <% } %>
-                <a href="/add-to-wishlist/<%= product._id %>" class="wishlist-btn">
+                <a href="/add-to-wishlist/<%= product._id %>" class="wishlist-btn" data-product-id="<%= product._id %>">
                   <i class="fas fa-heart"></i>
                 </a>
               </div>
@@ -202,5 +202,36 @@
   <script src="/js/mixitup.min.js"></script>
   <script src="/js/owl.carousel.min.js"></script>
   <script src="/js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Add to Wishlist
+      document.querySelectorAll('.wishlist-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+          e.preventDefault(); // Prevent default link behavior
+          const productId = e.currentTarget.getAttribute('data-product-id');
+          console.log('Adding to wishlist:', { productId });
+
+          try {
+            const response = await fetch(`/add-to-wishlist/${productId}`, {
+              method: 'GET', // Match the route
+              headers: { 'Content-Type': 'application/json' }
+            });
+
+            const result = await response.json();
+            if (result.success) {
+              alert('Product added to wishlist.');
+            } else if (response.status === 400) {
+              alert(result.message || 'Failed to add product to wishlist.');
+            } else if (response.status === 302 || response.status === 401) {
+              window.location.href = '/login'; // Redirect to login if unauthorized
+            }
+          } catch (err) {
+            console.error('Add to wishlist error:', err);
+            alert('Error adding product to wishlist.');
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>

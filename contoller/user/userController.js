@@ -583,8 +583,8 @@ const validateCoupon = async (req, res) => {
     return res.status(200).json({
       success: true,
       valid: true,
-      discount: discountPercentage, // Return percentage for frontend
-      discountAmount, // Include amount for clarity
+      discount: discountPercentage, 
+      discountAmount,
       couponId: coupon._id.toString(),
       message: 'Coupon applied successfully.'
     });

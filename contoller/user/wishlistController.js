@@ -13,16 +13,16 @@ const getWishlist = async (req, res) => {
       .populate('ProductId')
       .lean();
 
-    console.log('Wishlist items:', wishlistItems.map(item => ({
-      productId: item.ProductId?._id,
-      productName: item.ProductId?.productName
-    })));
+    if (!wishlistItems || wishlistItems.length === 0) {
+    }
+
+    const formattedItems = wishlistItems.map(item => ({
+      ...item,
+      product: item.ProductId || { productName: 'Product Unavailable', Image: ['/images/default.jpg'], Variants: [{ Price: 0, Stock: 0 }] }
+    }));
 
     res.render('wishlist', {
-      wishlistItems: wishlistItems.map(item => ({
-        ...item,
-        product: item.ProductId || { productName: 'Product Unavailable', Image: ['/images/default.jpg'], Variants: [{ Price: 0, Stock: 0 }] }
-      })),
+      wishlistItems: formattedItems,
       userId,
       activePage: 'wishlist',
       pageTitle: 'Wishlist'
@@ -31,7 +31,8 @@ const getWishlist = async (req, res) => {
     console.error('Get wishlist error:', err);
     res.status(500).render('page-404');
   }
-};
+}
+
 
 const addToCartFromWishlist = async (req, res) => {
   try {
@@ -69,6 +70,8 @@ const addToCartFromWishlist = async (req, res) => {
   }
 };
 
+
+
 const removeFromWishlist = async (req, res) => {
   try {
     const { userId, wishlistId } = req.body;
@@ -90,10 +93,14 @@ const removeFromWishlist = async (req, res) => {
   }
 };
 
+
+
+
 const addToWishlist = async (req, res) => {
   try {
     const userId = req.session.user;
     const { productId } = req.params;
+
     if (!productId) {
       return res.status(400).json({ success: false, message: 'User ID and Product ID are required' });
     }
@@ -109,7 +116,6 @@ const addToWishlist = async (req, res) => {
     });
 
     await wishlistItem.save();
-    console.log('Added to wishlist:', { userId, productId });
 
     res.json({ success: true, message: 'Product added to wishlist' });
   } catch (err) {
@@ -118,4 +124,11 @@ const addToWishlist = async (req, res) => {
   }
 };
 
-module.exports = { getWishlist, addToCartFromWishlist, removeFromWishlist, addToWishlist };
+
+
+module.exports = { 
+  getWishlist,
+  addToCartFromWishlist,
+  removeFromWishlist,
+  addToWishlist
+ };
