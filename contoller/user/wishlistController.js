@@ -99,6 +99,7 @@ const removeFromWishlist = async (req, res) => {
 
 const addToWishlist = async (req, res) => {
   try {
+    
     const userId = req.session.user;
     const { productId } = req.params;
 

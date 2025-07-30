@@ -56,6 +56,48 @@ const handleForgotPassword = async (req, res) => {
   }
 };
 
+const getProductOffer = async (product) => {
+    try {
+      if (!product || !product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
+        return { offer: null, salePrice: 0 };
+      }
+      const now = new Date();
+      const variantPrice = product.Variants[0].Price || 0;
+      const [productOffer, categoryOffer] = await Promise.all([
+        Offers.findOne({
+          Product: product._id,
+          Category: null,
+          StartDate: { $lte: now },
+          EndDate: { $gte: now },
+          $or: [{ MinPrice: { $exists: false } }, { MinPrice: { $lte: variantPrice } }],
+          $or: [{ MaxPrice: { $exists: false } }, { MaxPrice: { $gte: variantPrice } }]
+        }).lean(),
+        Offers.findOne({
+          Category: product.Category,
+          Product: null,
+          StartDate: { $lte: now },
+          EndDate: { $gte: now },
+          $or: [{ MinPrice: { $exists: false } }, { MinPrice: { $lte: variantPrice } }],
+          $or: [{ MaxPrice: { $exists: false } }, { MaxPrice: { $gte: variantPrice } }]
+        }).lean()
+      ]);
+      let offer = null;
+      if (productOffer && categoryOffer) {
+        offer = productOffer.Discount >= categoryOffer.Discount ? productOffer : categoryOffer;
+      } else {
+        offer = productOffer || categoryOffer;
+      }
+      if (!offer) {
+        return { offer: null, salePrice: variantPrice };
+      }
+      const salePrice = variantPrice * (1 - offer.Discount / 100);
+      return { offer, salePrice };
+    } catch (err) {
+      console.error(`Error fetching offer for productId: ${product?._id || 'unknown'}`, err);
+      return { offer: null, salePrice: 0 };
+    }
+  };
+
 const loadHomePage = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -468,5 +510,5 @@ module.exports = {
   changePassword,
   updateEmailRequestOtp,
   getOrders,
- 
+  getProductOffer
 };
