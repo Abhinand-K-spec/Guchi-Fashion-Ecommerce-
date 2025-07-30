@@ -219,9 +219,9 @@
       const originalTax = <%= tax %>;
       const deliveryCharge = <%= deliveryCharge %>;
       const userId = '<%= userId || "" %>';
-      const razorpayKey = '<%= process.env.RAZORPAY_KEY_ID %>'; // Ensure this is set in backend
+      const razorpayKey = '<%= process.env.RAZORPAY_KEY_ID %>';
       let appliedCouponCode = '';
-      let orderId = ''; // Added from second code
+      let orderId = '';
 
       console.log('Checkout script loaded', { userId, couponButton: !!couponButton, razorpayKey });
 
@@ -289,17 +289,17 @@
             console.log('Place order response:', result);
 
             if (!response.ok || !result.success) {
-              paymentError.textContent = result.message || 'Failed to initiate payment.';
+              console.error('Place order failed:', result.message);
+              paymentError.textContent = result.message || 'Failed to initiate payment. Please try again.';
               paymentError.style.display = 'block';
               return;
             }
 
-            orderId = result.order.id; 
+            orderId = result.orderId;
 
-            
             const options = {
               key: razorpayKey,
-              amount: result.order.amount, // Fixed: Use amount from server response
+              amount: result.order.amount,
               currency: 'INR',
               name: 'My E-Commerce Site',
               description: 'Order Payment',
@@ -332,8 +332,8 @@
                   console.log('Payment verification response:', verifyResult);
 
                   if (verifyResult.success) {
-                    // Redirect to order confirmation (updated from second code)
-                    window.location.href = '/order-success/' + verifyResult.orderId;
+                    // Redirect to order confirmation
+                    window.location.href = '/payment-success/' + verifyResult.orderId;
                   } else {
                     paymentError.textContent = verifyResult.message || 'Payment verification failed.';
                     paymentError.style.display = 'block';
@@ -354,22 +354,20 @@
               },
               theme: {
                 color: '#28a745'
-              },
-              modal: {
-                ondismiss: function () {
-                  console.log('Razorpay checkout dismissed');
-                  paymentError.textContent = 'Payment cancelled. Please try again.';
-                  paymentError.style.display = 'block';
-                }
               }
             };
 
             const rzp = new Razorpay(options);
             rzp.on('payment.failed', (response) => {
-              console.error('Payment failed:', response.error);
+              console.error('Payment failed:', { error: response.error, orderId });
               paymentError.textContent = response.error.description || 'Payment failed. Please try again.';
               paymentError.style.display = 'block';
-              window.location.href = `/order-failure/${orderId}`; // Updated from second code
+              if (orderId) {
+                window.location.href = `/payment-failure/${orderId}`;
+              } else {
+                console.error('Order ID undefined in payment failure');
+                window.location.href = '/payment-failure';
+              }
             });
             rzp.open();
           } catch (err) {

@@ -8,6 +8,9 @@ const cartController = require('../contoller/user/cartController');
 const addressController = require('../contoller/user/addressController');
 const wishlistController = require('../contoller/user/wishlistController');
 const walletController = require('../contoller/user/walletController');
+const couponController = require('../contoller/user/couponController');
+const productController = require('../contoller/user/productController');
+const paymentController = require('../contoller/user/paymentController');
 const { userAuth, adminAuth } = require('../middlewares/auth');
 
 const upload = require('../middlewares/cloudinaryUpload');
@@ -64,7 +67,7 @@ router.get(
   userController.googleCallbackHandler
 );
 
-router.get('/product-details/:id', userController.getProductDetails);
+router.get('/product-details/:id', productController.getProductDetails);
 
 router.post('/addToCart/:productId', userAuth, cartController.addToCart);
 router.patch('/cart/update-quantity/:id', userAuth, cartController.updateCartQuantity);
@@ -74,18 +77,17 @@ router.get('/cart', userAuth, cartController.cart);
 router.patch('/cart/update-quantity/:id', userAuth, cartController.updateCartQuantity);
 router.delete('/cart/remove/:id', userAuth, cartController.removeFromCart);
 
-router.get('/shopnow', userController.getShopPage);
-router.get('/shop', userController.getShopPage);
+router.get('/shopnow', productController.getShopPage);
+router.get('/shop', productController.getShopPage);
 
-router.get('/checkout', userAuth, userController.checkout);
-router.post('/place-order', userAuth, userController.placeOrder); 
-router.post('/validate-coupon', userController.validateCoupon);
+router.get('/checkout', userAuth, cartController.checkout);
+router.post('/place-order', userAuth, orderController.placeOrder); 
+router.post('/validate-coupon', couponController.validateCoupon);
 
-// Razorpay payment routes
-router.post('/verify-payment', userAuth, userController.verifyPayment);
+router.post('/verify-payment', userAuth, paymentController.verifyPayment);
 router.get('/order-confirmation/:orderId', userAuth, userController.getOrderSuccess);
-router.get('/order-success/:orderId', userAuth, userController.getPaymentSuccess); 
-router.get('/order-failure/:orderId', userAuth, userController.getPaymentFailure);
+router.get('/payment-success/:orderId', userAuth, paymentController.getPaymentSuccess); 
+router.get('/payment-failure/:orderId', userAuth, paymentController.getPaymentFailure);
 
 // order management------------------------------------------------------------------------------------->
 router.get('/orders', userAuth, orderController.listOrders);

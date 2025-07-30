@@ -5,10 +5,10 @@ const Address = require('../../model/addressSchema');
 const Orders = require('../../model/ordersSchema');
 const Coupon = require('../../model/couponsSchema');
 const Offers = require('../../model/offersSchema')
+const Wallet = require('../../model/walletSchema');
 
 const cart = async (req, res) => {
   try {
-    // console.log('here cart function')
     const userId = req.session.user;
     const user = await User.findById(userId).lean();
 
@@ -16,7 +16,6 @@ const cart = async (req, res) => {
     
       .populate('Items.product')
       .lean();
-      // console.log('from cart function',cartData)
 
     if (!cartData || !cartData.Items.length) {
       return res.render('cart', {
@@ -337,6 +336,93 @@ const getProductOffer = async (product) => {
   }
 };
 
+const checkout = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const user = await User.findById(userId).lean();
+    const addresses = await Address.find({ userId }).lean();
+    const cartData = await Cart.findOne({ user: userId }).populate('Items.product').lean();
+    if (!cartData || !cartData.Items.length) {
+      return res.redirect('/cart');
+    }
+    const coupons = await Coupon.find({
+      StartDate: { $lte: new Date() },
+      ExpiryDate: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+      IsListed: true,
+      $or: [{ UserId: null }, { UserId: userId }]
+    }).lean();
+
+    const wallet = await Wallet.findOne({ userId }).lean() || { balance: 0 };
+    let subtotal = 0;
+    let totalItemDiscount = 0;
+    const cartItems = [];
+    const validCartItems = [];
+    for (const item of cartData.Items) {
+      const product = item.product;
+      const variant = product?.Variants?.[0];
+      if (!product || !variant || !product._id || !product.Category) {
+        console.error(`Invalid cart item: productId=${item.product?._id || 'missing'}`);
+        continue;
+      }
+      const { offer, salePrice } = await getProductOffer(product);
+      const price = salePrice || variant.Price || 0;
+      const originalPrice = variant.Price || 0;
+      const quantity = item.quantity;
+      const itemTotal = price * quantity;
+      const itemDiscount = (originalPrice - price) * quantity;
+      cartItems.push({
+        _id: product._id,
+        name: product.productName,
+        image: product.Image[0] ? `${product.Image[0]}` : 'public/uploads/product-images/default.jpg',
+        price,
+        originalPrice,
+        itemDiscount,
+        offer,
+        quantity,
+        itemTotal,
+        stock: variant.Stock || 0
+      });
+      if (variant.Stock >= item.quantity) {
+        subtotal += itemTotal;
+        totalItemDiscount += itemDiscount;
+        validCartItems.push(item);
+      }
+    }
+    if (!cartItems.length) {
+      return res.redirect('/cart');
+    }
+    await Cart.findOneAndUpdate(
+      { user: userId },
+      { $set: { Items: validCartItems } }
+    );
+    const tax = Math.round(subtotal * 0.05);
+    const discount = 0;
+    const deliveryCharge = 40;
+    const finalTotal = subtotal - discount + tax + deliveryCharge;
+    res.render('checkout', {
+      pageTitle: 'Checkout',
+      cartItems,
+      subtotal,
+      totalItemDiscount,
+      discount,
+      tax,
+      deliveryCharge,
+      finalTotal,
+      addresses,
+      coupons,
+      user,
+      wallet,
+      activePage: 'checkout',
+      userId,
+      RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID
+    });
+  } catch (err) {
+    console.error("Checkout error:", err);
+    res.status(500).render('page-404');
+  }
+};
+
+
 
 
 module.exports = { 
@@ -345,4 +431,5 @@ module.exports = {
   addToCart,
   removeFromCart,
   updateCartQuantity,
+  checkout
 };

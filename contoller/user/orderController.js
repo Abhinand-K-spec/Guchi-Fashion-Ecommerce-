@@ -3,10 +3,24 @@ const Products = require('../../model/productSchema');
 const Address = require('../../model/addressSchema');
 const User = require('../../model/userSchema');
 const Wallet = require('../../model/walletSchema');
+const Offers = require('../../model/offersSchema');
+const Cart = require('../../model/cartSchema')
+const Coupon = require('../../model/couponsSchema');
 const PDFDocument = require('pdfkit');
 const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
+require('dotenv').config();
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+
+
+
 
 const listOrders = async (req, res) => {
   try {
@@ -85,7 +99,6 @@ const orderDetails = async (req, res) => {
 
 const cancelOrder = async (req, res) => {
   try {
-    console.log('here cancel order');
     
     const order = await Orders.findById(req.params.id).populate('Items.product');
     if (!order || order.Status !== 'Pending') {
@@ -370,11 +383,215 @@ const downloadInvoice = async (req, res) => {
   }
 };
 
+const getProductOffer = async (product) => {
+  try {
+    if (!product || !product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
+      return { offer: null, salePrice: 0 };
+    }
+    const now = new Date();
+    const variantPrice = product.Variants[0].Price || 0;
+    const [productOffer, categoryOffer] = await Promise.all([
+      Offers.findOne({
+        Product: product._id,
+        Category: null,
+        StartDate: { $lte: now },
+        EndDate: { $gte: now },
+        $or: [{ MinPrice: { $exists: false } }, { MinPrice: { $lte: variantPrice } }],
+        $or: [{ MaxPrice: { $exists: false } }, { MaxPrice: { $gte: variantPrice } }]
+      }).lean(),
+      Offers.findOne({
+        Category: product.Category,
+        Product: null,
+        StartDate: { $lte: now },
+        EndDate: { $gte: now },
+        $or: [{ MinPrice: { $exists: false } }, { MinPrice: { $lte: variantPrice } }],
+        $or: [{ MaxPrice: { $exists: false } }, { MaxPrice: { $gte: variantPrice } }]
+      }).lean()
+    ]);
+    let offer = null;
+    if (productOffer && categoryOffer) {
+      offer = productOffer.Discount >= categoryOffer.Discount ? productOffer : categoryOffer;
+    } else {
+      offer = productOffer || categoryOffer;
+    }
+    if (!offer) {
+      return { offer: null, salePrice: variantPrice };
+    }
+    const salePrice = variantPrice * (1 - offer.Discount / 100);
+    return { offer, salePrice };
+  } catch (err) {
+    console.error(`Error fetching offer for productId: ${product?._id || 'unknown'}`, err);
+    return { offer: null, salePrice: 0 };
+  }
+};
+
+
+
+const placeOrder = async (req, res) => {
+  try {
+    const { selectedAddressId, coupon, paymentMethod } = req.body;
+    const userId = req.session.user._id;
+   
+    const cart = await Cart.findOne({ user: userId }).populate('Items.product').lean();
+    // console.log('cart in place order:', cart);
+    if (!cart || !cart.Items.length) {
+      console.log('Cart empty or not found for user:', userId);
+      return res.status(400).json({ success: false, message: 'Cart is empty.' });
+    }
+    const selectedAddress = await Address.findById(selectedAddressId).lean();
+    if (!selectedAddress) {
+      console.log('Invalid address:', selectedAddressId);
+      return res.status(400).json({ success: false, message: 'Invalid address selected.' });
+    }
+    const hasOutOfStock = cart.Items.some(item => {
+      const variant = item.product?.Variants?.[0];
+      return !variant || variant.Stock === 0 || variant.Stock < item.quantity;
+    });
+    if (hasOutOfStock) {
+      return res.status(400).json({ success: false, message: 'Some items are out of stock.' });
+    }
+    let subtotal = 0;
+    const orderItems = [];
+    for (const item of cart.Items) {
+      const product = item.product;
+      const variant = product?.Variants?.[0];
+      if (!product || !variant) {
+        console.error(`Invalid order item: productId=${item.product?._id || 'missing'}`);
+        continue;
+      }
+      const { offer, salePrice } = await getProductOffer(product);
+      const price = salePrice || variant.Price || 1;
+      const quantity = item.quantity;
+      const itemTotal = price * quantity;
+      orderItems.push({
+        product: product._id, 
+        quantity,
+        price,
+        status: 'Pending'
+      });
+      subtotal += itemTotal;
+    }
+    if (!orderItems.length) {
+      console.log('No valid order items after validation');
+      return res.status(400).json({ success: false, message: 'No valid items in cart.' });
+    }
+    const tax = Math.round(subtotal * 0.05);
+    const deliveryCharge = 40;
+    let couponDiscount = 0;
+    let couponData = null;
+    if (coupon) {
+      couponData = await Coupon.findOne({
+        CouponCode: coupon.toUpperCase(),
+        StartDate: { $lte: new Date() },
+        ExpiryDate: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+        IsListed: true,
+        $or: [{ UserId: null }, { UserId: new mongoose.Types.ObjectId(userId) }],
+        MinCartValue: { $lte: subtotal }
+      });
+      if (couponData && couponData.Discount > 0) {
+        couponDiscount = Math.min(
+          subtotal * (couponData.Discount / 100),
+          subtotal + tax + deliveryCharge - 1
+        );
+      }
+    }
+    const finalTotal = subtotal - couponDiscount + tax + deliveryCharge;
+    if (finalTotal < 1) {
+      console.error('Final total too low:', finalTotal);
+      return res.status(400).json({ success: false, message: 'Order amount must be at least ₹1.00 after discounts.' });
+    }
+    const order = new Orders({
+      UserId: userId,
+      addressId: selectedAddressId,
+      Address: {
+        name: selectedAddress.name,
+        phone: selectedAddress.phone,
+        alternativePhone: selectedAddress.alternativePhone,
+        line1: selectedAddress.line1,
+        town: selectedAddress.town,
+        city: selectedAddress.city,
+        state: selectedAddress.state,
+        postCode: selectedAddress.postCode
+      },
+      Items: orderItems,
+      PaymentMethod: paymentMethod,
+      PaymentStatus: paymentMethod === 'COD' ? 'Pending' : paymentMethod === 'Wallet' ? 'Completed' : 'Pending',
+      Status: 'Pending',
+      OrderId: `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      OrderDate: new Date()
+    });
+    await order.save();
+    if (paymentMethod === 'Wallet') {
+      let wallet = await Wallet.findOne({ userId });
+      if (!wallet) {
+        wallet = new Wallet({ userId, Balance: 0, Transaction: [] });
+        await wallet.save();
+      }
+      if (wallet.Balance < finalTotal) {
+        console.log('Insufficient wallet balance:', { Balance: wallet.Balance, required: finalTotal });
+        await Orders.findByIdAndDelete(order._id);
+        return res.status(400).json({ success: false, message: 'Insufficient wallet balance.' });
+      }
+      wallet.Balance -= finalTotal;
+      wallet.Transaction.push({
+        amount: -finalTotal,
+        type: 'debit',
+        description: `Order payment for order ID: ${order.OrderId}`,
+        date: new Date()
+      });
+      await wallet.save();
+    }
+    if (paymentMethod === 'Online') {
+      const receiptString = `order_${userId}_${Date.now()}`;
+      const truncatedReceipt = receiptString.length > 40 ? receiptString.substring(0, 40) : receiptString;
+      const options = {
+        amount: Math.round(finalTotal * 100),
+        currency: 'INR',
+        receipt: truncatedReceipt,
+        notes: { userId, coupon, selectedAddressId, orderId: order._id }
+      };
+      const razorpayOrder = await razorpay.orders.create(options);
+      return res.status(200).json({
+        success: true,
+        order: razorpayOrder,
+        orderId: order._id,
+        message: 'Proceed to Razorpay checkout.'
+      });
+    }
+    console.log('Order placed:', order._id);
+    await Cart.findOneAndUpdate({ user: userId }, { Items: [] });
+    for (const item of orderItems) {
+      await Products.findByIdAndUpdate(item.product, {
+        $inc: { 'Variants.0.Stock': -item.quantity }
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      orderId: order._id,
+      message: 'Order placed successfully.'
+    });
+  } catch (err) {
+    console.error('Place order error:', err);
+    if (err.name === 'ValidationError') {
+      const errors = Object.values(err.errors).map(e => e.message).join(', ');
+      return res.status(400).json({ success: false, message: `Validation error: ${errors}` });
+    }
+    if (err.statusCode === 400 && err.error?.code === 'BAD_REQUEST_ERROR') {
+      return res.status(400).json({ success: false, message: err.error.description });
+    }
+    return res.status(500).json({ success: false, message: 'Error placing order.' });
+  }
+};
+
+
+
 module.exports = {
   listOrders,
   orderDetails,
   cancelOrder,
   cancelItem,
   requestReturnItem,
-  downloadInvoice
+  downloadInvoice,
+  placeOrder,
+  getProductOffer
 };
