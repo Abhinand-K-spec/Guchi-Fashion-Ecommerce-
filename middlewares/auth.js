@@ -13,11 +13,11 @@ const userAuth = (req,res,next)=>{
         .catch((error)=>{
             console.log('error in user auth middleware',error);
             res.status(500).send('internal server error');
-        })
+        });
     }else{
         res.redirect('/login'); 
     }
-}
+};
 
 const adminAuth = (req,res,next)=>{
     if(req.session.admin){
@@ -32,12 +32,12 @@ const adminAuth = (req,res,next)=>{
         .catch((error)=>{
             console.log('error in admin auth middleware',error);
             res.status(500).send('Internal server error');
-        })
+        });
     }else{
         res.redirect('/admin/login');
     }
-}
+};
 
 module.exports = {
     userAuth,adminAuth
-}
+};

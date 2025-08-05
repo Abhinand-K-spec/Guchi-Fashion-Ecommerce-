@@ -6,7 +6,7 @@ const nodemailer = require('nodemailer');
 
 
 function generateOtp(){
-    return Math.floor(100000+Math.random()*(900000)).toString()
+    return Math.floor(100000+Math.random()*(900000)).toString();
 }
 
 
@@ -21,7 +21,7 @@ async function sendVerification(email,otp){
                 user:process.env.NODEMIALER_GMAIL,
                 pass:process.env.NODEMAILER_PASSWORD
             }
-        })
+        });
 
         const info = await transporter.sendMail({
             from:process.env.NODEMAILER_GMAIL,
@@ -29,11 +29,11 @@ async function sendVerification(email,otp){
             subject:'Verify your account',
             text:`Your OTP is ${otp}`,
             html:`<b>Your OTP: ${otp} </b>`
-        })
+        });
 
-        return info.accepted.length>0
+        return info.accepted.length>0;
     } catch (error) {
-        console.error('error sending otp',error)
+        console.error('error sending otp',error);
         return false;
     }
 }
@@ -62,14 +62,14 @@ const profile = async(req,res)=>{
                 addresses : userAddresses
             },
             activePage:'profile'
-        })
+        });
     } catch (error) {
 
         console.log('error while loading profile',error.message);
         res.status(400).render('page-404');
         
     }
-}
+};
 
 
 
@@ -88,7 +88,7 @@ const getEditProfile = async(req,res)=>{
                 addresses : userAddresses
             },
             activePage:'profile'
-        })
+        });
         
     } catch (error) {
         
@@ -96,7 +96,7 @@ const getEditProfile = async(req,res)=>{
         res.status(400).render(page-404);
         
     }
-}
+};
 
 
   const updateEmailRequestOtp = async (req, res) => {
@@ -110,7 +110,7 @@ const getEditProfile = async(req,res)=>{
 
   
       const emailSent = await sendVerification(email, otp);
-      console.log(otp)
+      console.log(otp);
   
       if (!emailSent) {
         req.flash('msg', 'Failed to send OTP');
@@ -194,12 +194,12 @@ const getEditProfile = async(req,res)=>{
 
   const saveProfile = async(req,res)=>{
     try {
-      return res.redirect('/profile')
+      return res.redirect('/profile');
     } catch (error) {
       res.render('page-404');
       console.log('Error :',error.message);
     }
-  }
+  };
 
 
 
@@ -246,4 +246,4 @@ module.exports = {
     saveProfile,
     updateUsername
 
-}
+};

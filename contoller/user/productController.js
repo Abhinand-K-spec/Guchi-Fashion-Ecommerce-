@@ -53,10 +53,10 @@ const getProductOffer = async (product) => {
 const getProductDetails = async (req, res) => {
   try {
     const userId = req.session.user;
-    const user = await User.findById(userId)
+    const user = await User.findById(userId);
     const productId = req.params.id;
     const product = await Products.findById(productId).populate('Category').lean();
-    console.log('product:',product)
+    console.log('product:',product);
     if (!product) return res.status(404).render('page-404');
     if (!product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
       console.error(`Invalid Variants for product: ${product._id}`);
@@ -71,7 +71,7 @@ const getProductDetails = async (req, res) => {
       });
     }
     const { offer, salePrice } = await getProductOffer(product);
-    console.log('offer in product details :',offer)
+    console.log('offer in product details :',offer);
     const formattedProduct = {
       ...product,
       Variants: product.Variants.map(variant => ({
@@ -175,4 +175,4 @@ module.exports ={
     getShopPage,
     getProductOffer
 
-}
+};

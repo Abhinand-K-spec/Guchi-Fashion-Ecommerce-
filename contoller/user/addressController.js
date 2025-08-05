@@ -15,7 +15,7 @@ const getAddAddress = async (req,res)=>{
         res.render('addAddress',{
             user,
             activePage : 'address'
-        })
+        });
         
     } catch (error) {
 
@@ -85,7 +85,7 @@ const getEditAddress = async(req,res)=>{
             user,
             activePage:'address',
             addressId
-        })
+        });
 
         
     } catch (error) {
@@ -157,7 +157,7 @@ const editAddress = async (req, res) => {
         res.render('page-404');
         
     }
-  }
+  };
 
 
 module.exports = {
@@ -166,4 +166,4 @@ module.exports = {
     getEditAddress,
     editAddress,
     deleteAddress
-}
+};

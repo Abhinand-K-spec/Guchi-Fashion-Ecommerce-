@@ -227,7 +227,7 @@ async function sendVerification(email, otp) {
 
 const signup = async (req, res) => {
   try {
-    console.log('signup otp')
+    console.log('signup otp');
     const { name, email, password, referralCode } = req.body; 
     const findUser = await User.findOne({ email });
 

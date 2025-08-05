@@ -7,7 +7,7 @@ const productsController = require('../contoller/admin/productsController');
 const orderController = require('../contoller/admin/orderController');
 const couponController = require('../contoller/admin/couponController');
 const offerController = require('../contoller/admin/offerController');
-const salesController = require('../contoller/admin/salesController')
+const salesController = require('../contoller/admin/salesController');
 const { userAuth, adminAuth } = require('../middlewares/auth');
 const upload = require('../middlewares/multer');
 
@@ -41,7 +41,7 @@ router.post('/updateProduct/:productId', upload.any(), productsController.postEd
 
 router.get('/orders', adminAuth, orderController.getAdminOrders);
 // router.post('/order-status/:orderId', adminAuth, orderController.updateOrderStatus);
-router.post('/order-details/:orderId/update-item-status/:itemId', orderController.updateItemStatus)
+router.post('/order-details/:orderId/update-item-status/:itemId', orderController.updateItemStatus);
 router.get('/order-details/:orderId', adminAuth, orderController.getOrderDetails);
 router.post('/approve-return/:orderId', adminAuth, orderController.approveReturn);
 router.post('/reject-return/:orderId', adminAuth, orderController.rejectReturn);
@@ -50,7 +50,7 @@ router.post('/order-details/:orderId/return-item/:itemId', adminAuth, orderContr
 
 //Coupon management -------------------------------------------------------------->
 router.get('/coupon',adminAuth,couponController.coupon);
-router.post('/addCoupon',userAuth,couponController.addCoupon)
+router.post('/addCoupon',userAuth,couponController.addCoupon);
 router.get('/coupons', couponController.coupon);
 router.post('/addCoupon', couponController.addCoupon);
 router.get('/unlistCoupon/:couponId', adminAuth, couponController.unlist);

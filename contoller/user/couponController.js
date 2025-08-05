@@ -115,4 +115,4 @@ const validateCoupon = async (req, res) => {
 
 module.exports = {
     validateCoupon
-}
+};
