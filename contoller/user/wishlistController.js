@@ -31,12 +31,12 @@ const getWishlist = async (req, res) => {
     console.error('Get wishlist error:', err);
     res.status(500).render('page-404');
   }
-}
+};
 
 
 const addToCartFromWishlist = async (req, res) => {
   try {
-    console.log('addToCart came')
+    console.log('addToCart came');
     const { productId } = req.body;
     const userId = req.session.user;
     console.log('userId :',userId,'productId :',productId);

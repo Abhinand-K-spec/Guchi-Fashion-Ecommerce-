@@ -4,18 +4,18 @@ const bcrypt = require('bcrypt');
  
 const pageNotFound = async(req,res)=>{
   try {
-      return res.render('page-404')
+      return res.render('page-404');
   } catch (error) {
       res.redirect('/pageNotFound');
   }
-}
+};
 
 const loadLogin = (req,res)=>{
     if(req.session.admin){
         return res.redirect('/admin');
     }
     res.render('admin-login');
-}
+};
 
 const loadDashboard = async(req,res)=>{
    try {
@@ -23,12 +23,12 @@ const loadDashboard = async(req,res)=>{
     if(req.session.admin){
         return res.render('admin');
     }
-    res.render('admin-login')
+    res.render('admin-login');
 
    } catch (error) {
     res.render('pageNotFound');
    }
-}
+};
 
 
 const login = async (req, res) => {
@@ -66,15 +66,15 @@ const logout = async (req,res)=>{
           console.log('error occured',err);
           res.render('pageNotFound');
       }else{
-          res.render('admin-login',{msg:'Logged out'})
+          res.render('admin-login',{msg:'Logged out'});
       }
-  })
-}
+  });
+};
   
 
 const loadUsers = async(req,res)=>{
-  res.render('users')
-}
+  res.render('users');
+};
 
 
 module.exports = {
@@ -84,4 +84,4 @@ module.exports = {
     logout,
     loadUsers,
     pageNotFound
-}
+};

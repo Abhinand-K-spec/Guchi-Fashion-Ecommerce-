@@ -4,7 +4,7 @@ const Products = require('../../model/productSchema');
 const Address = require('../../model/addressSchema');
 const Orders = require('../../model/ordersSchema');
 const Coupon = require('../../model/couponsSchema');
-const Offers = require('../../model/offersSchema')
+const Offers = require('../../model/offersSchema');
 const Wallet = require('../../model/walletSchema');
 const mongoose = require('mongoose');
 

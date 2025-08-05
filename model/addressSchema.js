@@ -43,8 +43,8 @@ const addressSchema = new Schema({
         type :String,
 
     }
-})
+});
 
-const Address = mongoose.model('address',addressSchema)
+const Address = mongoose.model('address',addressSchema);
 
 module.exports = Address;
