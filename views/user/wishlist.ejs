@@ -19,6 +19,16 @@
   </style>
 </head>
 <body>
+  <!-- Toast Container -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="notificationToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
   <div class="container mt-5">
     <h3>My Wishlist</h3>
     <% if (wishlistItems && wishlistItems.length > 0) { %>
@@ -56,8 +66,14 @@
     document.addEventListener('DOMContentLoaded', () => {
       const userId = '<%= userId || "" %>';
       if (!userId) {
-        alert('Please log in to manage your wishlist.');
-        window.location.href = '/login';
+        const toastEl = document.getElementById('notificationToast');
+        const toastBody = toastEl.querySelector('.toast-body');
+        toastEl.classList.remove('bg-success', 'bg-danger', 'text-white');
+        toastEl.classList.add('bg-warning', 'text-dark');
+        toastBody.textContent = 'Please log in to manage your wishlist.';
+        const toast = new bootstrap.Toast(toastEl);
+        toast.show();
+        setTimeout(() => { window.location.href = '/login'; }, 2000);
         return;
       }
 
@@ -75,15 +91,30 @@
             });
 
             const result = await response.json();
+            const toastEl = document.getElementById('notificationToast');
+            const toastBody = toastEl.querySelector('.toast-body');
+            toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white', 'text-dark');
             if (result.success) {
-              alert('Product added to cart and removed from wishlist.');
-              window.location.reload();
+              toastEl.classList.add('bg-success', 'text-white');
+              toastBody.textContent = '🎉 Product successfully added to cart and removed from wishlist.';
+              const toast = new bootstrap.Toast(toastEl);
+              toast.show();
+              setTimeout(() => { window.location.reload(); }, 10000);
             } else {
-              alert(result.message || 'Failed to add product to cart.');
+              toastEl.classList.add('bg-danger', 'text-white');
+              toastBody.textContent = '❌ Failed to add product to cart: ' + (result.message || 'Unknown error.');
+              const toast = new bootstrap.Toast(toastEl);
+              toast.show();
             }
           } catch (err) {
             console.error('Add to cart error:', err);
-            alert('Error adding product to cart.');
+            const toastEl = document.getElementById('notificationToast');
+            const toastBody = toastEl.querySelector('.toast-body');
+            toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white', 'text-dark');
+            toastEl.classList.add('bg-danger', 'text-white');
+            toastBody.textContent = '❌ Error adding product to cart.';
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
           }
         });
       });
@@ -102,15 +133,30 @@
             });
 
             const result = await response.json();
+            const toastEl = document.getElementById('notificationToast');
+            const toastBody = toastEl.querySelector('.toast-body');
+            toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white', 'text-dark');
             if (result.success) {
-              alert('Product removed from wishlist.');
-              window.location.reload();
+              toastEl.classList.add('bg-success', 'text-white');
+              toastBody.textContent = '✅ Product successfully removed from wishlist.';
+              const toast = new bootstrap.Toast(toastEl);
+              toast.show();
+              setTimeout(() => { window.location.reload(); }, 2000);
             } else {
-              alert(result.message || 'Failed to remove product from wishlist.');
+              toastEl.classList.add('bg-danger', 'text-white');
+              toastBody.textContent = '❌ Failed to remove product from wishlist: ' + (result.message || 'Unknown error.');
+              const toast = new bootstrap.Toast(toastEl);
+              toast.show();
             }
           } catch (err) {
             console.error('Remove from wishlist error:', err);
-            alert('Error removing product from wishlist.');
+            const toastEl = document.getElementById('notificationToast');
+            const toastBody = toastEl.querySelector('.toast-body');
+            toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white', 'text-dark');
+            toastEl.classList.add('bg-danger', 'text-white');
+            toastBody.textContent = '❌ Error removing product from wishlist.';
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
           }
         });
       });

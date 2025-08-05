@@ -15,8 +15,8 @@ const validateCoupon = async (req, res) => {
     try {
       const { couponCode, subtotal } = req.body;
       const cartTotal = parseFloat(subtotal);
-      const userId = req.session.user?._id; // Extract _id from session.user
-      console.log('Extracted userId:', userId); // Added to confirm userId value
+      const userId = req.session.user; 
+
       // Validate inputs
       if (!couponCode || isNaN(cartTotal) || cartTotal <= 0 || !userId) {
         console.error('Invalid input:', { couponCode, cartTotal, userId });

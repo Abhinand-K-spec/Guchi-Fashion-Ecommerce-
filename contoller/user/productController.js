@@ -25,16 +25,12 @@ const getProductOffer = async (product) => {
           Category: null,
           StartDate: { $lte: now },
           EndDate: { $gte: now },
-          $or: [{ MinPrice: { $exists: false } }, { MinPrice: { $lte: variantPrice } }],
-          $or: [{ MaxPrice: { $exists: false } }, { MaxPrice: { $gte: variantPrice } }]
         }).lean(),
         Offers.findOne({
           Category: product.Category,
           Product: null,
           StartDate: { $lte: now },
           EndDate: { $gte: now },
-          $or: [{ MinPrice: { $exists: false } }, { MinPrice: { $lte: variantPrice } }],
-          $or: [{ MaxPrice: { $exists: false } }, { MaxPrice: { $gte: variantPrice } }]
         }).lean()
       ]);
       let offer = null;
@@ -56,13 +52,17 @@ const getProductOffer = async (product) => {
 
 const getProductDetails = async (req, res) => {
   try {
+    const userId = req.session.user;
+    const user = await User.findById(userId)
     const productId = req.params.id;
     const product = await Products.findById(productId).populate('Category').lean();
+    console.log('product:',product)
     if (!product) return res.status(404).render('page-404');
     if (!product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
       console.error(`Invalid Variants for product: ${product._id}`);
       return res.render('product-details', {
         product: {
+          user,
           ...product,
           Variants: [{ Price: 0, salePrice: 0, Stock: 0, Size: '' }],
           offer: null
@@ -71,6 +71,7 @@ const getProductDetails = async (req, res) => {
       });
     }
     const { offer, salePrice } = await getProductOffer(product);
+    console.log('offer in product details :',offer)
     const formattedProduct = {
       ...product,
       Variants: product.Variants.map(variant => ({
@@ -85,6 +86,7 @@ const getProductDetails = async (req, res) => {
       IsListed: true
     }).limit(4).lean();
     res.render('product-details', {
+      activePage:'Shop',
       product: formattedProduct,
       recommendedProducts
     });

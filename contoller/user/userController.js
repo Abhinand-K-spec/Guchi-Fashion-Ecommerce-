@@ -13,7 +13,7 @@ const mongoose = require('mongoose');
 
 function generateReferralCode() {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = 'REF-';
+  let code = '';
   for (let i = 0; i < 8; i++) {
     code += characters.charAt(Math.floor(Math.random() * characters.length));
   }
@@ -69,16 +69,13 @@ const getProductOffer = async (product) => {
           Category: null,
           StartDate: { $lte: now },
           EndDate: { $gte: now },
-          $or: [{ MinPrice: { $exists: false } }, { MinPrice: { $lte: variantPrice } }],
-          $or: [{ MaxPrice: { $exists: false } }, { MaxPrice: { $gte: variantPrice } }]
         }).lean(),
         Offers.findOne({
           Category: product.Category,
           Product: null,
           StartDate: { $lte: now },
           EndDate: { $gte: now },
-          $or: [{ MinPrice: { $exists: false } }, { MinPrice: { $lte: variantPrice } }],
-          $or: [{ MaxPrice: { $exists: false } }, { MaxPrice: { $gte: variantPrice } }]
+          
         }).lean()
       ]);
       let offer = null;
@@ -116,7 +113,9 @@ const loadHomePage = async (req, res) => {
           offer: null
         };
       }
+      
       const { offer, salePrice } = await getProductOffer(product);
+      // console.log('offer :',offer)
       const variant = product.Variants[0];
       return {
         ...product,
@@ -228,9 +227,10 @@ async function sendVerification(email, otp) {
 
 const signup = async (req, res) => {
   try {
+    console.log('signup otp')
     const { name, email, password, referralCode } = req.body; 
     const findUser = await User.findOne({ email });
-    console.log('Email in signup:', email);
+
     if (findUser) {
       return res.render('signup', { msg: 'User already exists' });
     }
@@ -273,7 +273,6 @@ const verifyOtp = async (req, res) => {
       const user = req.session.userData;
       const passwordhash = await securePassword(user.password);
       
-      
       let referralCode = generateReferralCode();
       let existingUser = await User.findOne({ referalCode: referralCode });
       while (existingUser) {
@@ -296,17 +295,15 @@ const verifyOtp = async (req, res) => {
         });
         if (referrer) {
           saveUserData.referedBy = referrer._id;
-          // Update referrer's referals field (assuming it's a single ObjectId)
           await User.findByIdAndUpdate(referrer._id, {
             $set: { referals: saveUserData._id }
-            // Use $push: { referals: saveUserData._id } if referals is an array
           });
 
-          // Reward referrer with a coupon
-          const referralCoupon = new Coupon({
-            CouponCode: `REF-${referrer._id}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-            CouponName: `${referrer.name}'s Referral Reward`,
-            Discount: 10,
+          // Create 50% discount coupon for referrer
+          const referrerCoupon = new Coupon({
+            CouponCode: `REF-${referrer._id}-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
+            CouponName: `${referrer.name}'s 50% Referral Reward`,
+            Discount: 50,
             MinCartValue: 500,
             StartDate: new Date(),
             ExpiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
@@ -316,7 +313,25 @@ const verifyOtp = async (req, res) => {
             UsedBy: [],
             CreatedAt: new Date()
           });
-          await referralCoupon.save();
+          await referrerCoupon.save();
+
+          // Create 20% discount coupon for new user
+          const newUserCoupon = new Coupon({
+            CouponCode: `REF-${saveUserData._id}-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
+            CouponName: `${saveUserData.name}'s 20% Referral Welcome`,
+            Discount: 20,
+            MinCartValue: 500,
+            StartDate: new Date(),
+            ExpiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+            IsListed: true,
+            UserId: saveUserData._id,
+            UsageLimit: 1,
+            UsedBy: [],
+            CreatedAt: new Date()
+          });
+          await newUserCoupon.save();
+
+          console.log(`Referral coupons created: 50% for ${referrer._id}, 20% for ${saveUserData._id}`);
         }
       }
 
@@ -333,6 +348,7 @@ const verifyOtp = async (req, res) => {
     return res.status(500).json({ success: false, message: 'An error occurred while verifying OTP. Please try again.' });
   }
 };
+
 
 const resendOtp = async (req, res) => {
   try {

@@ -58,47 +58,57 @@ const getOrderDetails = async (req, res) => {
 
 const approveReturn = async (req, res) => {
   try {
-    // console.log('inside approve return')
     const { orderId } = req.params;
     const { productId } = req.query;
-    
-    
+
     const order = await Orders.findById(orderId).populate('Items.product');
     if (!order) return res.status(404).send('Order not found');
-    // console.log('after order find');
-    
+
     const item = order.Items.find(item => item.product?._id.toString() === productId);
     if (!item) return res.status(404).send('Item not found in order');
     if (item.returnStatus !== 'Return Requested') return res.status(400).send('Item return not requested');
-    // console.log('after item')
+
     await Product.updateOne(
       { _id: item.product, 'Variants.0': { $exists: true } },
       { $inc: { 'Variants.0.Stock': item.quantity } }
     );
-    // console.log('after product update')
-    
+
     item.returnStatus = 'Request Approved';
     item.status = 'Returned';
+    let refundAmount = item.price * item.quantity; // Use discounted price
+    if (order.discountAmount > 0) {
+      const itemTotalBeforeDiscount = (item.originalPrice || item.price) * item.quantity;
+      const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
+      const discountProportion = (itemTotalBeforeDiscount / totalOrderAmountBeforeDiscount) * order.discountAmount;
+      refundAmount -= discountProportion;
+    }
+    console.log(`Refund amount calculated: ${refundAmount} for item ${productId} in order ${orderId}`);
+
     if (order.PaymentMethod === 'Online') {
-      // console.log('inside payment online :',order.PaymentMethod);
-      const refundAmount = item.quantity * item.price;
       let wallet = await Wallet.findOne({ UserId: order.UserId });
       if (!wallet) {
         wallet = new Wallet({ UserId: order.UserId, Balance: 0, Transaction: [] });
+        console.log(`Created new wallet for user ${order.UserId}`);
       }
-      // console.log('refundAmount :',refundAmount)
-      wallet.Balance += refundAmount;
-      wallet.Transaction.push({
-        TransactionAmount: refundAmount,
-        TransactionType: 'credit',
-        description: `Refund for returned item ${item.product.productName} in order ${order._id}`,
-        TransactionDate: new Date()
-      });
-      wallet.UpdatedAt = new Date();
-      await wallet.save();
+      if (refundAmount > 0) {
+        wallet.Balance += refundAmount;
+        wallet.Transaction.push({
+          TransactionAmount: refundAmount,
+          TransactionType: 'credit',
+          description: `Refund for returned item ${item.product.productName} in order ${order._id}`,
+          TransactionDate: new Date()
+        });
+        wallet.UpdatedAt = new Date();
+        await wallet.save();
+        console.log(`Wallet updated for user ${order.UserId}, new balance: ${wallet.Balance}`);
+      } else {
+        console.log(`No refund applied, amount too low: ${refundAmount}`);
+      }
+    } else {
+      console.log(`No wallet update, payment method is ${order.PaymentMethod}`);
     }
-    await order.save();
 
+    await order.save();
     res.redirect(`/admin/order-details/${orderId}`);
   } catch (err) {
     console.error('Error approving return:', err);
@@ -156,8 +166,16 @@ const cancelSingleItem = async (req, res) => {
       await product.save();
     }
 
+    let refundAmount = item.price * item.quantity; // Use the discounted price paid
+    if (order.discountAmount > 0) {
+      // Adjust refund if discount was applied (proportional to item's contribution)
+      const itemTotalBeforeDiscount = (item.originalPrice || item.price) * item.quantity; // Original price if available
+      const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
+      const discountProportion = (itemTotalBeforeDiscount / totalOrderAmountBeforeDiscount) * order.discountAmount;
+      refundAmount -= discountProportion; // Subtract the discount portion
+    }
+
     if (order.PaymentMethod === 'Online' && order.PaymentStatus === 'Completed') {
-      const refundAmount = item.quantity * item.price;
       let wallet = await Wallet.findOne({ UserId: order.UserId });
       if (!wallet) {
         wallet = new Wallet({ UserId: order.UserId, balance: 0, transactions: [] });
@@ -166,7 +184,7 @@ const cancelSingleItem = async (req, res) => {
       wallet.transactions.push({
         amount: refundAmount,
         type: 'credit',
-        description: `Refund for cancelled item ${item.product.productName} in order ${order._id}`,
+        description: `Refund for cancelled item ${item.product?.productName} in order ${order._id}`,
         date: new Date()
       });
       wallet.UpdatedAt = new Date();
@@ -258,8 +276,15 @@ const updateItemStatus = async (req, res) => {
         product.Variants[0].Stock += item.quantity;
         await product.save();
       }
+      let refundAmount = item.price * item.quantity;
+      if (order.discountAmount > 0) {
+        const itemTotalBeforeDiscount = (item.originalPrice || item.price) * item.quantity;
+        const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
+        const discountProportion = (itemTotalBeforeDiscount / totalOrderAmountBeforeDiscount) * order.discountAmount;
+        refundAmount -= discountProportion;
+      }
+
       if (order.PaymentMethod === 'Online' && order.PaymentStatus === 'Completed') {
-        const refundAmount = item.quantity * item.price;
         let wallet = await Wallet.findOne({ UserId: order.UserId });
         if (!wallet) {
           wallet = new Wallet({ UserId: order.UserId, balance: 0, transactions: [] });

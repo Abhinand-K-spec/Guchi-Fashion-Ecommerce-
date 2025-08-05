@@ -37,7 +37,9 @@ const getWishlist = async (req, res) => {
 const addToCartFromWishlist = async (req, res) => {
   try {
     console.log('addToCart came')
-    const { userId, productId } = req.body;
+    const { productId } = req.body;
+    const userId = req.session.user;
+    console.log('userId :',userId,'productId :',productId);
     if (!userId || !productId) {
       return res.status(400).json({ success: false, message: 'User ID and Product ID are required' });
     }
@@ -75,7 +77,8 @@ const addToCartFromWishlist = async (req, res) => {
 
 const removeFromWishlist = async (req, res) => {
   try {
-    const { userId, wishlistId } = req.body;
+    const {  wishlistId } = req.body;
+    const userId = req.session.user;
     if (!userId || !wishlistId) {
       return res.status(400).json({ success: false, message: 'User ID and Wishlist ID are required' });
     }

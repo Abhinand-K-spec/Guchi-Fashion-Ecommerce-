@@ -94,13 +94,13 @@
       </div>
     </div>
 
-    <!-- Ordered Items -->
     <% order.Items.forEach(item => {
-        const product = item.product;
-        if (!product || !product.Variants?.[0]) return;
-        const image = product.Image?.[0] ? `${product.Image[0]}` : '/images/default.jpg';
-        const price = product.Variants[0].Price || item.price || 0;
-    %>
+      const product = item.product || {};
+      const image = product.Image?.[0] ? `${product.Image[0]}` : '/images/default.jpg';
+      const price = item.price || 0; 
+      const itemDiscount = item.itemDiscount || 0;
+      const originalPrice = product.Variants?.[0]?.Price || price; // For reference, if needed
+  %>
       <div class="product-card row g-3 align-items-center" id="item-<%= item._id %>">
         <div class="col-md-2 text-center">
           <img src="<%= image %>" alt="Product Image" class="img-fluid" />

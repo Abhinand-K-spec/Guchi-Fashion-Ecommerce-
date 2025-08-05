@@ -23,6 +23,38 @@
     .coupon-eligibility { font-size: 0.8rem; color: #6c757d; }
     .payment-method-container { margin-top: 1rem; }
     .payment-error { color: #dc3545; font-size: 0.9rem; margin-top: 0.5rem; }
+    .checkout-summary {
+      max-width: 400px;
+      padding: 1.5rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background-color: #f8f9fa;
+    }
+    .checkout-summary p {
+      margin: 0.5rem 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .checkout-summary .subtotal {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+    }
+    .checkout-summary .secondary {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #555;
+    }
+    .checkout-summary .final-total {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #dc3545;
+      background-color: #fff3f4;
+      padding: 0.5rem;
+      border-radius: 4px;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 
@@ -91,9 +123,6 @@
           <% }) %>
 
           <hr>
-          <% if (subtotal > 1000) { %>
-            <p class="coupon-message">Eligible for a coupon! Enter a code or view available coupons.</p>
-          <% } %>
           <div class="coupon-input-container">
             <input type="text" id="couponInput" class="form-control coupon-input" placeholder="Enter coupon code" name="coupon">
             <button type="button" id="couponButton" class="btn btn-primary">Apply</button>
@@ -103,13 +132,26 @@
           <button type="button" class="btn btn-outline-primary mb-3" data-bs-toggle="modal" data-bs-target="#couponModal">
             View Available Coupons
           </button>
-          <p><strong>Subtotal:</strong> ₹<span id="subtotal"><%= subtotal.toFixed(2) %></span></p>
-          <p><strong>Item Discount:</strong> ₹<span id="itemDiscount"><%= totalItemDiscount.toFixed(2) %></span></p>
-          <p><strong>Coupon Discount:</strong> ₹<span id="discount"><%= discount.toFixed(2) %></span></p>
-          <p><strong>Taxes:</strong> ₹<span id="tax"><%= tax.toFixed(2) %></span></p>
-          <p><strong>Delivery Charge:</strong> ₹<span id="deliveryCharge"><%= deliveryCharge.toFixed(2) %></span></p>
-          <p><strong>Final Total:</strong> ₹<span id="finalTotal"><%= finalTotal.toFixed(2) %></span></p>
-
+          <div class="checkout-summary">
+            <p class="subtotal">
+              <strong>Subtotal:</strong><span id="subtotal"><%= subtotal.toFixed(2) %>₹</span>
+            </p>
+            <p class="secondary">
+              <strong>Item Discount:</strong><span id="itemDiscount"><%= totalItemDiscount.toFixed(2) %>₹</span>
+            </p>
+            <p class="secondary">
+              <strong>Coupon Discount:</strong><span id="discount"><%= discount.toFixed(2) %>₹</span>
+            </p>
+            <p class="secondary">
+              <strong>Taxes:</strong><span id="tax"><%= tax.toFixed(2) %>₹</span>
+            </p>
+            <p class="secondary">
+              <strong>Delivery Charge:</strong><span id="deliveryCharge"><%= deliveryCharge.toFixed(2) %>₹</span>
+            </p>
+            <p class="final-total">
+              <strong>Final Total:</strong><span id="finalTotal"><%= finalTotal.toFixed(2) %>₹</span>
+            </p>
+          </div>
           <!-- Payment Method Selection -->
           <div class="payment-method-container">
             <h5>Payment Method</h5>
@@ -223,8 +265,6 @@
       let appliedCouponCode = '';
       let orderId = '';
 
-      console.log('Checkout script loaded', { userId, couponButton: !!couponButton, razorpayKey });
-
       if (!couponButton) {
         console.error('Coupon button not found');
         couponError.textContent = 'Coupon button not found. Please refresh the page.';
@@ -299,7 +339,7 @@
 
             const options = {
               key: razorpayKey,
-              amount: result.order.amount,
+              amount: Math.round(parseFloat(finalTotalEl.textContent) * 100),
               currency: 'INR',
               name: 'My E-Commerce Site',
               description: 'Order Payment',
@@ -347,7 +387,7 @@
               prefill: {
                 name: '<%= addresses[0]?.name || "" %>',
                 contact: '<%= addresses[0]?.phone || "" %>',
-                email: 'usermail'
+                email: '<%= user?.email || "guest@gmail.com"%>'
               },
               notes: {
                 address: '<%= addresses[0]?.town + ", " + addresses[0]?.city + ", " + addresses[0]?.state + " - " + addresses[0]?.postCode || "" %>'
@@ -376,8 +416,37 @@
             paymentError.style.display = 'block';
           }
         } else {
-          // COD: Submit form normally
-          checkoutForm.submit();
+          // Handle COD submission
+          try {
+            const response = await fetch('/place-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId,
+                selectedAddressId: document.querySelector('input[name="selectedAddressId"]:checked').value,
+                coupon: couponInput.value.trim(),
+                paymentMethod: 'COD',
+                finalTotal: parseFloat(finalTotalEl.textContent)
+              })
+            });
+
+            const result = await response.json();
+            console.log('COD place order response:', result);
+
+            if (!response.ok || !result.success) {
+              console.error('COD place order failed:', result.message);
+              paymentError.textContent = result.message || 'Failed to place COD order. Please try again.';
+              paymentError.style.display = 'block';
+              return;
+            }
+
+            // Redirect to order success page
+            window.location.href = '/order-confirmation/' + result.orderId;
+          } catch (err) {
+            console.error('Error placing COD order:', err);
+            paymentError.textContent = 'Error placing COD order. Please try again.';
+            paymentError.style.display = 'block';
+          }
         }
       });
 
@@ -460,11 +529,11 @@
           }
 
           try {
-            console.log('Sending fetch request to /validate-coupon', { couponCode, subtotal: originalSubtotal, userId });
+            console.log('Sending fetch request to /validate-coupon', { couponCode, subtotal: originalSubtotal });
             const response = await fetch('/validate-coupon', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ couponCode, subtotal: originalSubtotal, userId })
+              body: JSON.stringify({ couponCode, subtotal: originalSubtotal })
             });
 
             console.log('Fetch response status:', response.status, { ok: response.ok });

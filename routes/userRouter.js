@@ -110,7 +110,7 @@ router.post('/verify-wallet-payment', userAuth, walletController.verifyWalletPay
 
 router.get('/wishlist',userAuth,wishlistController.getWishlist);
 router.post('/wishlist/add-to-cart', wishlistController.addToCartFromWishlist);
-router.post('/remove', wishlistController.removeFromWishlist);
+router.post('/wishlist/remove', wishlistController.removeFromWishlist);
 router.post('/add', wishlistController.addToWishlist);
 router.get('/add-to-wishlist/:productId',userAuth,wishlistController.addToWishlist)
 

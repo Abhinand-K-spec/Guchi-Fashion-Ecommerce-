@@ -19,9 +19,6 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET
 });
 
-
-
-
 const listOrders = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -99,7 +96,6 @@ const orderDetails = async (req, res) => {
 
 const cancelOrder = async (req, res) => {
   try {
-    
     const order = await Orders.findById(req.params.id).populate('Items.product');
     if (!order || order.Status !== 'Pending') {
       return res.status(400).json({ success: false, message: 'Order not found or not in Pending status' });
@@ -115,9 +111,16 @@ const cancelOrder = async (req, res) => {
           await product.save();
           item.status = 'Cancelled';
           item.cancelReason = req.body.reason || 'No reason provided';
-          refundAmount += item.price * item.quantity; // Calculate refund for this item
+          refundAmount += item.price * item.quantity; // Use discounted price
         }
       }
+    }
+
+    if (order.discountAmount > 0) {
+      const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
+      const totalDiscountedAmount = order.Items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      const overallDiscount = order.discountAmount * (totalDiscountedAmount / totalOrderAmountBeforeDiscount);
+      refundAmount -= overallDiscount; // Adjust for total discount proportion
     }
 
     const allCancelled = order.Items.every(i => i.status === 'Cancelled');
@@ -126,7 +129,6 @@ const cancelOrder = async (req, res) => {
       order.CancelReason = req.body.reason || 'No reason provided';
     }
 
-    // Refund to wallet if payment method is Wallet
     if (order.PaymentMethod === 'Wallet' && refundAmount > 0) {
       let wallet = await Wallet.findOne({ UserId: order.UserId });
       if (!wallet) {
@@ -152,7 +154,6 @@ const cancelOrder = async (req, res) => {
 
 const cancelItem = async (req, res) => {
   try {
-    // console.log('here cancel item')
     const { orderId, itemId } = req.params;
     const userId = req.session.user;
     const { reason } = req.body;
@@ -186,9 +187,15 @@ const cancelItem = async (req, res) => {
       await product.save();
     }
 
-    // Refund to wallet if payment method is Wallet
+    let refundAmount = item.price * item.quantity; // Use discounted price
+    if (order.discountAmount > 0) {
+      const itemTotalBeforeDiscount = (item.originalPrice || item.price) * item.quantity;
+      const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
+      const discountProportion = (itemTotalBeforeDiscount / totalOrderAmountBeforeDiscount) * order.discountAmount;
+      refundAmount -= discountProportion;
+    }
+
     if (order.PaymentMethod === 'Wallet' || order.PaymentMethod === 'Online') {
-      const refundAmount = item.price * item.quantity;
       let wallet = await Wallet.findOne({ UserId: order.UserId });
       if (!wallet) {
         wallet = new Wallet({ UserId: order.UserId, Balance: 0, Transaction: [] });
@@ -395,17 +402,13 @@ const getProductOffer = async (product) => {
         Product: product._id,
         Category: null,
         StartDate: { $lte: now },
-        EndDate: { $gte: now },
-        $or: [{ MinPrice: { $exists: false } }, { MinPrice: { $lte: variantPrice } }],
-        $or: [{ MaxPrice: { $exists: false } }, { MaxPrice: { $gte: variantPrice } }]
+        EndDate: { $gte: now }
       }).lean(),
       Offers.findOne({
         Category: product.Category,
         Product: null,
         StartDate: { $lte: now },
         EndDate: { $gte: now },
-        $or: [{ MinPrice: { $exists: false } }, { MinPrice: { $lte: variantPrice } }],
-        $or: [{ MaxPrice: { $exists: false } }, { MaxPrice: { $gte: variantPrice } }]
       }).lean()
     ]);
     let offer = null;
@@ -425,24 +428,23 @@ const getProductOffer = async (product) => {
   }
 };
 
-
-
 const placeOrder = async (req, res) => {
   try {
     const { selectedAddressId, coupon, paymentMethod } = req.body;
-    const userId = req.session.user._id;
-   
+    const userId = req.session.user;
+
     const cart = await Cart.findOne({ user: userId }).populate('Items.product').lean();
-    // console.log('cart in place order:', cart);
     if (!cart || !cart.Items.length) {
       console.log('Cart empty or not found for user:', userId);
       return res.status(400).json({ success: false, message: 'Cart is empty.' });
     }
+
     const selectedAddress = await Address.findById(selectedAddressId).lean();
     if (!selectedAddress) {
       console.log('Invalid address:', selectedAddressId);
       return res.status(400).json({ success: false, message: 'Invalid address selected.' });
     }
+
     const hasOutOfStock = cart.Items.some(item => {
       const variant = item.product?.Variants?.[0];
       return !variant || variant.Stock === 0 || variant.Stock < item.quantity;
@@ -450,8 +452,11 @@ const placeOrder = async (req, res) => {
     if (hasOutOfStock) {
       return res.status(400).json({ success: false, message: 'Some items are out of stock.' });
     }
+
     let subtotal = 0;
     const orderItems = [];
+    let totalItemDiscount = 0;
+
     for (const item of cart.Items) {
       const product = item.product;
       const variant = product?.Variants?.[0];
@@ -459,27 +464,45 @@ const placeOrder = async (req, res) => {
         console.error(`Invalid order item: productId=${item.product?._id || 'missing'}`);
         continue;
       }
+
       const { offer, salePrice } = await getProductOffer(product);
-      const price = salePrice || variant.Price || 1;
-      const quantity = item.quantity;
+      const originalPrice = variant.Price || 0;
+      const price = salePrice || variant.Price || 0;
+      const quantity = item.quantity || 0;
       const itemTotal = price * quantity;
+      const itemDiscount = (originalPrice - price) * quantity;
+
+      if (isNaN(itemDiscount) || isNaN(quantity) || isNaN(price)) {
+        console.error(`Invalid values for product ${product._id}: itemDiscount=${itemDiscount}, quantity=${quantity}, price=${price}`);
+        continue;
+      }
+
       orderItems.push({
-        product: product._id, 
+        product: product._id,
         quantity,
         price,
-        status: 'Pending'
+        status: 'Pending',
+        itemDiscount
       });
+
       subtotal += itemTotal;
+      totalItemDiscount += itemDiscount;
     }
+
     if (!orderItems.length) {
       console.log('No valid order items after validation');
       return res.status(400).json({ success: false, message: 'No valid items in cart.' });
     }
+
+    console.log('Calculated subtotal:', subtotal);
+
     const tax = Math.round(subtotal * 0.05);
     const deliveryCharge = 40;
     let couponDiscount = 0;
     let couponData = null;
+
     if (coupon) {
+      console.log('inside if coupon');
       couponData = await Coupon.findOne({
         CouponCode: coupon.toUpperCase(),
         StartDate: { $lte: new Date() },
@@ -488,18 +511,41 @@ const placeOrder = async (req, res) => {
         $or: [{ UserId: null }, { UserId: new mongoose.Types.ObjectId(userId) }],
         MinCartValue: { $lte: subtotal }
       });
+
+      console.log('coupondata :', couponData);
+
       if (couponData && couponData.Discount > 0) {
-        couponDiscount = Math.min(
-          subtotal * (couponData.Discount / 100),
-          subtotal + tax + deliveryCharge - 1
-        );
+        couponDiscount = subtotal * (couponData.Discount / 100);
+        if (couponData.MaxDiscount && Number.isFinite(couponData.MaxDiscount)) {
+          couponDiscount = Math.min(couponDiscount, couponData.MaxDiscount);
+        }
+        couponDiscount = Math.round(couponDiscount * 100) / 100;
+        console.log('couponDiscount calculation: couponDiscount=', couponDiscount);
+        const totalItemTotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        orderItems.forEach(item => {
+          const itemRatio = (item.price * item.quantity) / totalItemTotal;
+          item.itemDiscount = (item.itemDiscount || 0) + Math.round((couponDiscount * itemRatio) * 100) / 100;
+        });
       }
     }
-    const finalTotal = subtotal - couponDiscount + tax + deliveryCharge;
+
+    const discountAmount = totalItemDiscount + couponDiscount;
+
+    if (isNaN(discountAmount)) {
+      console.error('Invalid discountAmount calculated:', discountAmount);
+      discountAmount = 0;
+    }
+
+    console.log('Calculated discountAmount before save:', discountAmount);
+    console.log('Order Items with itemDiscount before save:', orderItems);
+
+    const finalTotal = subtotal - discountAmount + tax + deliveryCharge;
+
     if (finalTotal < 1) {
       console.error('Final total too low:', finalTotal);
       return res.status(400).json({ success: false, message: 'Order amount must be at least ₹1.00 after discounts.' });
     }
+
     const order = new Orders({
       UserId: userId,
       addressId: selectedAddressId,
@@ -515,12 +561,22 @@ const placeOrder = async (req, res) => {
       },
       Items: orderItems,
       PaymentMethod: paymentMethod,
+      discountAmount: discountAmount,
+      couponDiscount,
+      totalItemDiscount,
+      subtotal,
+      tax,
+      deliveryCharge,
       PaymentStatus: paymentMethod === 'COD' ? 'Pending' : paymentMethod === 'Wallet' ? 'Completed' : 'Pending',
       Status: 'Pending',
       OrderId: `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
-      OrderDate: new Date()
+      OrderDate: new Date(),
+      coupon: couponData ? couponData._id : null
     });
+
     await order.save();
+    console.log('Saved order:', order._id, 'with discountAmount:', order.discountAmount, 'and Items:', order.Items);
+
     if (paymentMethod === 'Wallet') {
       let wallet = await Wallet.findOne({ userId });
       if (!wallet) {
@@ -541,6 +597,7 @@ const placeOrder = async (req, res) => {
       });
       await wallet.save();
     }
+
     if (paymentMethod === 'Online') {
       const receiptString = `order_${userId}_${Date.now()}`;
       const truncatedReceipt = receiptString.length > 40 ? receiptString.substring(0, 40) : receiptString;
@@ -558,6 +615,7 @@ const placeOrder = async (req, res) => {
         message: 'Proceed to Razorpay checkout.'
       });
     }
+
     console.log('Order placed:', order._id);
     await Cart.findOneAndUpdate({ user: userId }, { Items: [] });
     for (const item of orderItems) {
@@ -565,6 +623,7 @@ const placeOrder = async (req, res) => {
         $inc: { 'Variants.0.Stock': -item.quantity }
       });
     }
+
     return res.status(200).json({
       success: true,
       orderId: order._id,
@@ -582,8 +641,6 @@ const placeOrder = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Error placing order.' });
   }
 };
-
-
 
 module.exports = {
   listOrders,

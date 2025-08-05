@@ -6,7 +6,7 @@ const Order = require('../../model/ordersSchema');
 const coupon = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1; 
-        const limit = 5; 
+        const limit = 4; 
         const skip = (page - 1) * limit;
 
         const coupons = await Coupon.find().sort({CreatedAt:-1})
@@ -68,7 +68,7 @@ const addCoupon = async (req, res) => {
 
         // Create new coupon
         const newCoupon = new Coupon({
-            UserId: userId || null,
+            UserId: null,
             CouponName,
             CouponCode: CouponCode.toUpperCase(),
             Discount: discountValue,
@@ -79,7 +79,7 @@ const addCoupon = async (req, res) => {
             MaxCartValue: MaxCartValue || null,
             IsListed: true
         });
-        console.log('New coupon to save:', newCoupon);
+        // console.log('New coupon to save:', newCoupon);
 
         await newCoupon.save();
         res.redirect('/admin/coupons?page=1'); 

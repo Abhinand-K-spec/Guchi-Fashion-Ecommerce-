@@ -6,6 +6,55 @@ const Orders = require('../../model/ordersSchema');
 const Coupon = require('../../model/couponsSchema');
 const Offers = require('../../model/offersSchema')
 const Wallet = require('../../model/walletSchema');
+const mongoose = require('mongoose');
+
+
+
+const getProductOffer = async (product) => {
+  try {
+    if (!product || !product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
+      console.error(`Invalid product data: ${JSON.stringify(product)}`);
+      return { offer: null, salePrice: 0 };
+    }
+
+    const now = new Date();
+    const variantPrice = product.Variants[0].Price || 0;
+
+    const [productOffer, categoryOffer] = await Promise.all([
+      Offers.findOne({
+        Product: product._id,
+        Category: null,
+        StartDate: { $lte: now },
+        EndDate: { $gte: now },
+       
+      }).lean(),
+      Offers.findOne({
+        Category: product.Category,
+        Product: null,
+        StartDate: { $lte: now },
+        EndDate: { $gte: now },
+      }).lean()
+    ]);
+
+    let offer = null;
+    if (productOffer && categoryOffer) {
+      offer = productOffer.Discount >= categoryOffer.Discount ? productOffer : categoryOffer;
+    } else {
+      offer = productOffer || categoryOffer;
+    }
+
+    if (!offer) {
+      return { offer: null, salePrice: variantPrice };
+    }
+
+    const salePrice = variantPrice * (1 - offer.Discount / 100);
+    return { offer, salePrice };
+  } catch (err) {
+    console.error(`Error fetching offer for productId: ${product?._id || 'unknown'}`, err);
+    return { offer: null, salePrice: 0 };
+  }
+};
+
 
 const cart = async (req, res) => {
   try {
@@ -13,7 +62,6 @@ const cart = async (req, res) => {
     const user = await User.findById(userId).lean();
 
     const cartData = await Cart.findOne({ user: userId })
-    
       .populate('Items.product')
       .lean();
 
@@ -45,7 +93,8 @@ const cart = async (req, res) => {
       }
 
       const variant = product.Variants?.[0];
-      const price = variant?.Price || 0;
+      const { offer, salePrice } = await getProductOffer(product); // Add offer logic
+      const price = salePrice || variant?.Price || 0; // Use salePrice if offer exists
       const quantity = item.quantity;
       const itemTotal = price * quantity;
 
@@ -62,7 +111,8 @@ const cart = async (req, res) => {
         price,
         quantity,
         stock: variant?.Stock || 0,
-        itemTotal
+        itemTotal,
+        offer: offer ? offer.Discount : null // Include offer discount percentage or null
       });
 
       if (variant?.Stock >= item.quantity) {
@@ -87,6 +137,8 @@ const cart = async (req, res) => {
     res.status(500).render('page-404');
   }
 };
+
+
 
 const getCartData = async (req, res) => {
   try {
@@ -276,65 +328,6 @@ const removeFromCart = async (req, res) => {
   }
 };
 
-const getProductOffer = async (product) => {
-  try {
-    if (!product || !product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
-      console.error(`Invalid product data: ${JSON.stringify(product)}`);
-      return { offer: null, salePrice: 0 };
-    }
-
-    const now = new Date();
-    const variantPrice = product.Variants[0].Price || 0;
-
-    const [productOffer, categoryOffer] = await Promise.all([
-      Offers.findOne({
-        Product: product._id,
-        Category: null,
-        StartDate: { $lte: now },
-        EndDate: { $gte: now },
-        $or: [
-          { MinPrice: { $exists: false } },
-          { MinPrice: { $lte: variantPrice } }
-        ],
-        $or: [
-          { MaxPrice: { $exists: false } },
-          { MaxPrice: { $gte: variantPrice } }
-        ]
-      }).lean(),
-      Offers.findOne({
-        Category: product.Category,
-        Product: null,
-        StartDate: { $lte: now },
-        EndDate: { $gte: now },
-        $or: [
-          { MinPrice: { $exists: false } },
-          { MinPrice: { $lte: variantPrice } }
-        ],
-        $or: [
-          { MaxPrice: { $exists: false } },
-          { MaxPrice: { $gte: variantPrice } }
-        ]
-      }).lean()
-    ]);
-
-    let offer = null;
-    if (productOffer && categoryOffer) {
-      offer = productOffer.Discount >= categoryOffer.Discount ? productOffer : categoryOffer;
-    } else {
-      offer = productOffer || categoryOffer;
-    }
-
-    if (!offer) {
-      return { offer: null, salePrice: variantPrice };
-    }
-
-    const salePrice = variantPrice * (1 - offer.Discount / 100);
-    return { offer, salePrice };
-  } catch (err) {
-    console.error(`Error fetching offer for productId: ${product?._id || 'unknown'}`, err);
-    return { offer: null, salePrice: 0 };
-  }
-};
 
 const checkout = async (req, res) => {
   try {
@@ -345,12 +338,15 @@ const checkout = async (req, res) => {
     if (!cartData || !cartData.Items.length) {
       return res.redirect('/cart');
     }
+
+    // Fetch coupons with logging for debugging
     const coupons = await Coupon.find({
       StartDate: { $lte: new Date() },
       ExpiryDate: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
       IsListed: true,
-      $or: [{ UserId: null }, { UserId: userId }]
+      $or: [{ UserId: null }, { UserId: new mongoose.Types.ObjectId(userId) }]
     }).lean();
+    console.log(`Fetched coupons for user ${userId}:`, coupons);
 
     const wallet = await Wallet.findOne({ userId }).lean() || { balance: 0 };
     let subtotal = 0;
@@ -396,9 +392,10 @@ const checkout = async (req, res) => {
       { $set: { Items: validCartItems } }
     );
     const tax = Math.round(subtotal * 0.05);
-    const discount = 0;
+    const discount = 0; // Initial discount (updated via AJAX)
     const deliveryCharge = 40;
     const finalTotal = subtotal - discount + tax + deliveryCharge;
+
     res.render('checkout', {
       pageTitle: 'Checkout',
       cartItems,
@@ -421,6 +418,8 @@ const checkout = async (req, res) => {
     res.status(500).render('page-404');
   }
 };
+
+
 
 
 

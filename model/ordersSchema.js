@@ -68,6 +68,9 @@ const OrdersSchema = new Schema({
       },
       returnRequestedAt: {
         type: Date 
+      },
+      itemDiscount:{
+        type:Number
       }
     }
   ],
@@ -77,6 +80,9 @@ const OrdersSchema = new Schema({
   OrderDate: {
     type: Date,
     default: Date.now
+  },
+  discountAmount:{
+    type:Number
   },
   CancelReason: {
     type: String
