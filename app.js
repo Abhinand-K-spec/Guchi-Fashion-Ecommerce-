@@ -11,11 +11,13 @@ const adminRouter = require('./routes/adminRouter');
 const db = require('./config/db');
 const flash = require('connect-flash');
 const MongoStore = require('connect-mongo');
+const morgan = require('morgan');
 db();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
