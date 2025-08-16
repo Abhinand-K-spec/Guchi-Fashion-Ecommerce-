@@ -17,7 +17,8 @@ const OrdersSchema = new Schema({
     required:true
   },
   PaymentStatus:{
-    type:String
+    type:String,
+    enum:['Completed','Pending','Failed']
   },
   addressId: { type: mongoose.Schema.Types.ObjectId, ref: 'address' },
   Address: {

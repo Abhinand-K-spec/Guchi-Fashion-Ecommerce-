@@ -18,8 +18,8 @@ router.get('/', adminAuth, adminController.loadDashboard);
 router.get('/logout', adminController.logout);
 
 router.get('/users', adminAuth, costumerController.customerinfo);
-router.get('/blockCostumer', adminAuth, costumerController.costumerBlocked);
-router.get('/unblockCostumer', adminAuth, costumerController.costumerUnBlocked);
+router.post('/blockCostumer', adminAuth, costumerController.costumerBlocked);
+router.post('/unblockCostumer', adminAuth, costumerController.costumerUnBlocked);
 router.get('/costumer/clear', adminAuth, costumerController.clearSearch);
 
 router.get('/category', adminAuth, categoryController.categoryinfo);
@@ -34,8 +34,8 @@ router.get('/category/clear', adminAuth, categoryController.clearSearch);
 router.get('/addProducts', adminAuth, productsController.getAddProductPage);
 router.post('/addproduct', adminAuth, upload.none(), productsController.addProducts);
 router.get('/products', adminAuth, productsController.getAllProducts);
-router.get('/unlistProduct/:productId', adminAuth, productsController.unlist);
-router.get('/listProduct/:productId', adminAuth, productsController.list);
+router.post('/unlistProduct/:productId', adminAuth, productsController.unlist);
+router.post('/listProduct/:productId', adminAuth, productsController.list);
 router.get('/editProduct/:productId', adminAuth, productsController.getEditProductPage);
 router.post('/updateProduct/:productId', upload.any(), productsController.postEditProduct);
 
@@ -53,8 +53,8 @@ router.get('/coupon',adminAuth,couponController.coupon);
 router.post('/addCoupon',userAuth,couponController.addCoupon);
 router.get('/coupons', couponController.coupon);
 router.post('/addCoupon', couponController.addCoupon);
-router.get('/unlistCoupon/:couponId', adminAuth, couponController.unlist);
-router.get('/listCoupon/:couponId', adminAuth, couponController.list);
+router.post('/unlistCoupon/:couponId', adminAuth, couponController.unlist);
+router.post('/listCoupon/:couponId', adminAuth, couponController.list);
 // router.get('/editCoupon/:id', couponController.editCoupon);
 // router.post('/updateCoupon/:id', couponController.updateCoupon);
 

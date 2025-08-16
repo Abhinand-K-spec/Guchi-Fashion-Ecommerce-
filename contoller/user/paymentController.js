@@ -193,6 +193,7 @@ const getPaymentSuccess = async (req, res) => {
   try {
     const orderId = req.params.orderId;
     const order = await Orders.findById(orderId).populate('Items.product').lean();
+    order.PaymentStatus === 'Completed';
     if (!order) {
       return res.status(404).render('page-404');
     }
@@ -218,6 +219,7 @@ const getPaymentFailure = async (req, res) => {
     const orderId = req.params.orderId;
     console.log('paymentfailure:', req.params.orderId);
     const order = await Orders.findById(orderId).populate('Items.product').lean();
+    order.PaymentStatus === 'Failed';
     console.log('paymentfailure:', order.Items[0].product);
     if (!order) {
       return res.status(404).render('page-404');

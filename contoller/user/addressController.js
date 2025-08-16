@@ -9,7 +9,6 @@ const getAddAddress = async (req,res)=>{
     try {
 
         const userId = req.session.user;
-
         const user = await User.findById(userId);
 
         res.render('addAddress',{
@@ -25,6 +24,26 @@ const getAddAddress = async (req,res)=>{
     }
 };
 
+
+const getAddAddressFromCheckout = async (req,res)=>{
+  try {
+
+      const userId = req.session.user;
+
+      const user = await User.findById(userId);
+
+      res.render('addAddressCheckout',{
+          user,
+          activePage : 'address'
+      });
+      
+  } catch (error) {
+
+      console.log('Error loading add-address : ',error.message);
+      res.render('page-404');
+      
+  }
+};
 
 
 
@@ -97,6 +116,30 @@ const getEditAddress = async(req,res)=>{
 };
 
 
+const getEditAddressCheckout = async(req,res)=>{
+  try {
+
+      const userId = req.session.user;
+      const addressId = req.params.id;
+      const user = User.findById(userId);
+      const address = await Address.findOne({ _id: addressId, userId }).lean();
+     
+
+      res.render('editaddressCheckout',{
+          address,
+          user,
+          activePage:'address',
+          addressId
+      });
+
+      
+  } catch (error) {
+
+      console.log('error loading edit address page :', error.message);
+      res.render('page-404');
+      
+  }
+};
 
 
 
@@ -162,8 +205,10 @@ const editAddress = async (req, res) => {
 
 module.exports = {
     getAddAddress,
+    getAddAddressFromCheckout,
     addAddress,
     getEditAddress,
+    getEditAddressCheckout,
     editAddress,
     deleteAddress
 };

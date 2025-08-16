@@ -104,8 +104,8 @@
         <input type="hidden" id="addressId" value="<%= addressId %>" />
 
         <div class="mb-3">
-          <label for="name" class="form-label">Full Name</label>
-          <input type="text" class="form-control" id="name" name="name" value="<%= address.name %> " maxlength="10" />
+          <label for="name" class="form-label">Full Name></label>
+          <input type="text" class="form-control" id="name" name="name" value="<%= address.name %>" maxlength="30" />
           <div class="invalid-feedback">Full name is required.</div>
         </div>
 
@@ -140,7 +140,7 @@
         </div>
 
         <div class="d-flex justify-content-between">
-          <a href="/edit-profile" class="btn btn-secondary">Cancel</a>
+          <a href="/checkout" class="btn btn-secondary">Cancel</a>
           <button type="submit" class="btn btn-primary">Update Address</button>
         </div>
        
@@ -212,7 +212,7 @@
         }
 
         try {
-            const response = await fetch(`/edit-address/${addressId}`, {
+            const response = await fetch(`/edit-addressCheckout/${addressId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -224,9 +224,8 @@
 
             if (response.ok) {
                 showMessage(result.message);
-                // Redirect to edit profile page after successful update
                 setTimeout(() => {
-                    window.location.href = result.redirect;
+                    window.location.href = '/checkout';
                 }, 2000);
             } else {
                 showMessage(result.error || 'Failed to update address', true);

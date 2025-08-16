@@ -46,27 +46,27 @@ const addCoupon = async (req, res) => {
 
         console.log('Coupon data received:', req.body);
 
-        // Check if coupon code already exists
+
         const existingCoupon = await Coupon.findOne({ CouponCode });
         if (existingCoupon) {
             console.log('Existing coupon found:', existingCoupon);
             return res.status(400).json({ error: 'Coupon code already exists' });
         }
 
-        // Validate dates
+
         const start = new Date(StartDate);
         const end = new Date(EndDate);
         if (start > end) {
             return res.status(400).json({ error: 'Start Date cannot be later than End Date' });
         }
 
-        // Validate discount
+
         const discountValue = parseFloat(Discount);
         if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
             return res.status(400).json({ error: 'Discount must be between 0 and 100' });
         }
 
-        // Create new coupon
+
         const newCoupon = new Coupon({
             UserId: null,
             CouponName,
@@ -92,22 +92,30 @@ const addCoupon = async (req, res) => {
 const unlist = async (req, res) => {
     try {
         const couponId = req.params.couponId;
+        const coupon = await Coupon.findById(couponId);
+        if (!coupon) {
+            return res.status(404).json({ error: 'Coupon not found' });
+        }
         await Coupon.findByIdAndUpdate(couponId, { IsListed: false });
-        res.redirect('/admin/coupons');
+        res.status(200).json({ message: 'Coupon unlisted successfully' });
     } catch (error) {
         console.error('Error in unlist:', error);
-        res.redirect('/page-404');
+        res.status(500).json({ error: 'Failed to unlist coupon' });
     }
 };
 
 const list = async (req, res) => {
     try {
         const couponId = req.params.couponId;
+        const coupon = await Coupon.findById(couponId);
+        if (!coupon) {
+            return res.status(404).json({ error: 'Coupon not found' });
+        }
         await Coupon.findByIdAndUpdate(couponId, { IsListed: true });
-        res.redirect('/admin/coupons');
+        res.status(200).json({ message: 'Coupon listed successfully' });
     } catch (error) {
         console.error('Error in list:', error);
-        res.redirect('/page-404');
+        res.status(500).json({ error: 'Failed to list coupon' });
     }
 };
 
@@ -174,7 +182,7 @@ const list = async (req, res) => {
 module.exports = {
     coupon,
     addCoupon,
-   // editCoupon,
+    // editCoupon,
     // updateCoupon,
     unlist,
     list

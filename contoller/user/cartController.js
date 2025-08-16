@@ -339,7 +339,6 @@ const checkout = async (req, res) => {
       return res.redirect('/cart');
     }
 
-    // Fetch coupons with logging for debugging
     const coupons = await Coupon.find({
       StartDate: { $lte: new Date() },
       ExpiryDate: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },

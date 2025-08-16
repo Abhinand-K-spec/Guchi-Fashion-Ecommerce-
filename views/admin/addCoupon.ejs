@@ -87,12 +87,34 @@
         .pagination {
             margin-top: 10px;
         }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            min-width: 250px;
+            background-color: rgb(15, 160, 15);
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .toast.error {
+            background-color: #e11d48;
+            border-color: #b91c1c;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Add New Coupon</h2>
-        <form action="/admin/addCoupon" method="POST" id="couponForm" onsubmit="return validateForm()">
+        <form action="/admin/addCoupon" method="POST" id="couponForm" onsubmit="return handleCouponSubmit(event)">
             <div class="form-row">
                 <div class="form-group">
                     <label for="couponName">Coupon Name:</label>
@@ -167,24 +189,16 @@
                 </thead>
                 <tbody id="couponTable">
                     <% coupons.forEach(coupon => { %>
-                        <tr>
+                        <tr id="coupon-<%= coupon._id %>">
                             <td><%= coupon.CouponName %></td>
                             <td><%= coupon.CouponCode %></td>
                             <td><%= coupon.Discount ? coupon.Discount.toFixed(2) : 'N/A' %></td>
                             <td><%= coupon.UsageLimit %></td>
                             <td><%= new Date(coupon.StartDate).toLocaleDateString() %></td>
                             <td><%= new Date(coupon.ExpiryDate).toLocaleDateString() %></td>
-                            <td><%= coupon.IsListed ? 'Listed' : 'Unlisted' %></td>
+                            <td class="status"><%= coupon.IsListed ? 'Listed' : 'Unlisted' %></td>
                             <td>
-                                <% if (coupon.IsListed) { %>
-                                    <a href="/admin/unlistCoupon/<%= coupon._id %>" onclick="return confirm('Are you sure you want to unlist this coupon?')">
-                                        <button class="btn btn-danger">Unlist</button>
-                                    </a>
-                                <% } else { %>
-                                    <a href="/admin/listCoupon/<%= coupon._id %>" onclick="return confirm('Are you sure you want to list this coupon?')">
-                                        <button class="btn btn-danger">List</button>
-                                    </a>
-                                <% } %>
+                                <button class="btn btn-danger" onclick="toggleCouponStatus('<%= coupon._id %>', <%= coupon.IsListed %>)"><%= coupon.IsListed ? 'Unlist' : 'List' %></button>
                             </td>
                         </tr>
                     <% }) %>
@@ -200,10 +214,24 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${isError ? 'error' : ''}`;
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    
         function validateForm() {
             let isValid = true;
-
+    
             // Coupon Name validation
             const couponName = document.getElementById('couponName').value;
             if (!couponName) {
@@ -212,7 +240,7 @@
             } else {
                 document.getElementById('couponNameError').style.display = 'none';
             }
-
+    
             // Coupon Code validation
             const couponCode = document.getElementById('couponCode').value;
             if (!couponCode || !/^[A-Za-z0-9]{4,}$/.test(couponCode)) {
@@ -221,7 +249,7 @@
             } else {
                 document.getElementById('couponCodeError').style.display = 'none';
             }
-
+    
             // Usage Limit validation
             const usageLimit = document.getElementById('usageLimit').value;
             if (!usageLimit || usageLimit < 1) {
@@ -230,7 +258,7 @@
             } else {
                 document.getElementById('usageLimitError').style.display = 'none';
             }
-
+    
             // Start Date and End Date validation
             const startDate = new Date(document.getElementById('startDate').value);
             const endDate = new Date(document.getElementById('endDate').value);
@@ -245,7 +273,7 @@
                 document.getElementById('startDateError').style.display = 'none';
                 document.getElementById('endDateError').style.display = 'none';
             }
-
+    
             // Discount validation
             const discount = parseFloat(document.getElementById('discount').value);
             if (isNaN(discount) || discount < 0 || discount > 100) {
@@ -254,10 +282,83 @@
             } else {
                 document.getElementById('discountError').style.display = 'none';
             }
-
+    
             return isValid;
         }
-
+    
+        async function handleCouponSubmit(event) {
+            event.preventDefault();
+            if (!validateForm()) return;
+    
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+    
+            try {
+                const response = await axios.post('/admin/addCoupon', data);
+                console.log('Coupon creation response:', response.status, response.data);
+                showToast('Coupon created successfully');
+                addCouponToTable(response.data.coupon);
+                form.reset();
+            } catch (error) {
+                console.error('Coupon creation error:', error.response?.data || error);
+                showToast(error.response?.data?.error || 'Failed to create coupon', true);
+            }
+        }
+    
+        async function toggleCouponStatus(couponId, isListed) {
+            console.log(`Toggling coupon ${couponId}, currently ${isListed ? 'listed' : 'unlisted'}`);
+            const action = isListed ? 'unlistCoupon' : 'listCoupon';
+            try {
+                const response = await axios.post(`/admin/${action}/${couponId}`);
+                console.log(`${action} response:`, response.status, response.data);
+                showToast(`Coupon ${isListed ? 'unlisted' : 'listed'} successfully`);
+                updateCouponStatus(couponId, !isListed);
+            } catch (error) {
+                console.error(`${action} error:`, error.response?.data || error);
+                showToast(error.response?.data?.error || `Failed to ${isListed ? 'unlist' : 'list'} coupon`, true);
+            }
+        }
+    
+        function addCouponToTable(coupon) {
+            const table = document.getElementById('couponTable');
+            const row = document.createElement('tr');
+            row.id = `coupon-${coupon._id}`;
+            row.innerHTML = `
+                <td>${coupon.CouponName}</td>
+                <td>${coupon.CouponCode}</td>
+                <td>${coupon.Discount ? coupon.Discount.toFixed(2) : 'N/A'}</td>
+                <td>${coupon.UsageLimit}</td>
+                <td>${new Date(coupon.StartDate).toLocaleDateString()}</td>
+                <td>${new Date(coupon.ExpiryDate).toLocaleDateString()}</td>
+                <td class="status">${coupon.IsListed ? 'Listed' : 'Unlisted'}</td>
+                <td>
+                    <button class="btn btn-danger" onclick="toggleCouponStatus('${coupon._id}', ${coupon.IsListed})">${coupon.IsListed ? 'Unlist' : 'List'}</button>
+                </td>
+            `;
+            table.insertBefore(row, table.firstChild);
+        }
+    
+        function updateCouponStatus(couponId, isListed) {
+            console.log(`Updating status for coupon ${couponId} to ${isListed ? 'Listed' : 'Unlisted'}`);
+            const row = document.getElementById(`coupon-${couponId}`);
+            if (!row) {
+                console.error(`Row for coupon ${couponId} not found`);
+                showToast('Failed to update coupon status: Coupon not found', true);
+                return;
+            }
+            const statusCell = row.querySelector('.status');
+            const actionButton = row.querySelector('button');
+            if (!statusCell || !actionButton) {
+                console.error(`Status cell or button not found for coupon ${couponId}`);
+                showToast('Failed to update coupon status: UI elements missing', true);
+                return;
+            }
+            statusCell.textContent = isListed ? 'Listed' : 'Unlisted';
+            actionButton.textContent = isListed ? 'Unlist' : 'List';
+            actionButton.onclick = () => toggleCouponStatus(couponId, isListed);
+        }
+    
         function searchCoupons() {
             const searchTerm = document.getElementById('searchCoupons').value.toLowerCase();
             const rows = document.querySelectorAll('#couponTable tr');
@@ -266,12 +367,20 @@
                 row.style.display = text.includes(searchTerm) ? '' : 'none';
             });
         }
-
+    
         function clearSearch() {
             document.getElementById('searchCoupons').value = '';
             const rows = document.querySelectorAll('#couponTable tr');
             rows.forEach(row => row.style.display = '');
         }
+    
+
+        document.querySelectorAll('#couponTable button').forEach(button => {
+            const row = button.closest('tr');
+            const couponId = row.id.replace('coupon-', '');
+            const isListed = row.querySelector('.status').textContent === 'Listed';
+            button.onclick = () => toggleCouponStatus(couponId, isListed);
+        });
     </script>
 </body>
 </html>

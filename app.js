@@ -17,26 +17,25 @@ db();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(nocache());
 
 app.use(session({
-secret: process.env.SESSION_SECRET,
-resave: false,
-saveUninitialized: true,
-store: MongoStore.create({
-  mongoUrl: process.env.Mongodb_uri,
-  collectionName: 'sessions'
-}),
-
-cookie: {
-  secure: false,
-  httpOnly: true,
-  maxAge: 24 * 60 * 60 * 1000
-}
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: true,
+  store: MongoStore.create({
+    mongoUrl: process.env.Mongodb_uri,
+    collectionName: 'sessions'
+  }),
+  
+  cookie: {
+    secure: false,
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000
+  }
 }));
 
 app.use(passport.initialize());
@@ -60,6 +59,7 @@ app.set('view engine', 'ejs');
 app.set('views', [path.join(__dirname, 'views/user'), path.join(__dirname, 'views/admin')]);
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 app.use('/', userRouter);
 app.use('/admin', adminRouter);
 

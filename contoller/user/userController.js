@@ -142,14 +142,18 @@ const loadHomePage = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-  return req.session.destroy((err) => {
-    if (err) {
-      console.log('error occurred', err);
-      res.render('pageNotFound');
-    } else {
-      res.redirect('/login');
-    }
-  });
+
+  try {
+
+    delete req.session.user;
+    res.redirect('/login')
+
+  } catch (error) {
+    
+    console.log('error session destroy user');
+    res.render('page-404');
+  }
+
 };
 
 const loadSignup = async (req, res) => {
@@ -299,7 +303,7 @@ const verifyOtp = async (req, res) => {
             $set: { referals: saveUserData._id }
           });
 
-          // Create 50% discount coupon for referrer
+          // Create 50% discount for referring new user
           const referrerCoupon = new Coupon({
             CouponCode: `REF-${referrer._id}-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
             CouponName: `${referrer.name}'s 50% Referral Reward`,

@@ -70,7 +70,7 @@ const addCategoryOffer = async (req, res) => {
   }
 };
 
-// Remove category offer
+
 const removeCategoryOffer = async (req, res) => {
   try {
     const { id } = req.params;
@@ -94,7 +94,7 @@ const removeCategoryOffer = async (req, res) => {
   }
 };
 
-// Add product offer
+
 const addProductOffer = async (req, res) => {
   try {
     const { id } = req.params;
@@ -162,7 +162,7 @@ const addProductOffer = async (req, res) => {
   }
 };
 
-// Remove product offer
+
 const removeProductOffer = async (req, res) => {
   try {
     const { id } = req.params;

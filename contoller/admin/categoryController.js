@@ -6,7 +6,7 @@ const categoryinfo = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 3;
     const skip = (page - 1) * limit;
-    const now = new Date(); // Current date: July 24, 2025, 9:57 PM IST
+    const now = new Date(); 
 
     const categorydata = await Category
       .find({})
@@ -150,7 +150,7 @@ const searchCategory = async (req, res) => {
     const limit = 4;
     const skip = (page - 1) * limit;
     const search = req.query.search || '';
-    const now = new Date(); // Current date: July 24, 2025, 9:57 PM IST
+    const now = new Date(); 
 
     const query = {
       categoryName: { $regex: new RegExp(search, 'i') }

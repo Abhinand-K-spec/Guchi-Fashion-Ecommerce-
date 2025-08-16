@@ -47,8 +47,10 @@ router.post('/profile/update-username', userAuth, profileController.updateUserna
 
 // address management------------------------------------------------------------------------------------->
 router.get('/add-address', userAuth, addressController.getAddAddress);
+router.get('/add-addressCheckout',userAuth,addressController.getAddAddressFromCheckout);
 router.post('/add-address', userAuth, addressController.addAddress);
 router.get('/edit-address/:id', userAuth, addressController.getEditAddress);
+router.get('/edit-addressCheckout/:id', userAuth, addressController.getEditAddressCheckout);
 router.post('/edit-address/:id', userAuth, addressController.editAddress);
 router.get('/delete-address/:addressId', userAuth, addressController.deleteAddress);
 //-------------------------------------------------------------------------------------------------------->

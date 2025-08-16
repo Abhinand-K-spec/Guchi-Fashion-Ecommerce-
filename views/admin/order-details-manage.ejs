@@ -109,6 +109,9 @@
               <p><strong>Quantity:</strong> <%= item.quantity %></p>
               <p><strong>Price:</strong> ₹<%= item.price || 0 %></p>
               <p><strong>Status:</strong> 
+                <% if(order.PaymentMethod==='Online' && order.PaymentStatus!=='Completed' && order.Status==='Pending') { %>
+                        <h3 class="text-danger">Payment failed</h3>
+                <% } else { %>
                 <span class="badge 
                   <% if(item.status === 'Delivered') { %> bg-success
                   <% } else if(item.status === 'Cancelled') { %> bg-danger
@@ -118,9 +121,10 @@
                   <% } else { %> bg-secondary <% } %>"
                   id="item-status-<%= item._id %>">
                   <%= item.status %>
-                </span>
+                </span> 
+                 
               </p>
-              <!-- Item Status Update Form -->
+
               <% if (item.status !== 'Cancelled' && item.status !== 'Returned' && item.returnStatus !== 'Return Requested' && item.returnStatus !== 'Request Approved') { %>
                 <form class="update-item-status-form mt-2" data-item-id="<%= item._id %>" action="/admin/order-details/<%= order._id %>/update-item-status/<%= item._id %>" method="POST">
                   <select name="status" class="form-control form-control-sm">
@@ -131,6 +135,7 @@
                     <option value="Cancelled" <%= item.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
                   </select>
                 </form>
+                <% } %>
               <% } %>
               <% if (item.cancelReason) { %>
                 <p class="text-muted"><strong>Cancel Reason:</strong> <%= item.cancelReason %></p>
@@ -143,7 +148,7 @@
               <% } %>
             </div>
             <div class="col-md-3 text-end">
-              <% if (order.Status === 'Pending' && item.status !== 'Cancelled' && item.returnStatus === 'NotRequested' && item.status !== 'Delivered') { %>
+              <% if (order.Status === 'Pending' && item.status !== 'Cancelled' && item.returnStatus === 'NotRequested' && item.status !== 'Delivered' && order.paymentStatus==='Confirmed') { %>
                 <form class="cancel-item-form mb-2" data-item-id="<%= item._id %>" action="/admin/order-details/<%= order._id %>/cancel-item/<%= item._id %>" method="POST">
                   <input type="text" name="reason" class="form-control form-control-sm mb-2" placeholder="Reason for cancellation (optional)">
                   <button type="submit" class="btn btn-sm btn-danger">Cancel Item</button>

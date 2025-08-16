@@ -26,7 +26,7 @@ const getAdminOrders = async (req, res) => {
       .limit(limit)
       .lean();
 
-      // console.log('get admin orders id:',orders.OrderId)
+
     res.render('order-manage', {
       orders,
       currentPage: page,
@@ -166,22 +166,21 @@ const cancelSingleItem = async (req, res) => {
       await product.save();
     }
 
-    let refundAmount = item.price * item.quantity; // Use the discounted price paid
+    let refundAmount = item.price * item.quantity;
     if (order.discountAmount > 0) {
-      // Adjust refund if discount was applied (proportional to item's contribution)
-      const itemTotalBeforeDiscount = (item.originalPrice || item.price) * item.quantity; // Original price if available
+      const itemTotalBeforeDiscount = (item.originalPrice || item.price) * item.quantity;
       const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
       const discountProportion = (itemTotalBeforeDiscount / totalOrderAmountBeforeDiscount) * order.discountAmount;
-      refundAmount -= discountProportion; // Subtract the discount portion
+      refundAmount -= discountProportion;
     }
 
     if (order.PaymentMethod === 'Online' && order.PaymentStatus === 'Completed') {
       let wallet = await Wallet.findOne({ UserId: order.UserId });
       if (!wallet) {
-        wallet = new Wallet({ UserId: order.UserId, balance: 0, transactions: [] });
+        wallet = new Wallet({ UserId: order.UserId, Balance: 0, Transaction: [] });
       }
-      wallet.balance += refundAmount;
-      wallet.transactions.push({
+      wallet.Balance += refundAmount;
+      wallet.Transaction.push({
         amount: refundAmount,
         type: 'credit',
         description: `Refund for cancelled item ${item.product?.productName} in order ${order._id}`,
@@ -287,10 +286,10 @@ const updateItemStatus = async (req, res) => {
       if (order.PaymentMethod === 'Online' && order.PaymentStatus === 'Completed') {
         let wallet = await Wallet.findOne({ UserId: order.UserId });
         if (!wallet) {
-          wallet = new Wallet({ UserId: order.UserId, balance: 0, transactions: [] });
+          wallet = new Wallet({ UserId: order.UserId, Balance: 0, Transaction: [] });
         }
-        wallet.balance += refundAmount;
-        wallet.transactions.push({
+        wallet.Balance += refundAmount;
+        wallet.Transaction.push({
           amount: refundAmount,
           type: 'credit',
           description: `Refund for cancelled item ${item.product.productName} in order ${order._id}`,

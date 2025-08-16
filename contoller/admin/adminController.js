@@ -26,7 +26,7 @@ const loadDashboard = async(req,res)=>{
     res.render('admin-login');
 
    } catch (error) {
-    res.render('pageNotFound');
+    res.render('page-404');
    }
 };
 
@@ -56,19 +56,20 @@ const login = async (req, res) => {
   
     } catch (error) {
       console.error('Error during admin login:', error);
-      res.status(500).render('pageNotFound');
+      res.status(500).render('page-404');
     }
   };
   
 const logout = async (req,res)=>{
-  return req.session.destroy((err)=>{
-      if(err){
-          console.log('error occured',err);
-          res.render('pageNotFound');
-      }else{
-          res.render('admin-login',{msg:'Logged out'});
-      }
-  });
+ try {
+
+  delete req.session.admin;
+  res.redirect('/admin/login');
+  
+ } catch (error) {
+  console.log('error destroying admin session');
+  res.render('page-404');
+ }
 };
   
 
