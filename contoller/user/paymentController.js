@@ -60,7 +60,7 @@ const getProductOffer = async (product) => {
 
 const verifyPayment = async (req, res) => {
   try {
-    const { razorpay_payment_id, razorpay_order_id, razorpay_signature,  selectedAddressId, coupon, finalTotal } = req.body;
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, selectedAddressId, coupon, finalTotal } = req.body;
     const userId = req.session.user;
     if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature || !userId || !selectedAddressId) {
       console.error('Missing payment verification fields');
@@ -74,6 +74,25 @@ const verifyPayment = async (req, res) => {
       console.error('Invalid Razorpay signature');
       return res.status(400).json({ success: false, message: 'Invalid payment signature.' });
     }
+    const razorpayOrder = await razorpay.orders.fetch(razorpay_order_id);
+    const orderId = razorpayOrder.notes.orderId;
+    if (!orderId) {
+      console.error('OrderId not found in Razorpay notes');
+      return res.status(400).json({ success: false, message: 'Order ID not found in payment details.' });
+    }
+    const order = await Orders.findById(orderId).populate('Items.product');
+    if (!order) {
+      console.error('Order not found:', orderId);
+      return res.status(404).json({ success: false, message: 'Order not found.' });
+    }
+    if (order.PaymentStatus === 'Completed') {
+      console.log('Order already processed:', orderId);
+      return res.status(200).json({
+        success: true,
+        orderId: order._id,
+        redirect: `/payment-success/${order._id}`
+      });
+    }
     const cart = await Cart.findOne({ user: userId }).populate('Items.product').lean();
     if (!cart || !cart.Items.length) {
       return res.status(400).json({ success: false, message: 'Cart is empty.' });
@@ -83,97 +102,15 @@ const verifyPayment = async (req, res) => {
       console.log('Invalid address:', selectedAddressId);
       return res.status(400).json({ success: false, message: 'Invalid address selected.' });
     }
-    let subtotal = 0;
-    let totalItemDiscount = 0;
-    const orderItems = [];
-    for (const item of cart.Items) {
-      const product = item.product;
-      const variant = product?.Variants?.[0];
-      if (!product || !variant) {
-        console.error(`Invalid order item: productId=${item.product?._id || 'missing'}`);
-        continue;
-      }
-      const { offer, salePrice } = await getProductOffer(product);
-      const price = salePrice || variant.Price || 1;
-      const originalPrice = variant.Price || 1;
-      const quantity = item.quantity;
-      const itemTotal = price * quantity;
-      const itemDiscount = (originalPrice - price) * quantity;
-      orderItems.push({
-        product: product._id,
-        quantity,
-        price,
-        itemDiscount,
-        itemTotal
-      });
-      subtotal += itemTotal;
-      totalItemDiscount += itemDiscount;
-    }
-    if (!orderItems.length) {
-      console.log('No valid order items after validation');
-      return res.status(400).json({ success: false, message: 'No valid items in cart.' });
-    }
-    const tax = Math.round(subtotal * 0.05);
-    const deliveryCharge = 40;
-    let couponDiscount = 0;
-    let couponData = null;
-    if (coupon) {
-      couponData = await Coupon.findOne({
-        CouponCode: coupon.toUpperCase(),
-        StartDate: { $lte: new Date() },
-        ExpiryDate: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
-        IsListed: true,
-        $or: [{ UserId: null }, { UserId: new mongoose.Types.ObjectId(userId) }],
-        MinCartValue: { $lte: subtotal }
-      });
-      if (couponData && couponData.Discount > 0) {
-        couponDiscount = subtotal * (couponData.Discount / 100);
-        if (couponData.MaxDiscount && Number.isFinite(couponData.MaxDiscount)) {
-          couponDiscount = Math.min(couponDiscount, couponData.MaxDiscount);
-        }
-        couponDiscount = Math.round(couponDiscount * 100) / 100;
-        const totalItemTotal = orderItems.reduce((sum, item) => sum + item.itemTotal, 0);
-        orderItems.forEach(item => {
-          const itemRatio = item.itemTotal / totalItemTotal;
-          item.itemDiscount = (item.itemDiscount || 0) + Math.round((couponDiscount * itemRatio) * 100) / 100;
-        });
-      }
-    }
-    const discountAmount = totalItemDiscount + couponDiscount;
-    const order = new Orders({
-      UserId: userId,
-      addressId: selectedAddressId,
-      Address: {
-        name: selectedAddress.name,
-        phone: selectedAddress.phone,
-        alternativePhone: selectedAddress.alternativePhone,
-        line1: selectedAddress.line1,
-        town: selectedAddress.town,
-        city: selectedAddress.city,
-        state: selectedAddress.state,
-        postCode: selectedAddress.postCode
-      },
-      Items: orderItems,
-      subtotal,
-      coupon: couponData ? couponData._id : null,
-      couponDiscount,
-      discountAmount,
-      totalItemDiscount,
-      tax,
-      deliveryCharge,
-      finalTotal,
-      PaymentMethod: 'Online',
-      PaymentStatus: 'Completed',
-      razorpayOrderId: razorpay_order_id,
-      razorpayPaymentId: razorpay_payment_id,
-      razorpaySignature: razorpay_signature,
-      Status: 'Confirmed',
-      OrderDate: new Date(),
-      OrderId: `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`, 
-    });
+    order.PaymentMethod = 'Online';
+    order.PaymentStatus = 'Completed';
+    order.razorpayOrderId = razorpay_order_id;
+    order.razorpayPaymentId = razorpay_payment_id;
+    order.razorpaySignature = razorpay_signature;
+    order.Status = 'Confirmed';
     await order.save();
     await Cart.findOneAndUpdate({ user: userId }, { Items: [] });
-    for (const item of orderItems) {
+    for (const item of order.Items) {
       await Products.findByIdAndUpdate(item.product, { 
         $inc: { 'Variants.0.Stock': -item.quantity }
       });

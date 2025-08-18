@@ -50,20 +50,20 @@ const addCoupon = async (req, res) => {
         const existingCoupon = await Coupon.findOne({ CouponCode });
         if (existingCoupon) {
             console.log('Existing coupon found:', existingCoupon);
-            return res.status(400).json({ error: 'Coupon code already exists' });
+            return res.status(400).json({ success: false, error: 'Coupon code already exists' });
         }
 
 
         const start = new Date(StartDate);
         const end = new Date(EndDate);
         if (start > end) {
-            return res.status(400).json({ error: 'Start Date cannot be later than End Date' });
+            return res.status(400).json({ success: false, error: 'Start Date cannot be later than End Date' });
         }
 
 
         const discountValue = parseFloat(Discount);
         if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
-            return res.status(400).json({ error: 'Discount must be between 0 and 100' });
+            return res.status(400).json({ success: false, error: 'Discount must be between 0 and 100' });
         }
 
 
@@ -79,13 +79,17 @@ const addCoupon = async (req, res) => {
             MaxCartValue: MaxCartValue || null,
             IsListed: true
         });
-        // console.log('New coupon to save:', newCoupon);
 
-        await newCoupon.save();
-        res.redirect('/admin/coupons?page=1'); 
+        console.log('New coupon to save:', newCoupon);
+
+
+        const savedCoupon = await newCoupon.save();
+        
+
+        res.status(201).json({ success: true, coupon: savedCoupon });
     } catch (error) {
         console.error('Error in addCoupon:', error);
-        res.render('page-404');
+        res.status(500).json({ success: false, error: 'Failed to create coupon' });
     }
 };
 

@@ -38,7 +38,6 @@ const listOrders = async (req, res) => {
     const orders = await Orders.find(query)
       .populate({
         path: 'Items.product',
-        match: { 'Variants.0.Stock': { $gt: 0 } },
       })
       .populate('UserId')
       .sort({ OrderDate: -1 })

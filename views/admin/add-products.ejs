@@ -8,6 +8,9 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
+    *{
+      background-color: #000;
+    }
     body {
       background-color: #040303;
       font-family: 'Inter', sans-serif;
@@ -134,8 +137,8 @@
 <body>
   <%- include("../partials/admin/header") %>
 
-  <div class="container">
-    <h2>Add New Product</h2>
+  <div class="container ">
+    <h2 class="text-white">Add New Product</h2>
     <form method="POST" action="/admin/addproduct" enctype="multipart/form-data" onsubmit="return validateForm()">
       <div class="row g-4">
         <div class="col-md-6">
@@ -297,7 +300,7 @@ function toggleSizeRow(checkbox) {
     const row = document.createElement('tr');
     row.setAttribute('data-size', size);
     row.innerHTML = `
-      <td><input type="text" name="size[]" value="${size}" readonly class="form-control-plaintext text-center bg-black"></td>
+      <td><input type="text" name="size[]" value="${size}" readonly class="form-control-plaintext text-center text-white"></td>
       <td><input type="number" name="price[]" class="form-control" placeholder="₹" min="1"></td>
       <td><input type="number" name="stock[]" class="form-control" min="1"></td>`;
     tableBody.appendChild(row);
@@ -323,28 +326,28 @@ function validateForm() {
 
   // Validate product name
   if (!productName) {
-    alert('Product Name is required.');
+    toastBody('Product Name is required.');
     console.warn('Validation failed: Product Name is empty');
     return false;
   }
 
   // Validate category
   if (!category) {
-    alert('Please select a Product Category.');
+    toastBody('Please select a Product Category.');
     console.warn('Validation failed: Category not selected');
     return false;
   }
 
   // Validate description
   if (!description) {
-    alert('Product Description is required.');
+    toastBody('Product Description is required.');
     console.warn('Validation failed: Description is empty');
     return false;
   }
 
   // Validate sizes, prices, and stock
   if (variantRows.length === 0) {
-    alert('At least one size must be selected.');
+    toastBody('At least one size must be selected.');
     console.warn('Validation failed: No sizes selected');
     return false;
   }
@@ -355,25 +358,25 @@ function validateForm() {
     const stock = row.querySelector('input[name="stock[]"]').value.trim();
 
     if (!size || !price || !stock) {
-      alert(`All variant fields for size ${size} (Size, Price, Stock) must be filled.`);
+      toastBody(`All variant fields for size ${size} (Size, Price, Stock) must be filled.`);
       console.warn(`Validation failed: Incomplete fields for size ${size}`);
       return false;
     }
 
     if (isNaN(price) || parseFloat(price) <= 0) {
-      alert(`Price for size ${size} must be a positive number.`);
+      toastBody(`Price for size ${size} must be a positive number.`);
       console.warn(`Validation failed: Invalid price for size ${size}`);
       return false;
     }
 
     if (isNaN(stock) || parseInt(stock) <= 0) {
-      alert(`Stock for size ${size} must be a positive number.`);
+      toastBody(`Stock for size ${size} must be a positive number.`);
       console.warn(`Validation failed: Invalid stock for size ${size}`);
       return false;
     }
 
     if (sizeSet.has(size)) {
-      alert(`Duplicate size detected: ${size}`);
+      toastBody(`Duplicate size detected: ${size}`);
       console.warn(`Validation failed: Duplicate size ${size}`);
       return false;
     }
@@ -383,7 +386,7 @@ function validateForm() {
 
   // Validate images
   if (croppedImages.some(img => !img)) {
-    alert('All three product images must be uploaded and cropped.');
+    toastBody('All three product images must be uploaded and cropped.');
     console.warn('Validation failed: Not all images are cropped');
     return false;
   }
@@ -438,7 +441,7 @@ document.getElementById('addProductForm').addEventListener('submit', async (e) =
         console.log(`Appending image${i}`);
       } catch (error) {
         console.error(`Failed to process image${i}:`, error);
-        alert('Error processing image. Please try re-uploading.');
+        toastBody('Error processing image. Please try re-uploading.');
         return;
       }
     }
@@ -452,10 +455,10 @@ document.getElementById('addProductForm').addEventListener('submit', async (e) =
 
     console.log('Server response:', response.data);
     if (response.data.success) {
-      alert('Product added successfully!');
+      toastBody('Product added successfully!');
       window.location.href = '/admin/products';
     } else {
-      alert(response.data.message || 'Failed to add product.');
+      toastBody(response.data.message || 'Failed to add product.');
       console.warn('Server returned failure:', response.data.message);
     }
   } catch (error) {
@@ -464,11 +467,11 @@ document.getElementById('addProductForm').addEventListener('submit', async (e) =
       response: error.response?.data,
       status: error.response?.status
     });
-    alert(error.response?.data?.message || 'An error occurred while adding the product.');
+    toastBody(error.response?.data?.message || 'An error occurred while adding the product.');
   }
 });
 
-// Convert base64 data URL to Blob for image upload
+
 function dataURLtoBlob(dataURL) {
   console.log('Converting dataURL to Blob');
   const [header, data] = dataURL.split(',');
