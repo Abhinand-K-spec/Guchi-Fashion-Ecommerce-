@@ -4,7 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Order Details - Guchi Fashion</title>
 
-  <!-- Bootstrap & Font Awesome -->
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <!-- Axios -->
@@ -53,7 +53,7 @@
     a {
       text-decoration: none;
     }
-    .alert-container {
+    .toast-container {
       position: fixed;
       top: 20px;
       right: 20px;
@@ -80,7 +80,7 @@
 </head>
 
 <body>
-  <div class="alert-container"></div>
+  <div class="toast-container"></div>
 
   <div class="container py-5">
     <div class="order-header">
@@ -168,6 +168,11 @@
           <% } %>
         </div>
       </div>
+      <div>
+        <%if(item.status === 'Pending' && item.status !== 'Cancelled' && item.returnStatus === 'NotRequested'){%>
+          <button class="btn btn-danger btn-custom cancel-full-order-btn" data-bs-toggle="modal" data-bs-target="#cancelFullOrderModal">Cancel Full Order</button>
+        <%}%>
+      </div>
     <% }) %>
 
     <!-- Return Modal (Single Item Only) -->
@@ -195,6 +200,28 @@
         </form>
       </div>
     </div>
+
+    <!-- Cancel Full Order Modal -->
+    <div class="modal fade" id="cancelFullOrderModal" tabindex="-1" aria-labelledby="cancelFullOrderModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <form id="cancel-full-order-form" class="modal-content p-4" data-action="/order/<%= order._id %>/cancel">
+          <div class="modal-header border-0 pb-2">
+            <h5 class="modal-title" id="cancelFullOrderModalLabel">Cancel Full Order</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to cancel the entire order?</p>
+            <label for="cancel-full-reason" class="form-label">Reason for cancellation (required):</label>
+            <input type="text" name="reason" id="cancel-full-reason" class="form-control" placeholder="Reason for cancellation" required />
+            <div class="invalid-feedback">Please provide a cancellation reason.</div>
+          </div>
+          <div class="modal-footer border-0 pt-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <!-- Bootstrap JS -->
@@ -203,23 +230,23 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const returnModal = new bootstrap.Modal(document.getElementById('returnOrderModal'));
+      const cancelFullOrderModal = new bootstrap.Modal(document.getElementById('cancelFullOrderModal'));
 
-      // Prevent modal from closing when clicking inside
-      const modal = document.getElementById('returnOrderModal');
-      if (modal) {
-        modal.addEventListener('click', e => {
-          if (e.target.closest('.modal-content')) {
-            e.stopPropagation();
-          }
-        });
-      }
+      const modals = [document.getElementById('returnOrderModal'), document.getElementById('cancelFullOrderModal')];
+      modals.forEach(modal => {
+        if (modal) {
+          modal.addEventListener('click', e => {
+            if (e.target.closest('.modal-content')) {
+              e.stopPropagation();
+            }
+          });
+        }
+      });
 
-      // Prevent dropdown from closing unexpectedly
       document.querySelectorAll('.form-select').forEach(select => {
         select.addEventListener('click', e => e.stopPropagation());
       });
 
-      // Set return form action dynamically for single item
       document.querySelectorAll('.return-item-btn').forEach(button => {
         button.addEventListener('click', () => {
           const itemId = button.dataset.itemId;
@@ -231,7 +258,6 @@
         });
       });
 
-      // Handle single item cancellation
       document.querySelectorAll('.cancel-item-form').forEach(form => {
         form.addEventListener('submit', async e => {
           e.preventDefault();
@@ -242,35 +268,40 @@
 
           if (!reason) {
             reasonInput.classList.add('is-invalid');
-            showAlert('danger', 'Please provide a cancellation reason');
+            showToast('danger', 'Please provide a cancellation reason');
             return;
           }
           reasonInput.classList.remove('is-invalid');
-
+          //cancel item router
           try {
             console.log(`Sending cancel request: itemId=${itemId}, reason=${reason}`);
-            const response = await axios.post(formElement.dataset.action, { reason });
+            const response = await axios.post(formElement.dataset.action, { reason }, {
+              headers: { 'Accept': 'application/json' }
+            });
             console.log('Cancel Response:', response.data);
 
-            const itemCard = document.getElementById(`item-${itemId}`);
-            itemCard.querySelector('.cancel-item-form')?.remove();
-            itemCard.querySelector('.return-item-btn')?.remove();
-            const badge = itemCard.querySelector(`#item-status-${itemId}`);
-            badge.classList.remove('bg-success', 'bg-primary', 'bg-info', 'bg-warning', 'text-dark');
-            badge.classList.add('bg-danger');
-            badge.textContent = 'Cancelled';
-            if (reason) {
-              itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Cancel Reason:</strong> ${reason}</p>`);
+            if (response.data.success) {
+              const itemCard = document.getElementById(`item-${itemId}`);
+              itemCard.querySelector('.cancel-item-form')?.remove();
+              itemCard.querySelector('.return-item-btn')?.remove();
+              const badge = itemCard.querySelector(`#item-status-${itemId}`);
+              badge.classList.remove('bg-success', 'bg-primary', 'bg-info', 'bg-warning', 'text-dark');
+              badge.classList.add('bg-danger');
+              badge.textContent = 'Cancelled';
+              if (reason) {
+                itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Cancel Reason:</strong> ${reason}</p>`);
+              }
+              showToast('success', response.data.message);
+            } else {
+              showToast('danger', response.data.message || 'Cancellation failed');
             }
-            showAlert('success', response.data.message);
           } catch (error) {
             console.error('Cancel Error:', error.response?.data || error);
-            showAlert('danger', error.response?.data?.message || 'An error occurred while cancelling the item');
+            showToast('danger', error.response?.data?.message || 'An error occurred while cancelling the item');
           }
         });
       });
 
-      // Handle single item return
       document.getElementById('return-order-form')?.addEventListener('submit', async e => {
         e.preventDefault();
         const form = e.target;
@@ -281,54 +312,107 @@
 
         if (!reason || reason === '') {
           reasonSelect.classList.add('is-invalid');
-          showAlert('danger', 'Please select a valid return reason');
+          showToast('danger', 'Please select a valid return reason');
           return;
         }
         reasonSelect.classList.remove('is-invalid');
-
+        //return url
         try {
           console.log(`Sending return request: url=${url}, itemId=${itemId}, reason=${reason}`);
-          const response = await axios.post(url, { reason });
+          const response = await axios.post(url, { reason }, {
+            headers: { 'Accept': 'application/json' }
+          });
           console.log('Return Response:', response.data);
 
-          const itemCard = document.getElementById(`item-${itemId}`);
-          itemCard.querySelector('.return-item-btn')?.remove();
-          itemCard.querySelector('.btn-outline-secondary')?.remove();
-          const statusBadge = itemCard.querySelector(`#item-status-${itemId}`);
-          statusBadge.classList.remove('bg-success', 'bg-primary', 'bg-info');
-          statusBadge.classList.add('bg-warning', 'text-dark');
-          statusBadge.textContent = 'Return Requested';
-          if (reason) {
-            itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Return Reason:</strong> ${reason}</p>`);
-            itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Return Requested At:</strong> ${new Date().toLocaleString()}</p>`);
+          if (response.data.success) {
+            const itemCard = document.getElementById(`item-${itemId}`);
+            itemCard.querySelector('.return-item-btn')?.remove();
+            itemCard.querySelector('.btn-outline-secondary')?.remove();
+            const statusBadge = itemCard.querySelector(`#item-status-${itemId}`);
+            statusBadge.classList.remove('bg-success', 'bg-primary', 'bg-info');
+            statusBadge.classList.add('bg-warning', 'text-dark');
+            statusBadge.textContent = 'Return Requested';
+            if (reason) {
+              itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Return Reason:</strong> ${reason}</p>`);
+              itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Return Requested At:</strong> ${new Date().toLocaleString()}</p>`);
+            }
+            itemCard.querySelector('.col-md-3').insertAdjacentHTML('beforeend', `
+              <p><strong>Return Status:</strong> <span class="badge bg-warning text-dark">Return Requested</span></p>
+            `);
+            returnModal.hide();
+            showToast('success', response.data.message);
+          } else {
+            showToast('danger', response.data.message || 'Return request failed');
           }
-          itemCard.querySelector('.col-md-3').insertAdjacentHTML('beforeend', `
-            <p><strong>Return Status:</strong> <span class="badge bg-warning text-dark">Return Requested</span></p>
-          `);
-          returnModal.hide();
-          showAlert('success', response.data.message);
         } catch (error) {
           console.error('Return Error:', error.response?.data || error);
-          showAlert('danger', error.response?.data?.message || 'An error occurred while requesting return');
+          showToast('danger', error.response?.data?.message || 'An error occurred while requesting return');
         }
       });
 
-      // Show Bootstrap alerts
-      function showAlert(type, message) {
-        const alertHtml = `
-          <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      document.getElementById('cancel-full-order-form')?.addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = e.target;
+        const url = form.dataset.action;
+        const reasonInput = form.querySelector('#cancel-full-reason');
+        const reason = reasonInput.value.trim();
+
+        if (!reason) {
+          reasonInput.classList.add('is-invalid');
+          showToast('danger', 'Please provide a cancellation reason');
+          return;
+        }
+        reasonInput.classList.remove('is-invalid');
+        //full order cancel
+        try {
+          console.log(`Sending full order cancel request: url=${url}, reason=${reason}`);
+          const response = await axios.post(url, { reason }, {
+            headers: { 'Accept': 'application/json' }
+          });
+          console.log('Full Order Cancel Response:', response.data);
+
+          if (response.data.success) {
+            document.querySelectorAll('.product-card').forEach(card => {
+              card.querySelector('.cancel-item-form')?.remove();
+              card.querySelector('.return-item-btn')?.remove();
+              card.querySelector('.cancel-full-order-btn')?.remove();
+              const itemId = card.id.replace('item-', '');
+              const badge = card.querySelector(`#item-status-${itemId}`);
+              badge.classList.remove('bg-success', 'bg-primary', 'bg-info', 'bg-warning', 'text-dark');
+              badge.classList.add('bg-danger');
+              badge.textContent = 'Cancelled';
+              if (reason) {
+                card.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Cancel Reason:</strong> ${reason}</p>`);
+              }
+            });
+            cancelFullOrderModal.hide();
+            showToast('success', response.data.message);
+          } else {
+            showToast('danger', response.data.message || 'Full order cancellation failed');
+          }
+        } catch (error) {
+          console.error('Full Order Cancel Error:', error.response?.data || error);
+          showToast('danger', error.response?.data?.message || 'An error occurred while cancelling the order');
+        }
+      });
+
+      function showToast(type, message) {
+        const toastHtml = `
+          <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+              <div class="toast-body">${message}</div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
           </div>
         `;
-        const alertContainer = document.querySelector('.alert-container');
-        alertContainer.insertAdjacentHTML('beforeend', alertHtml);
+        const toastContainer = document.querySelector('.toast-container');
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        const toastElement = toastContainer.querySelector('.toast:last-child');
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
         setTimeout(() => {
-          const alert = alertContainer.querySelector('.alert');
-          if (alert) {
-            alert.classList.add('fade');
-            setTimeout(() => alert.remove(), 500);
-          }
+          toast.hide();
+          setTimeout(() => toastElement.remove(), 500);
         }, 3000);
       }
     });

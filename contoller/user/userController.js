@@ -97,6 +97,7 @@ const getProductOffer = async (product) => {
 
 const loadHomePage = async (req, res) => {
   try {
+
     const userId = req.session.user;
     const categories = await category.find({ isListed: true });
     const categoryIds = categories.map(cat => cat._id);
@@ -104,6 +105,7 @@ const loadHomePage = async (req, res) => {
       IsListed: true,
       Category: { $in: categoryIds },
     }).populate('Category').sort({ CreatedDate: -1 }).lean();
+
     const productsWithOffers = await Promise.all(allProducts.map(async (product) => {
       if (!product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
         console.error(`Invalid Variants for product: ${product._id}`);
@@ -115,7 +117,6 @@ const loadHomePage = async (req, res) => {
       }
       
       const { offer, salePrice } = await getProductOffer(product);
-      // console.log('offer :',offer)
       const variant = product.Variants[0];
       return {
         ...product,
@@ -142,18 +143,13 @@ const loadHomePage = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-
   try {
-
     delete req.session.user;
     res.redirect('/login')
-
   } catch (error) {
-    
     console.log('error session destroy user');
     res.render('page-404');
   }
-
 };
 
 const loadSignup = async (req, res) => {
@@ -257,6 +253,7 @@ const signup = async (req, res) => {
 const securePassword = async (password) => {
   try {
     const passwordHash = await bcrypt.hash(password, 10);
+    console.log('pass :',passwordHash);
     return passwordHash;
   } catch (error) {
     console.error('Error hashing password:', error);
@@ -431,7 +428,7 @@ const changePassword = async (req, res) => {
     const { currentPassword, newPassword, confirmPassword } = req.body;
 
     
-    // console.log('Raw req.body:', { currentPassword, newPassword, confirmPassword });
+    console.log('Raw req.body:', { currentPassword, newPassword, confirmPassword });
 
     if (!currentPassword || !newPassword || !confirmPassword) {
       return res.json({ success: false, message: 'All fields are required' });
@@ -445,20 +442,20 @@ const changePassword = async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-    // console.log('bcrypt.compare result:', isMatch);
+     console.log('bcrypt.compare result:', isMatch);
 
     if (!isMatch) {
       return res.json({ success: false, message: 'Current password is incorrect' });
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    // console.log('New hashed password:', hashedPassword);
+    console.log('New hashed password:', hashedPassword);
 
     user.password = hashedPassword;
     await user.save();
 
     
     const updatedUser = await User.findById(userId);
-    // console.log('After save, stored password:', updatedUser.password);
+    console.log('After save, stored password:', updatedUser.password);
 
     return res.json({ success: true });
   } catch (error) {

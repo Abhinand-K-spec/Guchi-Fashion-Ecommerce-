@@ -77,7 +77,7 @@
         return;
       }
 
-      // Add to Cart
+
       document.querySelectorAll('.add-to-cart').forEach(button => {
         button.addEventListener('click', async (e) => {
           const productId = e.currentTarget.getAttribute('data-product-id');
@@ -96,13 +96,13 @@
             toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white', 'text-dark');
             if (result.success) {
               toastEl.classList.add('bg-success', 'text-white');
-              toastBody.textContent = '🎉 Product successfully added to cart and removed from wishlist.';
+              toastBody.textContent = ' Product successfully added to cart and removed from wishlist.';
               const toast = new bootstrap.Toast(toastEl);
               toast.show();
               setTimeout(() => { window.location.reload(); }, 10000);
             } else {
               toastEl.classList.add('bg-danger', 'text-white');
-              toastBody.textContent = '❌ Failed to add product to cart: ' + (result.message || 'Unknown error.');
+              toastBody.textContent = ' Failed to add product to cart: ' + (result.message || 'Unknown error.');
               const toast = new bootstrap.Toast(toastEl);
               toast.show();
             }
@@ -112,14 +112,14 @@
             const toastBody = toastEl.querySelector('.toast-body');
             toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white', 'text-dark');
             toastEl.classList.add('bg-danger', 'text-white');
-            toastBody.textContent = '❌ Error adding product to cart.';
+            toastBody.textContent = 'Error adding product to cart.';
             const toast = new bootstrap.Toast(toastEl);
             toast.show();
           }
         });
       });
 
-      // Remove from Wishlist
+
       document.querySelectorAll('.remove-from-wishlist').forEach(button => {
         button.addEventListener('click', async (e) => {
           const wishlistId = e.currentTarget.getAttribute('data-wishlist-id');
@@ -138,13 +138,13 @@
             toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white', 'text-dark');
             if (result.success) {
               toastEl.classList.add('bg-success', 'text-white');
-              toastBody.textContent = '✅ Product successfully removed from wishlist.';
+              toastBody.textContent = 'Product successfully removed from wishlist.';
               const toast = new bootstrap.Toast(toastEl);
               toast.show();
               setTimeout(() => { window.location.reload(); }, 2000);
             } else {
               toastEl.classList.add('bg-danger', 'text-white');
-              toastBody.textContent = '❌ Failed to remove product from wishlist: ' + (result.message || 'Unknown error.');
+              toastBody.textContent = 'Failed to remove product from wishlist: ' + (result.message || 'Unknown error.');
               const toast = new bootstrap.Toast(toastEl);
               toast.show();
             }
@@ -154,7 +154,7 @@
             const toastBody = toastEl.querySelector('.toast-body');
             toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white', 'text-dark');
             toastEl.classList.add('bg-danger', 'text-white');
-            toastBody.textContent = '❌ Error removing product from wishlist.';
+            toastBody.textContent = 'Error removing product from wishlist.';
             const toast = new bootstrap.Toast(toastEl);
             toast.show();
           }

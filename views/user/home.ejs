@@ -127,9 +127,9 @@
       background-color: #1e40af;
     }
   
-    /* Enhanced toast styles for better visibility */
+
     .toast-container {
-      z-index: 1056; /* Increased to ensure visibility over other elements */
+      z-index: 1056; 
     }
   
     .toast {
@@ -256,7 +256,7 @@
       // Add to Wishlist
       document.querySelectorAll('.wishlist-btn').forEach(button => {
         button.addEventListener('click', async (e) => {
-          e.preventDefault(); // Prevent default link behavior
+          e.preventDefault(); 
           const productId = e.currentTarget.getAttribute('data-product-id');
           console.log('Adding to wishlist:', { productId });
 
@@ -272,19 +272,19 @@
             toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white', 'text-dark');
             if (result.success) {
               toastEl.classList.add('bg-success', 'text-white');
-              toastBody.textContent = '✅ Product successfully added to wishlist.';
+              toastBody.textContent = 'Product successfully added to wishlist.';
               const toast = new bootstrap.Toast(toastEl);
               toast.show();
               // Add 'added' class to the clicked button
               button.classList.add('added');
             } else if (response.status === 400) {
               toastEl.classList.add('bg-danger', 'text-white');
-              toastBody.textContent = '❌ Failed to add product to wishlist: ' + (result.message || 'Unknown error.');
+              toastBody.textContent = 'Failed to add product to wishlist: ' + (result.message || 'Unknown error.');
               const toast = new bootstrap.Toast(toastEl);
               toast.show();
             } else if (response.status === 302 || response.status === 401) {
               toastEl.classList.add('bg-warning', 'text-dark');
-              toastBody.textContent = '🔐 Please log in to add to wishlist.';
+              toastBody.textContent = 'Please log in to add to wishlist.';
               const toast = new bootstrap.Toast(toastEl);
               toast.show();
               setTimeout(() => { window.location.href = '/login'; }, 2000);
@@ -295,7 +295,7 @@
             const toastBody = toastEl.querySelector('.toast-body');
             toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white', 'text-dark');
             toastEl.classList.add('bg-danger', 'text-white');
-            toastBody.textContent = '❌ Error adding product to wishlist.';
+            toastBody.textContent = 'Error adding product to wishlist.';
             const toast = new bootstrap.Toast(toastEl);
             toast.show();
           }

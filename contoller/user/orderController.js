@@ -96,8 +96,11 @@ const orderDetails = async (req, res) => {
 const cancelOrder = async (req, res) => {
   try {
     const order = await Orders.findById(req.params.id).populate('Items.product');
-    if (!order || order.Status !== 'Pending') {
-      return res.status(400).json({ success: false, message: 'Order not found or not in Pending status' });
+    const { reason } = req.body; // Get reason from request body
+    console.log('here its working',reason)
+
+    if (!reason) {
+      return res.status(400).json({ success: false, message: 'Cancellation reason is required' });
     }
 
     let refundAmount = 0;
@@ -109,8 +112,8 @@ const cancelOrder = async (req, res) => {
           variant.Stock += item.quantity;
           await product.save();
           item.status = 'Cancelled';
-          item.cancelReason = req.body.reason || 'No reason provided';
-          refundAmount += item.price * item.quantity; // Use discounted price
+          item.cancelReason = reason; 
+          refundAmount += item.price * item.quantity;
         }
       }
     }
@@ -119,16 +122,16 @@ const cancelOrder = async (req, res) => {
       const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
       const totalDiscountedAmount = order.Items.reduce((sum, i) => sum + i.price * i.quantity, 0);
       const overallDiscount = order.discountAmount * (totalDiscountedAmount / totalOrderAmountBeforeDiscount);
-      refundAmount -= overallDiscount; // Adjust for total discount proportion
+      refundAmount -= overallDiscount;
     }
 
     const allCancelled = order.Items.every(i => i.status === 'Cancelled');
     if (allCancelled) {
       order.Status = 'Cancelled';
-      order.CancelReason = req.body.reason || 'No reason provided';
+
     }
 
-    if (order.PaymentMethod === 'Wallet' && refundAmount > 0) {
+    if (order.PaymentMethod === 'Wallet' || order.PaymentMethod === 'Online') {
       let wallet = await Wallet.findOne({ UserId: order.UserId });
       if (!wallet) {
         wallet = new Wallet({ UserId: order.UserId, Balance: 0, Transaction: [] });
@@ -150,6 +153,8 @@ const cancelOrder = async (req, res) => {
     return res.status(500).json({ success: false, message: 'An error occurred while cancelling the order' });
   }
 };
+
+
 
 const cancelItem = async (req, res) => {
   try {
