@@ -99,30 +99,27 @@ const getEditProfile = async(req,res)=>{
 };
 
 
-  const updateEmailRequestOtp = async (req, res) => {
-    try {
-      const { email } = req.body;
-      const userId = req.session.user;
-  
-      const otp = generateOtp();
-      req.session.emailOTP = otp;
-      req.session.newEmail = email;
+const updateEmailRequestOtp = async (req, res) => {
+  try {
 
-  
-      const emailSent = await sendVerification(email, otp);
-      console.log(otp);
-  
-      if (!emailSent) {
-        req.flash('msg', 'Failed to send OTP');
-        return res.redirect('/profile');
-      }
-  
-      res.redirect('/verify-email-otp');
-    } catch (err) {
-      console.error('OTP send error:', err);
-      res.redirect('/profile');
+    const { email } = req.body;
+    
+    const userId = req.session.user;
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    req.session.emailOTP = otp;
+    req.session.newEmail = email;
+    const emailSent = await sendVerification(email, otp);
+    if (!emailSent) {
+      req.flash('msg', 'Failed to send OTP');
+      return res.redirect('/profile');
     }
-  };
+    
+    res.redirect('/verify-email-otp');
+  } catch (err) {
+    console.error('OTP send error:', err);
+    res.redirect('/profile');
+  }
+};
 
 
 
@@ -131,7 +128,7 @@ const getEditProfile = async(req,res)=>{
   const getVerifyEmailOtpPage = async (req, res) => {
     try {
       const userId = req.session.user;
-      if (req.session.newEmail) {
+      if (!req.session.newEmail) {
         return res.redirect('/profile');
       }
   

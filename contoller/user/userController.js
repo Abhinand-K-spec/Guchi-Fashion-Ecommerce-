@@ -464,25 +464,7 @@ const changePassword = async (req, res) => {
   }
 };
 
-const updateEmailRequestOtp = async (req, res) => {
-  try {
-    const { email } = req.body;
-    const userId = req.session.user;
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    req.session.emailOTP = otp;
-    req.session.newEmail = email;
-    const emailSent = await sendVerification(email, otp);
-    console.log(otp);
-    if (!emailSent) {
-      req.flash('msg', 'Failed to send OTP');
-      return res.redirect('/profile');
-    }
-    res.redirect('/verify-email-otp');
-  } catch (err) {
-    console.error('OTP send error:', err);
-    res.redirect('/profile');
-  }
-};
+
 
 
 const getOrders = async (req, res) => {
@@ -525,7 +507,6 @@ module.exports = {
   getOrderFailure,
   getChangePassword,
   changePassword,
-  updateEmailRequestOtp,
   getOrders,
   getProductOffer
 };
