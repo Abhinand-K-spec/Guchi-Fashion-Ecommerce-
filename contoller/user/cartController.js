@@ -331,7 +331,8 @@ const removeFromCart = async (req, res) => {
 
 const checkout = async (req, res) => {
   try {
-    const userId = req.session.user;
+
+    const userId = req.session.user._id;
     const user = await User.findById(userId).lean();
     const addresses = await Address.find({ userId }).lean();
     const cartData = await Cart.findOne({ user: userId }).populate('Items.product').lean();

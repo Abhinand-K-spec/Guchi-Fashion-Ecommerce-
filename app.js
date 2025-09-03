@@ -1,5 +1,11 @@
 const express = require('express');
 const app = express();
+
+        app.use((req, res, next) => {
+          res.setHeader("Access-Control-Allow-Origin", "https://2e736e556d49.ngrok-free.app");
+          next();
+        });
+    
 const path = require('path');
 const env = require('dotenv').config();
 const passport = require('passport');
