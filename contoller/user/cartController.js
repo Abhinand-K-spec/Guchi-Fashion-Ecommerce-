@@ -112,7 +112,7 @@ const cart = async (req, res) => {
         quantity,
         stock: variant?.Stock || 0,
         itemTotal,
-        offer: offer ? offer.Discount : null // Include offer discount percentage or null
+        offer: offer ? offer.Discount : null 
       });
 
       if (variant?.Stock >= item.quantity) {
@@ -186,6 +186,7 @@ const getCartData = async (req, res) => {
 
 const addToCart = async (req, res) => {
   try {
+
     const userId = req.session.user;
     const productId = req.params.productId;
 
@@ -331,8 +332,8 @@ const removeFromCart = async (req, res) => {
 
 const checkout = async (req, res) => {
   try {
-
-    const userId = req.session.user._id;
+    
+    const userId = req.session.user;
     const user = await User.findById(userId).lean();
     const addresses = await Address.find({ userId }).lean();
     const cartData = await Cart.findOne({ user: userId }).populate('Items.product').lean();
@@ -346,7 +347,7 @@ const checkout = async (req, res) => {
       IsListed: true,
       $or: [{ UserId: null }, { UserId: new mongoose.Types.ObjectId(userId) }]
     }).lean();
-    console.log(`Fetched coupons for user ${userId}:`, coupons);
+
 
     const wallet = await Wallet.findOne({ userId }).lean() || { balance: 0 };
     let subtotal = 0;

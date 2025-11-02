@@ -183,8 +183,8 @@
       <% if (product.offer) { %>
         <div class="price-container">
           <h4 class="product-price" id="priceDisplay">₹<%= product.Variants[0].salePrice.toFixed(2) %></h4>
-          <span class="offer-percentage"><%= product.offer.Discount %>% OFF</span>
-          <span class="regular-price">₹<%= product.Variants[0].Price.toFixed(2) %></span>
+
+
         </div>
       <% } else { %>
         <h4 class="product-price" id="priceDisplay">₹<%= product.Variants[0].Price.toFixed(2) %></h4>
@@ -266,182 +266,68 @@
 <%- include('../partials/user/footer') %>
 
 <script>
-  const mainImg = document.getElementById("mainProductImage");
-  const result = document.getElementById("zoom-result");
-
-  function imageZoom(img, resultBox) {
-    // Ensure the result box is initially hidden
-    resultBox.style.display = "none";
-
-    // Calculate zoom level based on background size
-    const zoom = 2;
-    const imgWidth = img.width;
-    const imgHeight = img.height;
-
-    // Set background image and size for zoom result
-    resultBox.style.backgroundImage = `url('${img.src}')`;
-    resultBox.style.backgroundSize = `${imgWidth * zoom}px ${imgHeight * zoom}px`;
-
-    function moveLens(e) {
-      e.preventDefault();
-      const rect = img.getBoundingClientRect();
-      
-      // Calculate mouse position relative to the image
-      let x = e.clientX - rect.left;
-      let y = e.clientY - rect.top;
-
-      // Ensure the lens stays within image bounds
-      x = Math.max(0, Math.min(x, rect.width));
-      y = Math.max(0, Math.min(y, rect.height));
-
-      // Calculate the background position as a percentage
-      const posX = (x / rect.width) * 100;
-      const posY = (y / rect.height) * 100;
-
-      // Update the background position of the zoom result
-      resultBox.style.backgroundPosition = `${posX}% ${posY}%`;
-      resultBox.style.display = "block";
-    }
-
-    // Add event listeners for mouse move and touch move
-    img.addEventListener("mousemove", moveLens);
-    img.addEventListener("touchmove", (e) => {
-      e.preventDefault();
-      const touch = e.touches[0];
-      moveLens(touch);
-    });
-
-    // Hide zoom result when mouse leaves or touch ends
-    img.addEventListener("mouseleave", () => {
-      resultBox.style.display = "none";
-    });
-    img.addEventListener("touchend", () => {
-      resultBox.style.display = "none";
-    });
-  }
-
-  // Initialize zoom on mouse enter
-  mainImg.addEventListener("mouseenter", () => {
-    if (mainImg.complete && mainImg.naturalWidth !== 0) {
-      imageZoom(mainImg, result);
-    }
-  });
-
-  // Ensure zoom updates when image loads
-  mainImg.addEventListener("load", () => {
-    imageZoom(mainImg, result);
-  });
-
-  function swapImage(clickedThumb) {
-    const tempSrc = mainImg.src;
-    mainImg.src = clickedThumb.src;
-    clickedThumb.src = tempSrc;
-    result.style.backgroundImage = `url('${mainImg.src}')`;
-    // Reinitialize zoom for the new image
-    imageZoom(mainImg, result);
-  }
-</script>
-<script>
   document.addEventListener('DOMContentLoaded', () => {
-    const notification = document.getElementById('notification');
-    const addToCartBtn = document.getElementById('addToCartBtn');
-    const wishlistBtn = document.querySelector('.wishlistbtn');
     const sizeSelector = document.getElementById('sizeSelector');
+    const priceDisplay = document.getElementById('priceDisplay');
+    const stockDisplay = document.getElementById('stockDisplay');
+    const addToCartBtn = document.getElementById('addToCartBtn');
 
-    // Function to show toast notification
-    function showToast(message, type) {
-      notification.textContent = message;
-      notification.classList.remove('success', 'error');
-      notification.classList.add(type);
-      notification.style.display = 'block';
-      setTimeout(() => {
-        notification.style.display = 'none';
-      }, 3000); // Display for 3 seconds
+    // Parse variants from server
+    const variants = <%- JSON.stringify(product.Variants) %>;
+    const productOffer = <%- JSON.stringify(product.offer || null) %>;
+
+    // Remember previous selection
+    const savedSize = localStorage.getItem('selectedSize_<%= product._id %>');
+    if (savedSize) {
+      sizeSelector.value = savedSize;
     }
 
-    // Handle Add to Cart
-    if (addToCartBtn && !addToCartBtn.disabled) {
-      addToCartBtn.addEventListener('click', async (e) => {
-        e.preventDefault(); // Prevent form submission to handle via fetch
-        const form = addToCartBtn.closest('form');
-        const action = form.action;
-        const selectedSize = sizeSelector ? sizeSelector.value : '';
+    function updateVariant(selectedSize) {
+      const variant = variants.find(v => v.Size && v.Size.trim() === selectedSize.trim());
+      console.log("Selected:", selectedSize, "Matched variant:", variant);
 
-        try {
-          const response = await fetch(action, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ Size: selectedSize }) // Use 'Size' to match server-side Variants.Size
-          });
+      if (!variant) {
+        priceDisplay.textContent = "₹0.00";
+        stockDisplay.innerHTML = `<strong>Stock:</strong> 0 available`;
+        addToCartBtn.disabled = true;
+        addToCartBtn.textContent = "Out of Stock";
+        return;
+      }
 
-          console.log('Add to Cart Response:', {
-            status: response.status,
-            ok: response.ok,
-            headers: Object.fromEntries(response.headers.entries())
-          }); // Debug log
+      // If offer available, use salePrice and show both prices
+      let priceHTML = "";
+      if (productOffer) {
+        priceHTML = `₹${parseFloat(variant.salePrice || variant.Price).toFixed(2)} 
+          <span class="offer-percentage">${productOffer.Discount}% OFF</span>
+          <span class="regular-price">₹${parseFloat(variant.Price).toFixed(2)}</span>`;
+      } else {
+        priceHTML = `₹${parseFloat(variant.Price).toFixed(2)}`;
+      }
 
-          // Check for successful status codes (200 or 201)
-          if (response.ok) {
-            let result;
-            try {
-              result = await response.json();
-              console.log('Add to Cart JSON:', result); // Debug JSON response
-              if (result.success !== false) { // Allow success if success field is missing or true
-                showToast('✅ Product added to cart', 'success');
-              } else {
-                showToast('❌ Failed to add to cart: ' + (result.message || 'Unknown error'), 'error');
-              }
-            } catch (jsonError) {
-              console.warn('Non-JSON response or redirect:', jsonError);
-              // Assume success for HTTP 200/201 if JSON parsing fails (e.g., redirect)
-              showToast('✅ Product added to cart', 'success');
-            }
-          } else {
-            let result;
-            try {
-              result = await response.json();
-            } catch {
-              result = {};
-            }
-            console.log('Add to Cart Error Response:', result); // Debug error response
-            showToast('❌ Failed to add to cart: ' + (result.message || `HTTP ${response.status}`), 'error');
-          }
-        } catch (err) {
-          console.error('Add to cart error:', err);
-          showToast('❌ Error adding product to cart', 'error');
-        }
-      });
+      priceDisplay.innerHTML = priceHTML;
+
+      // Update stock
+      const stock = parseInt(variant.Stock || 0);
+      stockDisplay.innerHTML = `<strong>Stock:</strong> ${stock} available`;
+
+      // Update cart button
+      addToCartBtn.disabled = stock <= 0;
+      addToCartBtn.textContent = stock > 0 ? "Add to Cart" : "Out of Stock";
     }
 
-    // Handle Add to Wishlist (unchanged)
-    if (wishlistBtn) {
-      wishlistBtn.addEventListener('click', async (e) => {
-        e.preventDefault(); // Prevent form submission to handle via fetch
-        const form = wishlistBtn.closest('form');
-        const action = form.action;
+    // Run once at page load (with saved or first variant)
+    const initialSize = sizeSelector.value || variants[0]?.Size;
+    if (initialSize) updateVariant(initialSize);
 
-        try {
-          const response = await fetch(action, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-          });
-          const result = await response.json();
-
-          if (result.success) {
-            showToast('✅ Product added to wishlist', 'success');
-          } else if (response.status === 400) {
-            showToast('❌ Failed to add to wishlist: ' + (result.message || 'Unknown error'), 'error');
-          } else if (response.status === 401 || response.status === 302) {
-            showToast('🔐 Please log in to add to wishlist', 'error');
-            setTimeout(() => { window.location.href = '/login'; }, 2000);
-          }
-        } catch (err) {
-          console.error('Add to wishlist error:', err);
-          showToast('❌ Error adding product to wishlist', 'error');
-        }
-      });
-    }
+    // Listen for change
+    sizeSelector.addEventListener('change', (e) => {
+      const selectedSize = e.target.value;
+      localStorage.setItem('selectedSize_<%= product._id %>', selectedSize);
+      updateVariant(selectedSize);
+    });
   });
 </script>
+
+
 </body>
 </html>

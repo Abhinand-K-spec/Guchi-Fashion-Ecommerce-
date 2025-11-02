@@ -169,6 +169,10 @@
             </div>
             <p id="paymentError" class="payment-error" style="display: none;"></p>
           </div>
+          <div id="addressWarning" style="display:none; color: red; margin-bottom: 10px;">
+            Please add a delivery address before placing your order.
+          </div>
+          
 
           <!-- Hidden Inputs for Razorpay -->
           <input type="hidden" name="razorpayPaymentId" id="razorpayPaymentId">
@@ -307,11 +311,30 @@
           return;
         }
 
+        const addressList = document.querySelectorAll('input[name="selectedAddressId"]');
+const addressWarning = document.getElementById('addressWarning');
+
+// If no address exists
+if (addressList.length === 0) {
+  addressWarning.style.display = 'block';
+  console.warn('No addresses found');
+  return;
+}
+
+// If addresses exist but none selected
+const selectedAddress = document.querySelector('input[name="selectedAddressId"]:checked');
+if (!selectedAddress) {
+  addressWarning.textContent = 'Please select a delivery address.';
+  addressWarning.style.display = 'block';
+  return;
+}
+
+
         paymentError.style.display = 'none';
 
         if (paymentOnline.checked) {
           try {
-            // Send request to create Razorpay order
+
             console.log('Online payment');
             const response = await fetch('/place-order', {
               method: 'POST',
@@ -416,7 +439,7 @@
             paymentError.style.display = 'block';
           }
         } else {
-          // Handle COD submission
+
           try {
             const response = await fetch('/place-order', {
               method: 'POST',

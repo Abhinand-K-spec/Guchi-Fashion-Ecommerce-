@@ -49,7 +49,7 @@ const handleForgotPassword = async (req, res) => {
   const { email } = req.body;
   try {
     console.log(`Password reset link should be sent to: ${email}`);
-    res.render('forgot-password', { msg: 'If the email exists, a reset link has been sent.' });
+    res.render('forgot-password', { msg: 'If the email exists, an otp has been sent.' });
   } catch (err) {
     console.error('Forgot password error:', err);
     res.render('forgot-password', { msg: 'An error occurred. Try again later.' });

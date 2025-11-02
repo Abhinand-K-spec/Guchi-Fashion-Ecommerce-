@@ -1,11 +1,5 @@
 const express = require('express');
 const app = express();
-
-        app.use((req, res, next) => {
-          res.setHeader("Access-Control-Allow-Origin", "https://2e736e556d49.ngrok-free.app");
-          next();
-        });
-    
 const path = require('path');
 const env = require('dotenv').config();
 const passport = require('passport');
@@ -65,7 +59,9 @@ app.set('view engine', 'ejs');
 app.set('views', [path.join(__dirname, 'views/user'), path.join(__dirname, 'views/admin')]);
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms',{
+  skip: (req, res) => req.url.includes(".js") || req.url.includes(".css") || req.url.includes(".png") || res.statusCode < 400 
+}));
 app.use('/', userRouter);
 app.use('/admin', adminRouter);
 

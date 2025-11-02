@@ -56,7 +56,6 @@ const getProductDetails = async (req, res) => {
     const user = await User.findById(userId);
     const productId = req.params.id;
     const product = await Products.findById(productId).populate('Category').lean();
-    console.log('product:',product);
     if (!product) return res.status(404).render('page-404');
     if (!product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
       console.error(`Invalid Variants for product: ${product._id}`);
@@ -65,13 +64,14 @@ const getProductDetails = async (req, res) => {
           user,
           ...product,
           Variants: [{ Price: 0, salePrice: 0, Stock: 0, Size: '' }],
-          offer: null
+          offer: null,
+          activePage:'shopnow'
         },
         recommendedProducts: []
       });
     }
     const { offer, salePrice } = await getProductOffer(product);
-    console.log('offer in product details :',offer);
+
     const formattedProduct = {
       ...product,
       Variants: product.Variants.map(variant => ({
@@ -86,7 +86,7 @@ const getProductDetails = async (req, res) => {
       IsListed: true
     }).limit(4).lean();
     res.render('product-details', {
-      activePage:'Shop',
+      activePage:'shopnow',
       product: formattedProduct,
       recommendedProducts
     });

@@ -12,6 +12,7 @@
 
   <style>
     body {
+      background: url('/img/background.svg');
       background-color: #f4f6f9;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
@@ -89,6 +90,8 @@
           <h3 class="mb-3">Order Details</h3>
           <p><strong>Order ID:</strong> <%= order.OrderId %></p>
           <p><strong>Date:</strong> <%= new Date(order.OrderDate).toLocaleString() %></p>
+          <p><strong>Return Policy:</strong> 7-day return policy</p>
+
           <% if (order.PaymentMethod==='Online' && order.PaymentStatus!=='Completed' && order.Status==='Pending') { %>
             <div>
               <h3>Payment Failed</h3>
@@ -112,7 +115,12 @@
         <div class="col-md-7">
           <h5 class="mb-2"><%= product.productName %></h5>
           <p class="mb-1"><strong>Quantity:</strong> <%= item.quantity %></p>
-          <p class="mb-1"><strong>Price:</strong> ₹<%= price %></p>
+          <p class="mb-1"><strong>Price:</strong> ₹<%= price.toFixed(2) %></p>
+          <% if (itemDiscount > 0) { %>
+            <p class="mb-1 text-success"><strong>Item Discount:</strong> -₹<%= itemDiscount.toFixed(2) %></p>
+            <p class="mb-1 text-muted"><del>Sales Price: ₹<%= originalPrice %></del></p>
+            <% } %>
+            
           <p><strong>Status:</strong> 
             <span class="badge 
               <% if(item.status === 'Delivered') { %> bg-success
@@ -169,11 +177,12 @@
         </div>
       </div>
       <div>
-        <%if(item.status === 'Pending' && item.status !== 'Cancelled' && item.returnStatus === 'NotRequested'){%>
+        </div>
+        <% }) %>
+
+        <%if(order.status === 'Pending' && order.status !== 'Cancelled' && order.returnStatus === 'NotRequested'){%>
           <button class="btn btn-danger btn-custom cancel-full-order-btn" data-bs-toggle="modal" data-bs-target="#cancelFullOrderModal">Cancel Full Order</button>
         <%}%>
-      </div>
-    <% }) %>
 
     <!-- Return Modal (Single Item Only) -->
     <div class="modal fade" id="returnOrderModal" tabindex="-1" aria-labelledby="returnOrderModalLabel" aria-hidden="true">

@@ -201,15 +201,16 @@ const list = async (req, res) => {
 const getEditProductPage = async (req, res) => {
   try {
     const productId = req.params.productId;
+    const products = await Product.find({isListed:true}).lean();
     const product = await Product.findById(productId).populate('Category').lean();
     const categories = await Category.find({ isListed: true }).lean();
 
     if (!product) return res.status(404).render('page-404');
 
-    res.render('edit-product', { product, categories });
+    res.render('edit-product', { product, categories ,products });
   } catch (error) {
     console.error('Error in getEditProductPage:', error);
-    res.redirect('/page-404');
+    res.redirect('/pageNotFound');
   }
 };
 
@@ -218,14 +219,14 @@ const postEditProduct = async (req, res) => {
     const { productId } = req.params;
     const {
       productName,
-      size,
-      price,
-      stock,
+      'size[]': sizes,
+      'price[]': prices,
+      'stock[]': stocks,
       description,
       category,
+      croppedImage0,
       croppedImage1,
-      croppedImage2,
-      croppedImage3
+      croppedImage2
     } = req.body;
 
     const product = await Product.findById(productId);
@@ -238,12 +239,26 @@ const postEditProduct = async (req, res) => {
     if (!categoryDoc) return res.status(400).send('Invalid category');
     product.Category = categoryDoc._id;
 
-    if (product.Variants.length === 0) product.Variants.push({});
-    product.Variants[0].Size = size;
-    product.Variants[0].Price = parseFloat(price);
-    product.Variants[0].Stock = parseInt(stock);
+    // Correct logic to handle multiple variants (arrays from form)
+    const sizeArray = Array.isArray(sizes) ? sizes : [sizes].filter(s => s);
+    const priceArray = Array.isArray(prices) ? prices : [prices].filter(p => p);
+    const stockArray = Array.isArray(stocks) ? stocks : [stocks].filter(s => s);
 
-    const newImages = [croppedImage1, croppedImage2, croppedImage3];
+    const newVariants = sizeArray.map((sizeValue, index) => {
+        const priceValue = parseFloat(priceArray[index]);
+        const stockValue = parseInt(stockArray[index], 10);
+        
+        return {
+            Size: String(sizeValue).trim(),
+            Price: isNaN(priceValue) ? 0 : priceValue,
+            Stock: isNaN(stockValue) ? 0 : stockValue
+        };
+    });
+
+    product.Variants = newVariants;
+    
+    // Adjust indices to match the EJS form (0, 1, 2)
+    const newImages = [croppedImage0, croppedImage1, croppedImage2];
     const updatedImages = [];
 
     for (let i = 0; i < 3; i++) {

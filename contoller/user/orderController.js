@@ -433,9 +433,12 @@ const getProductOffer = async (product) => {
 };
 
 const placeOrder = async (req, res) => {
+
   try {
+    
     const { selectedAddressId, coupon, paymentMethod } = req.body;
     const userId = req.session.user;
+
 
     const cart = await Cart.findOne({ user: userId }).populate('Items.product').lean();
     if (!cart || !cart.Items.length) {
@@ -498,9 +501,9 @@ const placeOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No valid items in cart.' });
     }
 
-    console.log('Calculated subtotal:', subtotal);
 
-    const tax = Math.round(subtotal * 0.05);
+
+    const tax = Math.round(subtotal * 0.005);
     const deliveryCharge = 40;
     let couponDiscount = 0;
     let couponData = null;
@@ -540,8 +543,8 @@ const placeOrder = async (req, res) => {
       discountAmount = 0;
     }
 
-    console.log('Calculated discountAmount before save:', discountAmount);
-    console.log('Order Items with itemDiscount before save:', orderItems);
+
+
 
     const finalTotal = subtotal - discountAmount + tax + deliveryCharge;
 
@@ -579,7 +582,7 @@ const placeOrder = async (req, res) => {
     });
 
     await order.save();
-    console.log('Saved order:', order._id, 'with discountAmount:', order.discountAmount, 'and Items:', order.Items);
+
 
     if (paymentMethod === 'Wallet') {
       let wallet = await Wallet.findOne({ userId });
@@ -620,7 +623,7 @@ const placeOrder = async (req, res) => {
       });
     }
 
-    console.log('Order placed:', order._id);
+
     await Cart.findOneAndUpdate({ user: userId }, { Items: [] });
     for (const item of orderItems) {
       await Products.findByIdAndUpdate(item.product, {
