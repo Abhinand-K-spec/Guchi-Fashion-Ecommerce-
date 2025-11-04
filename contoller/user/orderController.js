@@ -96,8 +96,7 @@ const orderDetails = async (req, res) => {
 const cancelOrder = async (req, res) => {
   try {
     const order = await Orders.findById(req.params.id).populate('Items.product');
-    const { reason } = req.body; // Get reason from request body
-    console.log('here its working',reason)
+    const { reason } = req.body; 
 
     if (!reason) {
       return res.status(400).json({ success: false, message: 'Cancellation reason is required' });

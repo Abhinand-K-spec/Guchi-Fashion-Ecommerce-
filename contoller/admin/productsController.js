@@ -41,7 +41,17 @@ const addProducts = async (req, res) => {
 
     const Colour = 'Default';
 
-    if (!productName || !size || !price || !stock || !description || !category) {
+    if(/[^A-Za-z]g/.test(productName)){
+      req.flash('msg', 'Product name should not contain special characters or numbers');
+      return  res.redirect('/admin/addProducts');
+    }
+
+    if(productName.trim() == '' ){
+      req.flash('msg', 'Product name cannot be empty');
+      return  res.redirect('/admin/addProducts');
+    }
+
+    if (!productName || !size || !price || !stock || !description || !category ) {
       req.flash('msg', 'All fields are required');
       return res.redirect('/admin/addProducts');
     }
@@ -219,14 +229,14 @@ const postEditProduct = async (req, res) => {
     const { productId } = req.params;
     const {
       productName,
-      'size[]': sizes,
-      'price[]': prices,
-      'stock[]': stocks,
+      size,
+      price,
+      stock,
       description,
       category,
-      croppedImage0,
       croppedImage1,
-      croppedImage2
+      croppedImage2,
+      croppedImage3
     } = req.body;
 
     const product = await Product.findById(productId);
@@ -239,26 +249,12 @@ const postEditProduct = async (req, res) => {
     if (!categoryDoc) return res.status(400).send('Invalid category');
     product.Category = categoryDoc._id;
 
-    // Correct logic to handle multiple variants (arrays from form)
-    const sizeArray = Array.isArray(sizes) ? sizes : [sizes].filter(s => s);
-    const priceArray = Array.isArray(prices) ? prices : [prices].filter(p => p);
-    const stockArray = Array.isArray(stocks) ? stocks : [stocks].filter(s => s);
+    if (product.Variants.length === 0) product.Variants.push({});
+    product.Variants[0].Size = size;
+    product.Variants[0].Price = parseFloat(price);
+    product.Variants[0].Stock = parseInt(stock);
 
-    const newVariants = sizeArray.map((sizeValue, index) => {
-        const priceValue = parseFloat(priceArray[index]);
-        const stockValue = parseInt(stockArray[index], 10);
-        
-        return {
-            Size: String(sizeValue).trim(),
-            Price: isNaN(priceValue) ? 0 : priceValue,
-            Stock: isNaN(stockValue) ? 0 : stockValue
-        };
-    });
-
-    product.Variants = newVariants;
-    
-    // Adjust indices to match the EJS form (0, 1, 2)
-    const newImages = [croppedImage0, croppedImage1, croppedImage2];
+    const newImages = [croppedImage1, croppedImage2, croppedImage3];
     const updatedImages = [];
 
     for (let i = 0; i < 3; i++) {
@@ -283,6 +279,7 @@ const postEditProduct = async (req, res) => {
     res.status(500).render('page-404');
   }
 };
+
 
 module.exports = {
   productsinfo,

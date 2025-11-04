@@ -179,10 +179,18 @@
       <div>
         </div>
         <% }) %>
-
-        <%if(order.status === 'Pending' && order.status !== 'Cancelled' && order.returnStatus === 'NotRequested'){%>
-          <button class="btn btn-danger btn-custom cancel-full-order-btn" data-bs-toggle="modal" data-bs-target="#cancelFullOrderModal">Cancel Full Order</button>
-        <%}%>
+         <% if (
+            order.Items.length > 1 &&
+            order.Items.every(
+              x => x.status === 'Pending' &&
+                  x.status !== 'Cancelled' &&
+                  x.returnStatus === 'NotRequested'
+            )
+          ) { %>
+            <button class="btn btn-danger btn-custom cancel-full-order-btn" data-bs-toggle="modal" data-bs-target="#cancelFullOrderModal">
+              Cancel Full Order
+            </button>
+          <% } %>
 
     <!-- Return Modal (Single Item Only) -->
     <div class="modal fade" id="returnOrderModal" tabindex="-1" aria-labelledby="returnOrderModalLabel" aria-hidden="true">

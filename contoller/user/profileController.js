@@ -102,6 +102,7 @@ const getEditProfile = async(req,res)=>{
 const updateEmailRequestOtp = async (req, res) => {
   try {
 
+
     const { email } = req.body;
     
     const userId = req.session.user;
@@ -113,7 +114,7 @@ const updateEmailRequestOtp = async (req, res) => {
       req.flash('msg', 'Failed to send OTP');
       return res.redirect('/profile');
     }
-    
+    console.log('OTP sent successfully:', otp);
     res.redirect('/verify-email-otp');
   } catch (err) {
     console.error('OTP send error:', err);
@@ -152,7 +153,9 @@ const updateEmailRequestOtp = async (req, res) => {
       await User.findByIdAndUpdate(userId, { email: req.session.newEmail },{name:req.session.newName});
   
       req.flash('msg', 'Email updated successfully');
-      return res.redirect('/profile');
+      console.log('Email updated for user:', userId);
+      
+      return res.redirect('/editProfile');
     } else {
       req.flash('msg', 'Invalid OTP');
       return res.redirect('/verify-email-otp');

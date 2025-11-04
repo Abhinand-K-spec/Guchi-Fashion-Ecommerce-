@@ -58,7 +58,6 @@ const getProductDetails = async (req, res) => {
     const product = await Products.findById(productId).populate('Category').lean();
     if (!product) return res.status(404).render('page-404');
     if (!product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
-      console.error(`Invalid Variants for product: ${product._id}`);
       return res.render('product-details', {
         product: {
           user,
@@ -129,7 +128,6 @@ const getShopPage = async (req, res) => {
       .lean();
     const productsWithOffers = await Promise.all(products.map(async (product) => {
       if (!product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
-        console.error(`Invalid Variants for product: ${product._id}`);
         return {
           ...product,
           Variants: [{ Price: 0, salePrice: 0, Stock: 0 }],

@@ -313,7 +313,8 @@ function toggleSizeRow(checkbox) {
 
 function validateForm() {
   console.log('Validating form...');
-  const productName = document.querySelector('input[name="productName"]').value.trim();
+  const productNameInput = document.querySelector('input[name="productName"]');
+  const productName = productNameInput.value;
   const category = document.querySelector('select[name="category"]').value.trim();
   const description = document.querySelector('textarea[name="description"]').value.trim();
   const variantRows = document.querySelectorAll('#variantTable tbody tr');
@@ -324,12 +325,13 @@ function validateForm() {
   ];
   const sizeSet = new Set();
 
-  // Validate product name
-  if (!productName) {
-    toastBody('Product Name is required.');
-    console.warn('Validation failed: Product Name is empty');
+  if (!productName.trim() || /[^A-Za-z\s]/.test(productName.trim())) {
+    toastBody('Product Name is required and must contain only letters.');
+    console.warn('Validation failed: Product Name is invalid');
+    productNameInput.focus();
     return false;
   }
+
 
   // Validate category
   if (!category) {
