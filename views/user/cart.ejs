@@ -405,7 +405,7 @@
             if (data.success) {
               updateCartUI(data.cartItems, data.totalPrice);
             } else {
-              showQtyModal(data.message === 'You cannot add more than 5 items.' || data.message.startsWith('Only') ? data.message : "⚠️ Failed to update quantity.");
+              showQtyModal(data.message === 'You cannot add more than 5 items.' || data.message.startsWith('Only') ? data.message : " Failed to update quantity.");
             }
           })
           .catch(err => {
@@ -434,19 +434,19 @@
                 if (data.success) {
                   updateCartUI(data.cartItems, data.totalPrice);
                 } else {
-                  showQtyModal("⚠️ Failed to refresh cart.");
+                  showQtyModal(" Failed to refresh cart.");
                 }
               });
           }
         })
         .catch(err => {
           console.error("Remove error:", err);
-          showQtyModal("⚠️ Something went wrong.");
+          showQtyModal(" Something went wrong.");
         });
     });
   });
 
-  // Initial attachment of quantity button listeners
+
   attachQtyButtonListeners();
 </script>
 

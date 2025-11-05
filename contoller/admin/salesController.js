@@ -91,11 +91,11 @@ const downloadSalesReport = async (req, res) => {
   try {
     const { period, range, startDate, endDate } = req.query;
     const startTime = new Date().toISOString();
-    console.log(`Starting PDF generation at ${startTime} IST for period: ${period}, range: ${range}, startDate: ${startDate}, endDate: ${endDate}`);
+
 
     let filter = {};
     const now = new Date();
-    now.setHours(23, 59, 59, 999); // End of day, August 04, 2025
+    now.setHours(23, 59, 59, 999); 
 
     if (period === 'custom' && startDate && endDate) {
       filter.OrderDate = {
@@ -129,21 +129,14 @@ const downloadSalesReport = async (req, res) => {
       .sort({ OrderDate: -1 })
       .lean();
 
-    // Debug: Log OrderId values to check for uniqueness
-    console.log('Order IDs:', orders.map(order => ({ _id: order._id, OrderId: order.OrderId })));
+
 
     const doc = new PDFDocument({ margin: 50, size: 'A4', autoFirstPage: false });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="sales-report-${Date.now()}.pdf"`);
     doc.pipe(res);
 
-    // Optional: Save to local file for debugging
-    const tempFilePath = path.join(__dirname, `../../temp/sales-report-${Date.now()}.pdf`);
-    if (!fs.existsSync(path.dirname(tempFilePath))) {
-      fs.mkdirSync(path.dirname(tempFilePath), { recursive: true });
-    }
-    const writeStream = fs.createWriteStream(tempFilePath);
-    doc.pipe(writeStream);
+
 
     // Add content
     doc.addPage();
@@ -177,7 +170,7 @@ const downloadSalesReport = async (req, res) => {
     const columnWidth = 80; // Reduced to prevent overflow
 
     // Debug: Log column positions
-    console.log('Column Positions:', columns);
+
 
     doc.font('Helvetica-Bold')
       .fontSize(10)
@@ -247,8 +240,8 @@ const downloadSalesReport = async (req, res) => {
       .text(`Overall Discount: ₹${overallDiscount.toFixed(2)}`, 50, y + 40);
 
     doc.on('end', () => {
-      console.log(`PDF generation completed at ${new Date().toISOString()} IST`);
-      writeStream.end(); // Ensure local file is fully written
+
+
     });
     doc.end();
 

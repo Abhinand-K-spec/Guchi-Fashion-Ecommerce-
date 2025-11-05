@@ -44,6 +44,8 @@ const addCoupon = async (req, res) => {
             MaxCartValue,
         } = req.body;
 
+        console.log('discount:', Discount);
+
         console.log('Coupon data received:', req.body);
 
 

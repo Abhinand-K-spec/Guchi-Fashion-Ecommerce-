@@ -250,11 +250,13 @@ const updateCartQuantity = async (req, res) => {
       item.quantity += 1;
       const stock = item.product?.Variants?.[0]?.Stock || 0;
       if (item.quantity > 5) {
-        item.quantity -= 1; // Revert increment
+        item.quantity -= 1; 
+        item.quantity = 5;
         return res.json({ success: false, message: 'You cannot add more than 5 items.' });
       }
       if (item.quantity > stock) {
         item.quantity -= 1;
+        item.quantity = stock;
         return res.json({ success: false, message: `Only ${stock} items are available.` });
       }
     } else if (action === 'decrement') {
