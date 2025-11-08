@@ -64,7 +64,7 @@ const addToCartFromWishlist = async (req, res) => {
     await cart.save();
     await Wishlist.deleteOne({ UserId: userId, ProductId: productId });
 
-    console.log('Added to cart and removed from wishlist:', { userId, productId });
+
 
     res.json({ success: true, message: 'Product added to cart' });
   } catch (err) {
@@ -88,7 +88,7 @@ const removeFromWishlist = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Wishlist item not found' });
     }
 
-    console.log('Removed from wishlist:', { wishlistId, userId });
+
 
     res.json({ success: true, message: 'Product removed from wishlist' });
   } catch (err) {

@@ -271,7 +271,24 @@
   <% } %>
 </div>
 <%- include('../partials/user/footer') %>
+<script>
+  // Define the swapImage function
+  function swapImage(thumbnailElement) {
 
+    const mainImage = document.getElementById('mainProductImage');
+    
+
+    const newImageUrl = thumbnailElement.src;
+    const currentMainImageUrl = mainImage.src;
+
+    mainImage.src = newImageUrl;
+    thumbnailElement.src = currentMainImageUrl;
+    
+  }
+
+  // Ensure this function is defined before the DOMContentLoaded listener
+  // for the variant selection/cart logic, so it's ready when the page loads.
+</script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const sizeSelector = document.getElementById('sizeSelector');
