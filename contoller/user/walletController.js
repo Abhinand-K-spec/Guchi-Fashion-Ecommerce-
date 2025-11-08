@@ -1,6 +1,8 @@
 const Wallet = require('../../model/walletSchema');
 const Razorpay = require('razorpay');
 const User = require('../../model/userSchema');
+const crypto = require('crypto');
+
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -46,13 +48,13 @@ const addFunds = async (req, res) => {
       await Wallet.create({ UserId: userId, Balance: 0, Transaction: [] });
     }
 
+    const shortId = userId.toString().slice(-6); 
     const razorpayOrder = await razorpay.orders.create({
       amount: Math.round(amount * 100),
       currency: 'INR',
-      receipt: `wallet_${userId}_${Date.now()}`
+      receipt: `WAL${shortId}_${Date.now().toString().slice(-6)}` 
     });
 
-    console.log('Razorpay order created for wallet:', { razorpayOrderId: razorpayOrder.id, amount });
 
     return res.status(200).json({
       success: true,
@@ -112,4 +114,64 @@ const verifyWalletPayment = async (req, res) => {
   }
 };
 
-module.exports = { getWallet, addFunds, verifyWalletPayment };
+
+
+const payWithWallet = async (req, res) => {
+  try {
+    const { userId, orderId, amount } = req.body;
+
+    if (!userId || !orderId || !amount || amount <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid payment details.' });
+    }
+
+
+    const wallet = await Wallet.findOne({ UserId: userId });
+    if (!wallet) {
+      return res.status(404).json({ success: false, message: 'Wallet not found.' });
+    }
+
+
+    if (wallet.Balance < amount) {
+      return res.status(400).json({ success: false, message: 'Insufficient wallet balance.' });
+    }
+
+
+    wallet.Balance -= amount;
+    wallet.Transaction.push({
+      TransactionAmount: amount,
+      TransactionType: 'debit',
+      TransactionDate: new Date(),
+      Note: `Payment for Order #${orderId}`
+    });
+    await wallet.save();
+
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found.' });
+    }
+
+    order.paymentMethod = 'Wallet';
+    order.status = 'Paid';
+    order.paymentStatus = 'Completed';
+    await order.save();
+
+ 
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payment successful via wallet.',
+      newBalance: wallet.Balance
+    });
+  } catch (err) {
+    console.error('Wallet payment error:', err);
+    return res.status(500).json({ success: false, message: 'Error processing wallet payment.' });
+  }
+};
+
+module.exports = {
+   getWallet,
+   addFunds,
+   verifyWalletPayment,
+   payWithWallet
+};

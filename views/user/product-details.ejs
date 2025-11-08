@@ -212,12 +212,17 @@
       <p><%= product.Description || 'No description available.' %></p>
      
       <% if ((product.Variants[0]?.Stock || 0) > 0) { %>
-        <form action="/addToCart/<%= product._id %>" method="POST">
-          <button class="btn btn-danger" id="addToCartBtn">Add to Cart</button>
-        </form>
-        <form action="/add-to-wishlist/<%= product._id %>" method="GET" style="display: inline-block;">
-          <button class="wishlistbtn btn btn-secondary">Add to Wishlist</button>
-        </form>
+        <button class="btn btn-danger" id="addToCartBtn" data-product-id="<%= product._id %>">
+            Add to Cart
+        </button>
+
+        <button 
+          class="wishlistbtn btn btn-secondary" 
+          id="addToWishlistBtn"
+          data-product-id="<%= product._id %>">
+          Add to Wishlist
+        </button>
+
       <% } else { %>
         <button class="btn btn-danger" disabled id="addToCartBtn">Out of Stock</button>
         <p class="out-of-stock mt-2">This product is currently out of stock</p>
@@ -225,6 +230,8 @@
 
       <!-- Notification Container -->
       <div id="notification" class="notification"></div>
+
+
 
       <% if (product.reviews && product.reviews.length > 0) { %>
         <hr class="my-4"/>
@@ -327,6 +334,101 @@
     });
   });
 </script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const addToCartBtn = document.getElementById('addToCartBtn');
+    const notification = document.getElementById('notification');
+
+    // Utility function to show success/error
+    function showNotification(type, message) {
+      notification.textContent = message;
+      notification.className = `notification ${type}`;
+      notification.style.display = 'block';
+      setTimeout(() => {
+        notification.style.display = 'none';
+      }, 2500);
+    }
+
+    if (addToCartBtn) {
+      addToCartBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const productId = addToCartBtn.dataset.productId;
+
+        // Disable button while request runs
+        addToCartBtn.disabled = true;
+        addToCartBtn.textContent = 'Adding...';
+
+        try {
+          const response = await fetch(`/addToCart/${productId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            showNotification('success', result.success || result.message || 'Product added to cart successfully!');
+          } else {
+            showNotification('error', result.message || result.error  || 'Failed to add product to cart.');
+          }
+        } catch (err) {
+          console.error('Add to cart error:', err);
+          showNotification('error', 'Something went wrong. Please try again.');
+        } finally {
+          addToCartBtn.disabled = false;
+          addToCartBtn.textContent = 'Add to Cart';
+        }
+      });
+    }
+  });
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const wishlistBtn = document.getElementById('addToWishlistBtn');
+    const notification = document.getElementById('notification');
+
+    // Use the same notification function as Add to Cart
+    function showNotification(type, message) {
+      notification.textContent = message;
+      notification.className = `notification ${type}`;
+      notification.style.display = 'block';
+      setTimeout(() => {
+        notification.style.display = 'none';
+      }, 2500);
+    }
+
+    if (wishlistBtn) {
+      wishlistBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const productId = wishlistBtn.dataset.productId;
+
+        wishlistBtn.disabled = true;
+        wishlistBtn.textContent = 'Adding...';
+
+        try {
+          const response = await fetch(`/add-to-wishlist/${productId}`, {
+            method: 'GET'
+          });
+
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            showNotification('success', result.message || 'Added to wishlist successfully!');
+          } else {
+            showNotification('error', result.message || result.error || 'Failed to add to wishlist.');
+          }
+        } catch (err) {
+          console.error('Wishlist error:', err);
+          showNotification('error', 'Something went wrong while adding to wishlist.');
+        } finally {
+          wishlistBtn.disabled = false;
+          wishlistBtn.textContent = 'Add to Wishlist';
+        }
+      });
+    }
+  });
+</script>
+
 
 
 </body>

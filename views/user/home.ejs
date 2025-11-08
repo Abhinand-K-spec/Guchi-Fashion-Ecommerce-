@@ -279,7 +279,7 @@
               button.classList.add('added');
             } else if (response.status === 400) {
               toastEl.classList.add('bg-danger', 'text-white');
-              toastBody.textContent = 'Failed to add product to wishlist: ' + (result.message || 'Unknown error.');
+              toastBody.textContent = 'Failed to add product to wishlist: ' + (result.message || 'Product already added.');
               const toast = new bootstrap.Toast(toastEl);
               toast.show();
             } else if (response.status === 302 || response.status === 401) {
@@ -287,7 +287,7 @@
               toastBody.textContent = 'Please log in to add to wishlist.';
               const toast = new bootstrap.Toast(toastEl);
               toast.show();
-              setTimeout(() => { window.location.href = '/login'; }, 2000);
+              setTimeout(() => { window.location.href = '/login'; }, 8000);
             }
           } catch (err) {
             console.error('Add to wishlist error:', err);

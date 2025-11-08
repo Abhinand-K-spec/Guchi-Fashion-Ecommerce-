@@ -107,6 +107,8 @@ router.post('/order/:orderId/return-item/:itemId', userAuth, orderController.req
 router.get('/wallet', userAuth, walletController.getWallet);
 router.post('/add-funds', userAuth, walletController.addFunds);
 router.post('/verify-wallet-payment', userAuth, walletController.verifyWalletPayment);
+router.post('/wallet-pay', userAuth, walletController.payWithWallet);
+
 
 
 

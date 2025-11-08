@@ -17,7 +17,7 @@ const validateCoupon = async (req, res) => {
       const cartTotal = parseFloat(subtotal);
       const userId = req.session.user; 
 
-      // Validate inputs
+
       if (!couponCode || isNaN(cartTotal) || cartTotal <= 0 || !userId) {
         console.error('Invalid input:', { couponCode, cartTotal, userId });
         return res.status(400).json({
@@ -29,7 +29,7 @@ const validateCoupon = async (req, res) => {
   
       console.log('Validating coupon:', { couponCode, cartTotal });
   
-      // Find coupon
+
       const coupon = await Coupon.findOne({
         CouponCode: couponCode.trim().toUpperCase(),
         StartDate: { $lte: new Date() },
@@ -48,7 +48,7 @@ const validateCoupon = async (req, res) => {
         });
       }
   
-      // Validate UsageLimit
+
       if (!Number.isInteger(coupon.UsageLimit) || coupon.UsageLimit <= 0) {
         console.error('Invalid coupon UsageLimit:', coupon.UsageLimit);
         return res.status(400).json({
@@ -58,7 +58,7 @@ const validateCoupon = async (req, res) => {
         });
       }
   
-      // Check usage count
+
       const usageCount = await Orders.countDocuments({ Coupon: coupon._id });
       if (usageCount >= coupon.UsageLimit) {
         console.log('Coupon usage limit reached:', { couponCode, usageCount, limit: coupon.UsageLimit });
@@ -69,7 +69,7 @@ const validateCoupon = async (req, res) => {
         });
       }
   
-      // Use explicit Discount field
+
       const discountPercentage = Number.isFinite(coupon.Discount) ? coupon.Discount : 0;
       if (discountPercentage <= 0 || discountPercentage > 100) {
         console.error('Invalid discount percentage:', discountPercentage);

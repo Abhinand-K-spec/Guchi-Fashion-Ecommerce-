@@ -224,7 +224,7 @@
       const otp = otpInput.value.trim();
       const invalidFeedback = otpInput.nextElementSibling;
 
-      // Client-side validation
+
       if (!otp || !/^\d{6}$/.test(otp)) {
         otpInput.classList.add('is-invalid');
         invalidFeedback.style.display = 'block';
@@ -274,7 +274,7 @@
       }
     });
 
-    // Real-time validation for OTP input
+
     document.getElementById('input-otp').addEventListener('input', function () {
       const otp = this.value.trim();
       const invalidFeedback = this.nextElementSibling;

@@ -39,9 +39,9 @@
     <div class="balance-card mb-4">
       <h5>Current Balance</h5>
       <p class="balance-amount">₹<%= wallet ? wallet.Balance.toFixed(2) : '0.00' %></p>
-      <a href="/checkout" class="btn btn-primary mt-2">
+      <!-- <a href="/checkout" class="btn btn-primary mt-2">
         <i class="fas fa-shopping-cart me-1"></i> Use Wallet for Checkout
-      </a>
+      </a> -->
     </div>
 
     <!-- Transaction History -->
@@ -63,6 +63,28 @@
       <% } %>
     </div>
   </div>
+  <!-- ===================== ADD FUNDS SECTION ===================== -->
+<div class="add-funds-container text-center">
+  <h5 class="mt-4">Add Funds to Wallet</h5>
+  <form id="addFundsForm" class="d-inline-flex flex-column align-items-center mt-3">
+    <input 
+      type="number" 
+      id="amountInput" 
+      class="form-control add-funds-input mb-2" 
+      placeholder="Enter amount (₹)" 
+      min="1" 
+      step="0.01" 
+      required 
+    />
+    <button type="submit" class="btn btn-success">
+      <i class="fa-solid fa-plus me-2"></i> Add Funds
+    </button>
+  </form>
+
+  <p id="errorMessage" class="error-message" style="display:none;"></p>
+  <p id="successMessage" class="success-message" style="display:none;"></p>
+</div>
+
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 

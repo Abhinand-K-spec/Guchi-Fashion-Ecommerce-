@@ -107,12 +107,12 @@ const addToWishlist = async (req, res) => {
     const { productId } = req.params;
 
     if (!productId) {
-      return res.status(400).json({ success: false, message: 'User ID and Product ID are required' });
+      return res.status(400).json({error: 'User ID and Product ID are required' });
     }
 
     const exists = await Wishlist.findOne({ UserId: userId, ProductId: productId });
     if (exists) {
-      return res.status(400).json({ success: false, message: 'Product already in wishlist' });
+      return res.status(400).json({ error: 'Product already in wishlist' });
     }
 
     const wishlistItem = new Wishlist({
@@ -122,10 +122,10 @@ const addToWishlist = async (req, res) => {
 
     await wishlistItem.save();
 
-    res.json({ success: true, message: 'Product added to wishlist' });
+    res.json({ success: 'Product added to wishlist' });
   } catch (err) {
     console.error('Add to wishlist error:', err);
-    res.status(500).json({ success: false, message: 'Error adding product to wishlist' });
+    res.status(500).json({ error: 'Error adding product to wishlist' });
   }
 };
 

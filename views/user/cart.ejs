@@ -309,13 +309,13 @@
     const proceedBtn = document.querySelector('.cart__total .primary-btn');
     const outOfStockMsg = document.querySelector('.cart__total .text-danger');
 
-    // Check for out-of-stock items
+
     const hasOutOfStock = cartItems.some(item => item.stock === 0 || item.stock < item.quantity);
 
-    // Update subtotal
+
     subtotalEl.textContent = `₹${totalPrice.toFixed(2)}`;
 
-    // Update proceed button visibility
+
     if (hasOutOfStock) {
       proceedBtn.classList.add('hide');
       if (!outOfStockMsg) {
@@ -382,10 +382,12 @@
         if (isIncrement) {
           if (currentQty >= 5) {
             showQtyModal(" You can't add more than 5 items.");
+            currentQty = 5
             return;
           }
           if (currentQty >= stock) {
             showQtyModal(` Only ${stock} items are available.`);
+            currentQty = stock
             return;
           }
         } else {

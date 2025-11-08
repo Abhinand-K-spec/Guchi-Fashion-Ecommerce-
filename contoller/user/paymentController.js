@@ -178,5 +178,6 @@ module.exports = {
     getPaymentFailure,
     getPaymentSuccess,
     verifyPayment,
-    getProductOffer
+    getProductOffer,
+    
 };

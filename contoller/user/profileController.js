@@ -153,7 +153,6 @@ const updateEmailRequestOtp = async (req, res) => {
       await User.findByIdAndUpdate(userId, { email: req.session.newEmail },{name:req.session.newName});
   
       req.flash('msg', 'Email updated successfully');
-      console.log('Email updated for user:', userId);
       
       return res.redirect('/editProfile');
     } else {

@@ -217,7 +217,7 @@ const addToCart = async (req, res) => {
     }
 
     await cart.save();
-    res.redirect('/shop');
+    return res.json({success:'Successfully added to cart'})
   } catch (err) {
     console.error('Add to cart error:', err);
     res.redirect('/shop');
@@ -242,7 +242,6 @@ const updateCartQuantity = async (req, res) => {
 
     const item = cart.Items.find(i => String(i.product._id) === String(productId));
     if (!item) {
-      console.log(`Item not found: productId=${productId}, cart.Items=${JSON.stringify(cart.Items.map(i => String(i.product._id)))}`);
       return res.json({ success: false, message: 'Item not found in cart.' });
     }
 
@@ -269,7 +268,6 @@ const updateCartQuantity = async (req, res) => {
     }
 
     await cart.save();
-    console.log(`Cart saved: userId=${userId}, productId=${productId}, newQuantity=${item.quantity}`);
 
     let totalPrice = 0;
     const cartItems = cart.Items.map(item => {
@@ -306,28 +304,27 @@ const updateCartQuantity = async (req, res) => {
 
 const removeFromCart = async (req, res) => {
   try {
-    const userId = req.session.user;
-    const productId = req.params.id;
+  const userId = req.session.user;
+  const productId = req.params.id;
 
-    if (!userId) return res.json({ success: false, message: 'User not logged in' });
+  if (!userId) {
+      return res.json({ success: false, message: 'User not logged in' });
+  }
+      const result = await Cart.findOneAndUpdate(
+          { user: userId },
+          { $pull: { Items: { product: productId } } }, 
+          { new: true } 
+      ).lean();
 
-    const cart = await Cart.findOne({ user: userId });
-    if (!cart) return res.json({ success: false, message: 'Cart not found' });
+      if (!result) {
+          return res.json({ success: false, message: 'Cart not found or item already removed.' });
+      }
 
-    const itemIndex = cart.Items.findIndex(item => item.product.toString() === productId);
-    if (itemIndex === -1) {
-      cart.Items.splice(itemIndex, 1);
-      await cart.save();
-      return res.json({ success: true });
-    }
+      return res.json({ success: true, message: 'Item successfully removed from cart.' });
 
-    cart.Items.splice(itemIndex, 1);
-    await cart.save();
-
-    res.json({ success: true });
   } catch (err) {
-    console.error('Remove cart error:', err);
-    res.json({ success: false, message: 'Error removing item from cart' });
+      console.error('Remove cart error:', err);
+      return res.json({ success: false, message: 'Error removing item from cart' });
   }
 };
 
@@ -342,6 +339,7 @@ const checkout = async (req, res) => {
     if (!cartData || !cartData.Items.length) {
       return res.redirect('/cart');
     }
+    
 
     const coupons = await Coupon.find({
       StartDate: { $lte: new Date() },
@@ -351,7 +349,8 @@ const checkout = async (req, res) => {
     }).lean();
 
 
-    const wallet = await Wallet.findOne({ userId }).lean() || { balance: 0 };
+    const wallet = await Wallet.findOne({ UserId:userId }).lean() || { balance: 0 };
+    console.log(wallet)
     let subtotal = 0;
     let totalItemDiscount = 0;
     const cartItems = [];
@@ -395,7 +394,7 @@ const checkout = async (req, res) => {
       { $set: { Items: validCartItems } }
     );
     const tax = Math.round(subtotal * 0.05);
-    const discount = 0; // Initial discount (updated via AJAX)
+    const discount = 0; 
     const deliveryCharge = 40;
     const finalTotal = subtotal - discount + tax + deliveryCharge;
 
