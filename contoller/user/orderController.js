@@ -487,6 +487,7 @@ const placeOrder = async (req, res) => {
         product: product._id,
         quantity,
         price,
+        originalPrice,
         status: 'Pending',
         itemDiscount
       });

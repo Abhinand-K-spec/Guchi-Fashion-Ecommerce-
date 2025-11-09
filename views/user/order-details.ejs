@@ -115,11 +115,11 @@
         <div class="col-md-7">
           <h5 class="mb-2"><%= product.productName %></h5>
           <p class="mb-1"><strong>Quantity:</strong> <%= item.quantity %></p>
-          <p class="mb-1"><strong>Price:</strong> ₹<%= price.toFixed(2) %></p>
           <% if (itemDiscount > 0) { %>
             <p class="mb-1 text-success"><strong>Item Discount:</strong> -₹<%= itemDiscount.toFixed(2) %></p>
             <p class="mb-1 text-muted"><del>Sales Price: ₹<%= originalPrice %></del></p>
             <% } %>
+            <p class="mb-1"><strong>Price:</strong> ₹<%= ((originalPrice-itemDiscount)*item.quantity).toFixed(2) %></p>
             
           <p><strong>Status:</strong> 
             <span class="badge 

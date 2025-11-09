@@ -21,6 +21,11 @@ const getWallet = async (req, res) => {
       Balance: 0,
       Transaction: []
     };
+
+    if (wallet.Transaction && wallet.Transaction.length > 0) {
+      wallet.Transaction.sort((a, b) => b.TransactionDate - a.TransactionDate);
+    }
+
     res.render('wallet', {
       pageTitle: 'My Wallet',
       user,

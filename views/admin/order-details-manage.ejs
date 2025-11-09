@@ -107,8 +107,8 @@
             <div class="col-md-7">
               <h6><strong><%= item.product?.productName || 'Unknown Product' %></strong></h6>
               <p>Quantity: <%= item.quantity %></p>
-              <p>Discount ₹<%= (item.price - item.itemDiscount ).toFixed(2)%></p>
-              <p class="text-success"><strong>Final Price: ₹<%= (item.price * item.quantity ).toFixed(2)|| 0 %></strong></p>
+              <!-- <p>Discount ₹<%= (item.originalPrice - item.itemDiscount ).toFixed(2)%></p> -->
+              <p class="text-success"><strong>Final Price: ₹<%= ((item.originalPrice - item.itemDiscount ) * item.quantity).toFixed(2) || 0 %></strong></p>
               <p>Status: 
                 <% if(order.PaymentMethod==='Online' && order.PaymentStatus!=='Completed' && order.Status==='Pending') { %>
                         <h3 class="text-danger">Payment failed</h3>

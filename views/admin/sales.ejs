@@ -73,6 +73,7 @@
       text-align: center;
     }
 
+    
     th {
       background-color: #0a84ff;
       color: white;
@@ -157,7 +158,7 @@
             <th>Net Amount</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="text-align: center">
           <% report.forEach(order => { %>
             <tr>
               <td><%= order.OrderId %></td>

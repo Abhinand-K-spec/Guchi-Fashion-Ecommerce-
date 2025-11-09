@@ -50,6 +50,10 @@ const OrdersSchema = new Schema({
         type: Number,
         default: 0
       },
+      originalPrice:{
+        type : Number,
+        default:0
+      },
       status: {
         type: String,
         enum: ['Pending','Returned','Delivered','Cancelled','Shipped','OutForDelivery'],
