@@ -57,7 +57,7 @@
               <tr>
                 <th>Order ID</th>
                 <th>Date</th>
-                <th>Status</th>
+                <!-- <th>Status</th> -->
                 <th>Actions</th>
               </tr>
             </thead>
@@ -66,7 +66,7 @@
                 <tr>
                   <td><%= order.OrderId || order._id.toString().slice(-6) %></td>
                   <td><%= new Date(order.OrderDate).toLocaleDateString() %></td>
-                  <td><%= order.Status %></td>
+                  <!-- <td><%= order.Items[0].status %></td> -->
                   <td>
                     <a href="/order/<%= order._id %>" class="btn btn-sm btn-info mb-1">Details</a>
 
