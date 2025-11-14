@@ -93,8 +93,8 @@ const cart = async (req, res) => {
       }
 
       const variant = product.Variants?.[0];
-      const { offer, salePrice } = await getProductOffer(product); // Add offer logic
-      const price = salePrice || variant?.Price || 0; // Use salePrice if offer exists
+      const { offer, salePrice } = await getProductOffer(product); 
+      const price = salePrice || variant?.Price || 0; 
       const quantity = item.quantity;
       const itemTotal = price * quantity;
 
@@ -393,7 +393,7 @@ const checkout = async (req, res) => {
       { user: userId },
       { $set: { Items: validCartItems } }
     );
-    const tax = Math.round(subtotal * 0.05);
+    const tax = (subtotal * 0.05)/100;
     const discount = 0; 
     const deliveryCharge = 40;
     const finalTotal = subtotal - discount + tax + deliveryCharge;

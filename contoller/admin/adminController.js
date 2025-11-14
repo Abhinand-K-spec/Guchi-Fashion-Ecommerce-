@@ -1,6 +1,7 @@
 const User = require('../../model/userSchema');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const Orders = require('../../model/ordersSchema');
  
 const pageNotFound = async(req,res)=>{
   try {
@@ -19,11 +20,13 @@ const loadLogin = (req,res)=>{
 
 const loadDashboard = async(req,res)=>{
    try {
-    
-    if(req.session.admin){
-        return res.render('admin');
+     if(!req.session.admin){
+      return res.render('admin-login');
     }
-    res.render('admin-login');
+
+    const orders = Orders.find({});
+    const  totalCount = Orders.countDocuments();
+    res.render('admin')
 
    } catch (error) {
     res.render('page-404');

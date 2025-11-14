@@ -91,6 +91,7 @@
           <p><strong>Order ID:</strong> <%= order.OrderId %></p>
           <p><strong>Date:</strong> <%= new Date(order.OrderDate).toLocaleString() %></p>
           <p><strong>Return Policy:</strong> 7-day return policy</p>
+          <p><strong>Payment Method: <%=order.PaymentMethod%></strong></p>
 
           <% if (order.PaymentMethod==='Online' && order.PaymentStatus!=='Completed' && order.Status==='Pending') { %>
             <div>
@@ -115,11 +116,13 @@
         <div class="col-md-7">
           <h5 class="mb-2"><%= product.productName %></h5>
           <p class="mb-1"><strong>Quantity:</strong> <%= item.quantity %></p>
-          <% if (itemDiscount > 0) { %>
+          <% if (itemDiscount >= 0) { %>
             <p class="mb-1 text-success"><strong>Item Discount:</strong> -₹<%= itemDiscount.toFixed(2) %></p>
             <p class="mb-1 text-muted"><del>Sales Price: ₹<%= originalPrice %></del></p>
             <% } %>
-            <p class="mb-1"><strong>Price:</strong> ₹<%= ((originalPrice-itemDiscount)*item.quantity).toFixed(2) %></p>
+            <p>Taxes: ₹<%=((((originalPrice-itemDiscount)*item.quantity)*0.05)/100).toFixed(2)%></p>
+            <p>Delivary: ₹40</p>
+            <p class="mb-1"><strong>Price:</strong> ₹<%= ((((originalPrice-itemDiscount)*item.quantity)+((((originalPrice-itemDiscount)*item.quantity)*0.05)/100))+40).toFixed(2) %></p>
             
           <p><strong>Status:</strong> 
             <span class="badge 

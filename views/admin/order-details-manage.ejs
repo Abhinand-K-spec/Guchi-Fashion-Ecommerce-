@@ -99,6 +99,7 @@
         <hr>
 
         <h5 class="mb-3">Ordered Items:</h5>
+        <h6 class="text-success"><strong>Payment method: <%=order.PaymentMethod%></strong></h6>
         <% order.Items.forEach(item => { %>
           <div class="row border rounded p-2 mb-3" style="background-color:#3a3a3a;" id="item-<%= item._id %>">
             <div class="col-md-2 d-flex align-items-center justify-content-center">
@@ -107,8 +108,10 @@
             <div class="col-md-7">
               <h6><strong><%= item.product?.productName || 'Unknown Product' %></strong></h6>
               <p>Quantity: <%= item.quantity %></p>
-              <!-- <p>Discount ₹<%= (item.originalPrice - item.itemDiscount ).toFixed(2)%></p> -->
-              <p class="text-success"><strong>Final Price: ₹<%= ((item.originalPrice - item.itemDiscount ) * item.quantity).toFixed(2) || 0 %></strong></p>
+              <p>Discount: ₹<%= (item.itemDiscount ).toFixed(2)%></p>
+              <p>taxes: <%=((((item.originalPrice-item.itemDiscount)*item.quantity)*0.05)/100).toFixed(2)%></p>
+              <p>Delivary: 40</p>
+              <p class="text-success"><strong>Final Price: ₹<%= ((((item.originalPrice-item.itemDiscount)*item.quantity)+((((item.originalPrice-item.itemDiscount)*item.quantity)*0.05)/100))+40).toFixed(2) || 0 %></strong></p>
               <p>Status: 
                 <% if(order.PaymentMethod==='Online' && order.PaymentStatus!=='Completed' && order.Status==='Pending') { %>
                         <h3 class="text-danger">Payment failed</h3>
