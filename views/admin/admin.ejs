@@ -131,7 +131,7 @@
         
         <div class="col-lg-3 col-md-6 mb-4">
           <div class="card bg-dark-secondary border-0 shadow-sm">
-            <div class="card-body">
+            <div class="card-body text-center">
               <p class="text-white small mb-0">Total Orders</p>
               <h3 class="text-white"><%= totalOrders %></h3>
             </div>
@@ -140,8 +140,8 @@
 
         <div class="col-lg-3 col-md-6 mb-4">
           <div class="card bg-dark-secondary border-0 shadow-sm">
-            <div class="card-body">
-              <p class=" text-white small mb-0">Total Revenue</p>
+            <div class="card-body text-center">
+              <p class=" text-white  small mb-0">Total Revenue</p>
               <h3 class="text-success">₹<%= Math.round(totalRevenue) %></h3>
             </div>
           </div>
@@ -170,8 +170,8 @@
 
         <div class="col-lg-3 col-md-6 mb-4">
           <div class="card bg-dark-secondary border-0 shadow-sm">
-            <div class="card-body">
-              <p class="text-white small mb-0">Total Users</p>
+            <div class="card-body text-center">
+              <p class="text-white  small mb-0">Total Users</p>
               <h3 class="text-white"><%= totalUsers %></h3>
             </div>
           </div>
@@ -254,33 +254,75 @@
         </div>
       </div>
       <!-- TOP 10 ORDERS SECTION -->
-<div class="card bg-dark-secondary border-0 shadow-sm mb-5 mt-4">
-  <div class="card-body">
-    <h5 class="text-white mb-3">Top 10 Recent Orders</h5>
+<!-- RECENT ORDERS + TOP SELLING PRODUCTS SECTION -->
+<div class="row mt-4">
 
-    <div class="table-responsive">
-      <table class="table table-dark table-hover align-middle">
-        <thead>
-          <tr>
-            <th></th>
-            <th>Order ID</th>
-            <th>Date</th>
-          </tr>
-        </thead>
+  <!-- Recent Orders Table -->
+  <div class="col-lg-6 mb-4">
+    <div class="card bg-dark-secondary border-0 shadow-sm">
+      <div class="card-body">
+        <h5 class="text-white mb-3">Recent Orders</h5>
 
-        <tbody>
-          <% lastOrders.forEach((order, index) => { %>
-            <tr>
-              <td><%= index + 1 %></td>
-              <td>ORD- <%= order._id %></td>
-              <td><%= order.createdAt.toLocaleDateString("en-IN") %></td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
+        <div class="table-responsive">
+          <table class="table table-dark table-hover align-middle">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Order ID</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <% lastOrders.forEach((order, index) => { %>
+              <tr>
+                <td><%= index + 1 %></td>
+                <td>ORD-<%= order._id %></td>
+                <td><%= order.createdAt.toLocaleDateString("en-IN") %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
     </div>
   </div>
+
+  <!-- Top Selling Products Table -->
+  <div class="col-lg-6 mb-4">
+    <div class="card bg-dark-secondary border-0 shadow-sm">
+      <div class="card-body">
+        <h5 class="text-white mb-3">Top Selling Products</h5>
+
+        <div class="table-responsive">
+          <table class="table table-dark table-hover align-middle">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Product</th>
+                <th>Sold</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <% topProducts.forEach((product, index) => { %>
+              <tr>
+                <td><%= index + 1 %></td>
+                <td><%= product.productName %></td>
+                <td><%= product.totalSold %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
 </div>
+
 
 
     </div>

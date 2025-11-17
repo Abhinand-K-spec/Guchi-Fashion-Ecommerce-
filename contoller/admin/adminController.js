@@ -31,7 +31,7 @@ const loadDashboard = async (req, res) => {
 
 
     const orders = Orders.find().populate("Items.product").lean();
-    const lastOrders = await Orders.find({}).sort({createdAt:-1}).limit(10)
+    const lastOrders = await Orders.find({}).sort({createdAt:-1}).limit(5)
     const totalOrders = (await orders).length;
 
 
@@ -242,6 +242,36 @@ const loadDashboard = async (req, res) => {
     const categoryData = categorySold.map(c => c.totalSold);
 
 
+    const topProducts = await Orders.aggregate([
+      { $unwind: "$Items" },
+    
+      // Fetch product details
+      {
+        $lookup: {
+          from: "products",
+          localField: "Items.product",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      { $unwind: "$productDetails" },
+    
+
+      {
+        $group: {
+          _id: "$productDetails._id",
+          productName: { $first: "$productDetails.productName" },
+          totalSold: { $sum: "$Items.quantity" }
+        }
+      },
+    
+      { $sort: { totalSold: -1 } },
+    
+      { $limit: 10 }
+    ]);
+    
+
+
     res.render("admin", {
       totalOrders,
       lastOrders,
@@ -262,7 +292,8 @@ const loadDashboard = async (req, res) => {
 
       returnedOrders,
       categoryLabels,
-      categoryData
+      categoryData,
+      topProducts
     });
 
   } catch (error) {
