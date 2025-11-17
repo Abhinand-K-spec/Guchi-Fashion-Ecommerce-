@@ -45,12 +45,16 @@ const addCoupon = async (req, res) => {
         } = req.body;
 
 
-
+        
         const existingCoupon = await Coupon.findOne({ CouponCode });
         if (existingCoupon) {
-            console.log('Existing coupon found:', existingCoupon);
-            return res.status(400).json({ success: false, error: 'Coupon code already exists' });
+            return res.status(400).json({
+                success: false,
+                error: "Coupon code already exists"
+            });
+            
         }
+
 
 
         const start = new Date(StartDate);
@@ -79,7 +83,6 @@ const addCoupon = async (req, res) => {
             IsListed: true
         });
 
-        console.log('New coupon to save:', newCoupon);
 
 
         const savedCoupon = await newCoupon.save();

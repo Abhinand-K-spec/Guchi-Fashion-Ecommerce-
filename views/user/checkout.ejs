@@ -160,6 +160,7 @@
               <label class="form-check-label" for="paymentCOD">
                 Cash on Delivery
               </label>
+              <p id="cod-p" class="text-danger"></p>
             </div>
             <div class="form-check">
               <input class="form-check-input" type="radio" name="paymentMethod" id="paymentOnline" value="Online">
@@ -291,6 +292,30 @@
           placeOrderButton.innerHTML = '<i class="fas fa-credit-card me-1"></i> Proceed to Payment (Online)';
         }
       };
+
+      // Disable COD if final total > 1000
+const finalTotalValue = Number(
+  document.getElementById('finalTotal').textContent.replace('₹','').trim()
+);
+
+const codRadio = document.getElementById('paymentCOD');
+const codLabel = document.querySelector("label[for='paymentCOD']");
+const onlineRadio = document.getElementById('paymentOnline');
+
+if (finalTotalValue > 1500) {
+  codRadio.disabled = true;
+  codRadio.checked = false;
+  
+  const codp = document.getElementById('cod-p').innerHTML = 'COD not allowed above 100/-'
+    onlineRadio.checked = true; // auto-select Online Payment
+    codLabel.style.opacity = "0.5";
+    codLabel.style.cursor = "not-allowed";
+
+    // Change order button text
+    document.getElementById('placeOrderButton').innerHTML =
+      '<i class="fas fa-credit-card me-1"></i> Proceed to Payment (Online)';
+}
+
 
       // Initialize button text
       updatePlaceOrderButton();

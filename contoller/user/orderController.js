@@ -509,7 +509,7 @@ const placeOrder = async (req, res) => {
     let couponData = null;
 
     if (coupon) {
-      console.log('inside if coupon');
+
       couponData = await Coupon.findOne({
         CouponCode: coupon.toUpperCase(),
         StartDate: { $lte: new Date() },
@@ -519,7 +519,7 @@ const placeOrder = async (req, res) => {
         MinCartValue: { $lte: subtotal }
       });
 
-      console.log('coupondata :', couponData);
+
 
       if (couponData && couponData.Discount > 0) {
         couponDiscount = subtotal * (couponData.Discount / 100);
@@ -527,7 +527,7 @@ const placeOrder = async (req, res) => {
           couponDiscount = Math.min(couponDiscount, couponData.MaxDiscount);
         }
         couponDiscount = Math.round(couponDiscount * 100) / 100;
-        console.log('couponDiscount calculation: couponDiscount=', couponDiscount);
+
         const totalItemTotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         orderItems.forEach(item => {
           const itemRatio = (item.price * item.quantity) / totalItemTotal;
@@ -549,7 +549,7 @@ const placeOrder = async (req, res) => {
     const finalTotal = subtotal - discountAmount + tax + deliveryCharge;
 
     if (finalTotal < 1) {
-      console.error('Final total too low:', finalTotal);
+
       return res.status(400).json({ success: false, message: 'Order amount must be at least ₹1.00 after discounts.' });
     }
 
@@ -624,18 +624,21 @@ const placeOrder = async (req, res) => {
     }
 
 
-    await Cart.findOneAndUpdate({ user: userId }, { Items: [] });
-    for (const item of orderItems) {
-      await Products.findByIdAndUpdate(item.product, {
-        $inc: { 'Variants.0.Stock': -item.quantity }
-      });
-    }
+for (const item of order.Items) {
+  await Products.findByIdAndUpdate(item.product, {
+    $inc: { "Variants.0.Stock": -item.quantity }
+  });
+}
 
-    return res.status(200).json({
-      success: true,
-      orderId: order._id,
-      message: 'Order placed successfully.'
-    });
+
+await Cart.findOneAndUpdate({ user: userId }, { Items: [] });
+
+return res.status(200).json({
+  success: true,
+  orderId: order._id,
+  message: "Order placed successfully."
+});
+
   } catch (err) {
     console.error('Place order error:', err);
     if (err.name === 'ValidationError') {

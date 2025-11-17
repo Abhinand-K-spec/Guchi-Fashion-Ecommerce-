@@ -4,11 +4,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Order Details - Guchi Fashion</title>
 
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <!-- Axios -->
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <!-- Razorpay Checkout -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <style>
     body {
@@ -96,7 +97,10 @@
           <% if (order.PaymentMethod==='Online' && order.PaymentStatus!=='Completed' && order.Status==='Pending') { %>
             <div>
               <h3>Payment Failed</h3>
-              <a href="/checkout?orderId=<%= order?._id%>" class="btn btn-sm btn-danger btn-custom">Retry Payment</a>
+              <!-- Retry button (no redirect) -->
+              <button class="btn btn-sm btn-danger btn-custom" id="retry-payment-btn" data-order-id="<%= order._id %>">
+                Retry Payment
+              </button>
             </div>
           <% } %>
         </div>
@@ -416,6 +420,131 @@
         }
       });
 
+      //
+      // Retry Payment Logic (uses POST /place-order with { orderId, retry: true })
+      //
+      const retryBtn = document.getElementById('retry-payment-btn');
+      const razorpayKey = '<%= process.env.RAZORPAY_KEY_ID %>'; // server-side key
+      const userId = '<%= user?._id || "" %>'; // if you need to send userId, it's available
+
+      if (retryBtn) {
+        retryBtn.addEventListener('click', async () => {
+          const orderId = retryBtn.dataset.orderId;
+          if (!orderId) {
+            showToast('danger', 'Order id not found for retry');
+            return;
+          }
+
+          retryBtn.disabled = true;
+          const originalText = retryBtn.innerHTML;
+          retryBtn.innerHTML = 'Initializing...';
+
+          try {
+            // Call your existing /place-order route to generate a new Razorpay order for retry.
+            // Sending { orderId, retry: true } — adjust or add more fields if your backend expects them.
+            const res = await axios.post('/retry-payment', {
+              orderId: orderId,
+              retry: true,
+              // If your backend needs userId or other fields, include them:
+              // userId: userId
+            }, {
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+            });
+
+            if (!res || !res.data || !res.data.success) {
+              console.error('Retry place-order failed', res?.data);
+              showToast('danger', (res?.data?.message) || 'Failed to initialize retry payment');
+              retryBtn.disabled = false;
+              retryBtn.innerHTML = originalText;
+              return;
+            }
+
+            // Expecting backend to return an object similar to checkout:
+            // res.data.order.id  -> Razorpay order id
+            // res.data.orderId   -> your DB order id
+            const razorOrder = res.data.order;
+            const dbOrderId = res.data.orderId || orderId; // fallback
+
+            if (!razorOrder || !razorOrder.id) {
+              console.error('Razorpay order id missing in response', res.data);
+              showToast('danger', 'Payment initialization failed (missing order id).');
+              retryBtn.disabled = false;
+              retryBtn.innerHTML = originalText;
+              return;
+            }
+
+            const options = {
+              key: razorpayKey,
+              amount: razorOrder.amount || Math.round((res.data.amount || 0) * 100),
+              currency: razorOrder.currency || 'INR',
+              name: 'Guchi Fashion',
+              description: 'Retry Payment',
+              image: '/guchi-logo.png',
+              order_id: razorOrder.id,
+              handler: async function (paymentResponse) {
+                // On successful payment — verify with backend
+                try {
+                  const verifyRes = await axios.post('/verify-retry-payment', {
+                    razorpay_payment_id: paymentResponse.razorpay_payment_id || paymentResponse.razorpay_payment_id,
+                    razorpay_order_id: paymentResponse.razorpay_order_id || paymentResponse.razorpay_order_id,
+                    razorpay_signature: paymentResponse.razorpay_signature || paymentResponse.razorpay_signature,
+                    orderId: dbOrderId,
+                    // include any other helpful data your backend expects:
+                    // userId
+                  }, {
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+                  });
+
+                  if (verifyRes && verifyRes.data && verifyRes.data.success) {
+                    showToast('success', 'Payment successful!');
+                    // Update UI: reload to reflect payment status (or optionally redirect)
+                    setTimeout(() => {
+                      location.reload();
+                    }, 900);
+                  } else {
+                    console.error('Verify payment failed', verifyRes?.data);
+                    showToast('danger', verifyRes?.data?.message || 'Payment verification failed.');
+                    retryBtn.disabled = false;
+                    retryBtn.innerHTML = originalText;
+                  }
+                } catch (verifyErr) {
+                  console.error('Error verifying retry payment', verifyErr);
+                  showToast('danger', 'Error verifying payment. Please contact support.');
+                  retryBtn.disabled = false;
+                  retryBtn.innerHTML = originalText;
+                }
+              },
+              prefill: {
+                name: '<%= order.ShippingAddress?.name || "" %>',
+                contact: '<%= order.ShippingAddress?.phone || "" %>',
+                email: '<%= user?.email || "" %>'
+              },
+              notes: {
+                orderId: '<%= order._id %>'
+              },
+              theme: { color: '#28a745' }
+            };
+
+            const rzp = new Razorpay(options);
+
+            rzp.on('payment.failed', function (response) {
+              console.error('Retry payment failed', response);
+              showToast('danger', response.error?.description || 'Payment failed during retry');
+              retryBtn.disabled = false;
+              retryBtn.innerHTML = originalText;
+            });
+
+            rzp.open();
+          } catch (err) {
+            console.error('Error initiating retry payment', err);
+            showToast('danger', (err?.response?.data?.message) || 'Error initiating retry payment. Try again later.');
+            retryBtn.disabled = false;
+            retryBtn.innerHTML = originalText;
+          }
+        });
+      }
+
+      // toast helper
       function showToast(type, message) {
         const toastHtml = `
           <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
@@ -433,8 +562,10 @@
         setTimeout(() => {
           toast.hide();
           setTimeout(() => toastElement.remove(), 500);
-        }, 3000);
+        }, 3500);
       }
+
+      // existing return/cancel success handlers etc remain unchanged (already above)
     });
   </script>
 

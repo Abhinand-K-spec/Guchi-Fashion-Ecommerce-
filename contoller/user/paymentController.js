@@ -174,10 +174,150 @@ const getPaymentFailure = async (req, res) => {
   }
 };
 
+
+const retryPayment =  async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    const userId = req.session.user;
+
+    if (!orderId) {
+      return res.status(400).json({ success: false, message: 'Order ID missing.' });
+    }
+
+    const existingOrder = await Orders.findById(orderId).lean();
+    if (!existingOrder) {
+      return res.status(404).json({ success: false, message: 'Order not found.' });
+    }
+
+    // Validate for retry
+    if (existingOrder.PaymentMethod !== 'Online') {
+      return res.status(400).json({
+        success: false,
+        message: 'Retry allowed only for online payments.'
+      });
+    }
+
+    if (existingOrder.PaymentStatus === 'Completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Payment is already completed.'
+      });
+    }
+
+    // Calculate payable amount again
+const totalOriginalPrice = existingOrder.Items.reduce((sum,item)=> sum+=item.originalPrice,0);
+const delivary = 40;
+const discountAmount = existingOrder.discountAmount;
+const finalAmount = totalOriginalPrice - discountAmount + delivary
+      
+
+
+    if (finalAmount < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid amount for retry.'
+      });
+    }
+
+    // Create new Razorpay order
+    const receipt = `retry_${orderId}_${Date.now()}`.slice(0, 40);
+
+    const razorpayOrder = await razorpay.orders.create({
+      amount: Math.round(finalAmount * 100),
+      currency: "INR",
+      receipt: receipt,
+      notes: { orderId }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Retry payment initialized.",
+      order: razorpayOrder,
+      orderId: existingOrder._id
+    });
+
+  } catch (err) {
+    console.error("Retry Payment Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error during retry payment."
+    });
+  }
+};
+
+const verifyRetryPayment = async (req, res) => {
+  try {
+    const { 
+      razorpay_payment_id, 
+      razorpay_order_id, 
+      razorpay_signature, 
+      orderId 
+    } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({ success: false, message: "Order ID missing." });
+    }
+
+    const existingOrder = await Orders.findById(orderId);
+    if (!existingOrder) {
+      return res.status(404).json({ success: false, message: "Order not found." });
+    }
+
+    // Prevent verification on non-online orders
+    if (existingOrder.PaymentMethod !== "Online") {
+      return res.status(400).json({ success: false, message: "Invalid payment retry for COD order." });
+    }
+
+    // Razorpay signature verification
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body.toString())
+      .digest("hex");
+
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment verification failed (Invalid signature)."
+      });
+    }
+
+    // Update order as paid
+    existingOrder.PaymentStatus = "Completed";
+    existingOrder.Status = "Confirmed";
+
+    existingOrder.PaymentDetails = {
+      razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_signature,
+      paidAt: new Date()
+    };
+
+    await existingOrder.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment verified successfully.",
+      orderId: existingOrder._id
+    });
+
+  } catch (err) {
+    console.error("Verify Retry Payment Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error verifying payment."
+    });
+  }
+};
+
+
 module.exports = {
     getPaymentFailure,
     getPaymentSuccess,
     verifyPayment,
     getProductOffer,
+    retryPayment,
+    verifyRetryPayment
     
 };

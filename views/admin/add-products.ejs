@@ -1,148 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Add Product</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    *{
-      background-color: #000;
-    }
-    body {
-      background-color: #040303;
-      font-family: 'Inter', sans-serif;
-      color: #0c0b0b;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Add Product</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        background-color: #040303;
+        font-family: 'Inter', sans-serif;
+        color: #0c0b0b;
+      }
+      
+      .container {
+        background-color: #000000;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+      }
+      
+      h2 {
+        color: #fff;
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 30px;
+      }
+      
+      .form-label {
+        color: #d3d3d3;
+        font-weight: 500;
+        margin-bottom: 6px;
+      }
+      
+      .form-control,
+      .form-select {
+        background-color: #121212;
+        border: 1px solid #333;
+        color: #f0f0f0;
+        border-radius: 8px;
+        padding: 10px 12px;
+      }
+      
+      .form-control:focus,
+      .form-select:focus {
+        border-color: #0d6efd;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+      }
+      
+      input::placeholder,
+      textarea::placeholder {
+        color: #888;
+      }
+      
+      input[type="file"] {
+        background-color: #222;
+        color: #bbb;
+        border: none;
+        border-radius: 6px;
+        padding: 10px;
+      }
+      
+      textarea.form-control {
+        height: 10px;
+        resize: none;
+      }
+      
+      .form-check-label {
+        color: #ccc;
+      }
+      
+      .crop-preview {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px;
+        background-color: #222;
+        margin-top: 5px;
+        border: 1px solid #444;
+      }
+      
+      .submit-btn {
+        background-color: #0d6efd;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 25px;
+        font-weight: 600;
+      }
+      
+      .submit-btn:hover {
+        background-color: #0b5ed7;
+      }
+      
+      table {
+        color: #fff;
+        background-color: #1c1c1c;
+        border: 1px solid #444;
+      }
+      
+      thead {
+        background-color: #0d6efd;
+        color: #fff;
+      }
+      
+      .table th,
+      .table td {
+        vertical-align: middle;
+        text-align: center;
+      }
+      
+      .modal-content {
+        background-color: #121212;
+        color: #fff;
+        border: 1px solid #444;
+      }
+      
+      .modal-header .btn-close {
+        filter: invert(1);
+      }
+      
+      .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+      }
+      #productnamepart{
+        margin-top: 10vh;
+      }
+      </style>
   
-    .container {
-      max-width: 10px;
-      margin: 40px auto;
-      background-color: #000000;
-      padding: 45px 50px;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
-    }
-  
-    h2 {
-      color: #fff;
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 30px;
-    }
-  
-    .form-label {
-      color: #d3d3d3;
-      font-weight: 500;
-      margin-bottom: 6px;
-    }
-  
-    .form-control,
-    .form-select {
-      background-color: #121212;
-      border: 1px solid #333;
-      color: #f0f0f0;
-      border-radius: 8px;
-      padding: 10px 12px;
-    }
-  
-    .form-control:focus,
-    .form-select:focus {
-      border-color: #0d6efd;
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
-    }
-  
-    input::placeholder,
-    textarea::placeholder {
-      color: #888;
-    }
-  
-    input[type="file"] {
-      background-color: #222;
-      color: #bbb;
-      border: none;
-      border-radius: 6px;
-      padding: 10px;
-    }
-  
-    textarea.form-control {
-    height: 10px;
-      resize: none;
-    }
-  
-    .form-check-label {
-      color: #ccc;
-    }
-  
-    .crop-preview {
-      width: 100px;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 8px;
-      background-color: #222;
-      margin-top: 5px;
-      border: 1px solid #444;
-    }
-  
-    .submit-btn {
-      background-color: #0d6efd;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 25px;
-      font-weight: 600;
-    }
-  
-    .submit-btn:hover {
-      background-color: #0b5ed7;
-    }
-  
-    table {
-      color: #fff;
-      background-color: #1c1c1c;
-      border: 1px solid #444;
-    }
-  
-    thead {
-      background-color: #0d6efd;
-      color: #fff;
-    }
-  
-    .table th,
-    .table td {
-      vertical-align: middle;
-      text-align: center;
-    }
-  
-    .modal-content {
-      background-color: #121212;
-      color: #fff;
-      border: 1px solid #444;
-    }
-  
-    .modal-header .btn-close {
-      filter: invert(1);
-    }
-  
-    .form-check-input:checked {
-      background-color: #0d6efd;
-      border-color: #0d6efd;
-    }
-  </style>
-  
+  <%- include("../partials/admin/header") %>
 </head>
 <body>
-  <%- include("../partials/admin/header") %>
 
-  <div class="container ">
-    <h2 class="text-white">Add New Product</h2>
+  <div class="container bg-dark">
+
     <form method="POST" action="/admin/addproduct" enctype="multipart/form-data" onsubmit="return validateForm()">
-      <div class="row g-4">
-        <div class="col-md-6">
-          <label class="form-label">Product Name</label>
+      <div id="productnamepart" class="row g-4">
+        <div  class="col-md-6">
+          <label class="form-labe">Product Name</label>
           <input type="text" name="productName" class="form-control" placeholder="Enter product name">
         </div>
 

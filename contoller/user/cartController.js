@@ -350,7 +350,7 @@ const checkout = async (req, res) => {
 
 
     const wallet = await Wallet.findOne({ UserId:userId }).lean() || { balance: 0 };
-    console.log(wallet)
+
     let subtotal = 0;
     let totalItemDiscount = 0;
     const cartItems = [];

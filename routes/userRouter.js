@@ -90,6 +90,9 @@ router.post('/verify-payment', userAuth, paymentController.verifyPayment);
 router.get('/order-confirmation/:orderId', userAuth, userController.getOrderSuccess);
 router.get('/payment-success/:orderId', userAuth, paymentController.getPaymentSuccess); 
 router.get('/payment-failure/:orderId', userAuth, paymentController.getPaymentFailure);
+router.post('/retry-payment', userAuth,paymentController.retryPayment);
+router.post('/verify-retry-payment', userAuth,paymentController.verifyRetryPayment);
+
 
 // order management------------------------------------------------------------------------------------->
 router.get('/orders', userAuth, orderController.listOrders);

@@ -2,6 +2,7 @@ const Orders = require('../../model/ordersSchema');
 const User = require('../../model/userSchema');
 const Product = require('../../model/productSchema');
 const Wallet = require('../../model/walletSchema');
+const { after } = require('lodash');
 
 const getAdminOrders = async (req, res) => {
   try {
@@ -77,20 +78,17 @@ const approveReturn = async (req, res) => {
 
     item.returnStatus = 'Request Approved';
     item.status = 'Returned';
-    let refundAmount = item.price * item.quantity; // Use discounted price
-    if (order.discountAmount > 0) {
-      const itemTotalBeforeDiscount = (item.originalPrice || item.price) * item.quantity;
-      const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
-      const discountProportion = (itemTotalBeforeDiscount / totalOrderAmountBeforeDiscount) * order.discountAmount;
-      refundAmount -= discountProportion;
-    }
-    console.log(`Refund amount calculated: ${refundAmount} for item ${productId} in order ${orderId}`);
+    const tax = (((item.price * item.quantity) * 0.05)) / 100;
+    
+    const delivery = 40;
+    let refundAmount = item.price * item.quantity + tax + delivery ; 
+    
 
-    if (order.PaymentMethod === 'Online') {
+    if (order.PaymentMethod === 'Online' || order.PaymentMethod === 'COD') {
       let wallet = await Wallet.findOne({ UserId: order.UserId });
       if (!wallet) {
         wallet = new Wallet({ UserId: order.UserId, Balance: 0, Transaction: [] });
-        console.log(`Created new wallet for user ${order.UserId}`);
+
       }
       if (refundAmount > 0) {
         wallet.Balance += refundAmount;
@@ -102,7 +100,6 @@ const approveReturn = async (req, res) => {
         });
         wallet.UpdatedAt = new Date();
         await wallet.save();
-        console.log(`Wallet updated for user ${order.UserId}, new balance: ${wallet.Balance}`);
       } else {
         console.log(`No refund applied, amount too low: ${refundAmount}`);
       }
