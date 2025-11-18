@@ -11,37 +11,74 @@ const getAdminOrders = async (req, res) => {
     const search = req.query.search || '';
     const statusFilter = req.query.status || '';
 
+    // Basic search filter
     const filter = {};
     if (search) {
       filter.OrderId = { $regex: search, $options: 'i' };
     }
-    if (statusFilter) {
-      filter.Status = statusFilter;
-    }
 
-    const totalOrders = await Orders.countDocuments(filter);
-    const orders = await Orders.find(filter)
+    let orders = await Orders.find(filter)
       .sort({ createdAt: -1 })
       .populate('UserId', 'name email')
-      .skip((page - 1) * limit)
-      .limit(limit)
+      .populate('Items.product')
       .lean();
 
+    // --------------------------
+    // COMPUTE STATUS FOR EACH ORDER
+    // --------------------------
+    orders = orders.map(order => {
+      const statuses = order.Items.map(i => i.status);
 
+      let computedStatus = "";
 
+      if (order.PaymentStatus === "Pending") {
+        computedStatus = "Payment Failed";
+      } else if (statuses.every(s => s === "Delivered")) {
+        computedStatus = "Delivered";
+      } else if (statuses.every(s => s === "Cancelled")) {
+        computedStatus = "Cancelled";
+      } else if (statuses.every(s => s === "Returned")) {
+        computedStatus = "Returned";
+      } else if (statuses.includes("Delivered") && statuses.includes("Pending")) {
+        computedStatus = "Partially Delivered";
+      } else if (statuses.includes("Returned") && statuses.includes("Delivered")) {
+        computedStatus = "Partially Returned";
+      } else if (statuses.includes("Pending")) {
+        computedStatus = "Pending";
+      } else {
+        computedStatus = statuses[0] || "Pending";
+      }
+
+      return { ...order, computedStatus };
+    });
+
+    // --------------------------
+    // FILTER BY COMPUTED STATUS
+    // --------------------------
+    if (statusFilter && statusFilter.trim() !== "") {
+      orders = orders.filter(o => o.computedStatus === statusFilter);
+    }
+
+    // --------------------------
+    // PAGINATION AFTER FILTERING
+    // --------------------------
+    const totalOrders = orders.length;
+    const paginatedOrders = orders.slice((page - 1) * limit, page * limit);
 
     res.render('order-manage', {
-      orders,
+      orders: paginatedOrders,
       currentPage: page,
       totalPages: Math.ceil(totalOrders / limit),
       search,
       status: statusFilter,
     });
+
   } catch (err) {
     console.error('Error loading orders:', err);
     res.status(500).render('page-404');
   }
 };
+
 
 const getOrderDetails = async (req, res) => {
   try {
