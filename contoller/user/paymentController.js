@@ -161,6 +161,10 @@ const getPaymentFailure = async (req, res) => {
     }
     const userId = req.session.user;
     const user = await User.findById(userId).lean();
+    await Cart.findOneAndUpdate(
+      { user: userId },
+      { Items: [] }
+    );
     res.render('razorOrderFailure', {
       order,
       user,
@@ -293,6 +297,17 @@ const verifyRetryPayment = async (req, res) => {
     };
 
     await existingOrder.save();
+
+    await Cart.findOneAndUpdate(
+      { user: existingOrder.UserId },
+      { Items: [] }
+    );
+
+    for (const item of existingOrder.Items) {
+      await Products.findByIdAndUpdate(item.product, {
+        $inc: { 'Variants.0.Stock': -item.quantity }
+      });
+    }
 
     return res.status(200).json({
       success: true,
