@@ -286,8 +286,7 @@
     
   }
 
-  // Ensure this function is defined before the DOMContentLoaded listener
-  // for the variant selection/cart logic, so it's ready when the page loads.
+
 </script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
@@ -308,7 +307,7 @@
 
     function updateVariant(selectedSize) {
       const variant = variants.find(v => v.Size && v.Size.trim() === selectedSize.trim());
-      console.log("Selected:", selectedSize, "Matched variant:", variant);
+
 
       if (!variant) {
         priceDisplay.textContent = "₹0.00";

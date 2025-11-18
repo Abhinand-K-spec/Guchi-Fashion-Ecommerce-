@@ -60,12 +60,20 @@
     color: white;
     border: 1px solid #555;
   }
+  .admin-content-scroll {
+    width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+
+}
 </style>
 
 <body>
   <div class="alert-container"></div>
 
-  <div class="container">
+  <div class="admin-content-scroll">
+    <div class="container">
+  
     <h3 class="mb-4 text-white">Order Details</h3>
 
     <% if (order) { %>
@@ -98,8 +106,8 @@
 
         <hr>
 
-        <h5 class="mb-3">Ordered Items:</h5>
         <h6 class="text-success"><strong>Payment method: <%=order.PaymentMethod%></strong></h6>
+        <h5 class="mb-3">Ordered Items:</h5>
         <% order.Items.forEach(item => { %>
           <div class="row border rounded p-2 mb-3" style="background-color:#3a3a3a;" id="item-<%= item._id %>">
             <div class="col-md-2 d-flex align-items-center justify-content-center">
@@ -129,7 +137,7 @@
                  
               </p>
 
-              <% if (item.status !== 'Cancelled' && item.status !== 'Returned' && item.returnStatus !== 'Return Requested' && item.returnStatus !== 'Request Approved') { %>
+              <% if (item.status !== 'Cancelled'&& item.status !== 'Delivered' && item.status !== 'Returned' && item.returnStatus !== 'Return Requested' && item.returnStatus !== 'Request Approved') { %>
                 <form class="update-item-status-form mt-2" data-item-id="<%= item._id %>" action="/admin/order-details/<%= order._id %>/update-item-status/<%= item._id %>" method="POST">
                   <select name="status" class="form-control form-control-sm">
                     <option value="Pending" <%= item.status === 'Pending' ? 'selected' : '' %>>Pending</option>
@@ -184,6 +192,7 @@
     <% } else { %>
       <p class="text-danger">Order not found.</p>
     <% } %>
+    </div>
   </div>
 
   <!-- Bootstrap JS -->

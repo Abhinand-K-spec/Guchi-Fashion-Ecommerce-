@@ -267,7 +267,7 @@ const loadDashboard = async (req, res) => {
     
       { $sort: { totalSold: -1 } },
     
-      { $limit: 10 }
+      { $limit: 5 }
     ]);
     
 

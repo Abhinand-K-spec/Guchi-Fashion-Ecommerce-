@@ -190,13 +190,10 @@ const cancelItem = async (req, res) => {
       await product.save();
     }
 
-    let refundAmount = item.price * item.quantity; // Use discounted price
-    if (order.discountAmount > 0) {
-      const itemTotalBeforeDiscount = (item.originalPrice || item.price) * item.quantity;
-      const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
-      const discountProportion = (itemTotalBeforeDiscount / totalOrderAmountBeforeDiscount) * order.discountAmount;
-      refundAmount -= discountProportion;
-    }
+    const delivery = 40;
+    const tax = (((item.price * item.quantity) * 0.05)) / 100;
+
+    let refundAmount = item.price * item.quantity + tax + delivery ;
 
     if (order.PaymentMethod === 'Wallet' || order.PaymentMethod === 'Online') {
       let wallet = await Wallet.findOne({ UserId: order.UserId });
