@@ -10,6 +10,49 @@ const Coupon = require('../../model/couponsSchema');
 const mongoose = require('mongoose');
 
 
+const securePassword = async (password) => {
+  try {
+    const passwordHash = await bcrypt.hash(password, 10);
+    return passwordHash;
+  } catch (error) {
+    console.error('Error hashing password:', error);
+    throw new Error('Password hashing failed');
+  }
+};
+
+
+function generateOtp(){
+    return Math.floor(100000+Math.random()*(900000)).toString();
+}
+
+
+async function sendVerification(email,otp){
+    try {
+        const transporter = nodemailer.createTransport({
+            service:'gmail',
+            port:587,
+            secure:false,
+            requireTLS:true,
+            auth:{
+                user:process.env.NODEMIALER_GMAIL,
+                pass:process.env.NODEMAILER_PASSWORD
+            }
+        });
+
+        const info = await transporter.sendMail({
+            from:process.env.NODEMAILER_GMAIL,
+            to:email,
+            subject:'Verify your account',
+            text:`Your OTP is ${otp}`,
+            html:`<b>Your OTP: ${otp} </b>`
+        });
+
+        return info.accepted.length>0;
+    } catch (error) {
+        console.error('error sending otp',error);
+        return false;
+    }
+}
 
 function generateReferralCode() {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -46,15 +89,60 @@ const getForgotPasswordPage = (req, res) => {
 };
 
 const handleForgotPassword = async (req, res) => {
-  const { email } = req.body;
+  const { email,password } = req.body;
   try {
-    console.log(`Password reset link should be sent to: ${email}`);
-    res.render('forgot-password', { msg: 'If the email exists, an otp has been sent.' });
+
+    const otp = generateOtp();
+    const emailSend = sendVerification(email,otp);
+    if(!emailSend){
+      return res.render('forgot-password',{msg:`Can't send verification to mail`})
+    }
+
+    req.session.tempPass = password;
+    req.session.email = email;
+    req.session.otp = otp;
+
+    console.log('OTP sent:',otp);
+    res.render('forgot-verify-otp',);
   } catch (err) {
     console.error('Forgot password error:', err);
     res.render('forgot-password', { msg: 'An error occurred. Try again later.' });
   }
 };
+
+const verifyForgotOtp = async (req, res) => {
+  try {
+    const otp = req.body.otp;
+
+
+    if (req.session.otp !== otp) {
+      return res.json({ error: 'Please enter a valid OTP' });
+    }
+
+    const email = req.session.email;
+    const plainPassword = req.session.tempPass;
+
+
+    const password = await securePassword(plainPassword);
+
+
+    await User.findOneAndUpdate(
+      { email: email },
+      { $set: { password: password } }
+    );
+
+    req.session.otp = null;
+    req.session.tempPass = null;
+    req.session.email = null;
+
+    return res.json({ success: true, message: 'Password updated successfully' });
+
+  } catch (error) {
+    console.log(error);
+    return res.json({ error: 'Something went wrong' });
+  }
+};
+
 
 const getProductOffer = async (product) => {
     try {
@@ -227,7 +315,7 @@ async function sendVerification(email, otp) {
 
 const signup = async (req, res) => {
   try {
-    console.log('signup otp');
+
     const { name, email, password, referralCode } = req.body; 
     const findUser = await User.findOne({ email });
 
@@ -250,16 +338,6 @@ const signup = async (req, res) => {
   }
 };
 
-const securePassword = async (password) => {
-  try {
-    const passwordHash = await bcrypt.hash(password, 10);
-    console.log('pass :',passwordHash);
-    return passwordHash;
-  } catch (error) {
-    console.error('Error hashing password:', error);
-    throw new Error('Password hashing failed');
-  }
-};
 
 const verifyOtp = async (req, res) => {
   try {
@@ -268,8 +346,13 @@ const verifyOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please enter a valid 6-digit OTP.' });
     }
     if (!req.session.userData || !req.session.otp) {
-      return res.status(400).json({ success: false, message: 'Session expired. Please sign up again.' });
+      return res.json({ error: 'Session expired. Please sign up again.' });
     }
+    
+    if (req.session.otp !== req.body.otp) {
+      return res.json({ error: 'Invalid OTP. Please try again.' });
+    }
+    
     if (userOtp === req.session.otp) {
       const user = req.session.userData;
       const passwordhash = await securePassword(user.password);
@@ -285,10 +368,10 @@ const verifyOtp = async (req, res) => {
         name: user.name,
         email: user.email,
         password: passwordhash,
-        referalCode: referralCode // Set referral code
+        referalCode: referralCode 
       });
 
-      // Process referralCode if provided
+
       if (user.referralCode) {
         const referrer = await User.findOne({ 
           referalCode: user.referralCode.toUpperCase(),
@@ -316,7 +399,7 @@ const verifyOtp = async (req, res) => {
           });
           await referrerCoupon.save();
 
-          // Create 20% discount coupon for new user
+
           const newUserCoupon = new Coupon({
             CouponCode: `REF-${saveUserData._id}-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
             CouponName: `${saveUserData.name}'s 20% Referral Welcome`,
@@ -508,5 +591,6 @@ module.exports = {
   getChangePassword,
   changePassword,
   getOrders,
-  getProductOffer
+  getProductOffer,
+  verifyForgotOtp
 };

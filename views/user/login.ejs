@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="/css/login.css" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 
   <!-- Google Sign-In API -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -24,6 +26,16 @@
       font-size: 0.9rem;
       margin-top: 5px;
     }
+    #password{
+      width : 60vh;
+    }
+    #email{
+      width: 60vh;
+    }
+    #togglePassword{
+      padding-left: 2vh;
+      padding-top: 2vh;
+    }
   </style>
 </head>
 <body>
@@ -38,8 +50,14 @@
         <div id="emailError" class="error-text"></div>
 
         <label for="password">Password</label>
+        <div class="d-flex">
         <input type="password" name="password" id="password" placeholder="Enter your password"  />
+        <span id="togglePassword" class="eye-icon">
+          <i class="fa fa-eye"></i>
+        </span>
+        </div>
         <div id="passwordError" class="error-text"></div>
+        
 
         <!-- Forgot Password link -->
         <div class="text-end mb-3">
@@ -84,6 +102,16 @@
     const password = document.getElementById('password');
     const emailError = document.getElementById('emailError');
     const passwordError = document.getElementById('passwordError');
+    const togglePassword = document.getElementById('togglePassword');
+
+    togglePassword.addEventListener("click", () => {
+      const type = password.type === "password" ? "text" : "password";
+      password.type = type;
+      togglePassword.innerHTML =
+      type === "password"
+        ? `<i class="fa fa-eye"></i>`
+        : `<i class="fa fa-eye-slash"></i>`;
+  });
 
     form.addEventListener('submit', function (e) {
       let valid = true;
@@ -91,20 +119,23 @@
       emailError.textContent = '';
       passwordError.textContent = '';
 
-      // Email validation
+
       const emailValue = email.value.trim();
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailValue) {
         emailError.textContent = 'Email is required.';
+        setInterval(()=>{emailError.textContent = ''},2000)
         valid = false;
       } else if (!emailPattern.test(emailValue)) {
         emailError.textContent = 'Enter a valid email address.';
+        setInterval(()=>{emailError.textContent = ''},2000)
         valid = false;
       }
 
-      // Password validation
+
       if (!password.value.trim()) {
         passwordError.textContent = 'Password is required.';
+        setInterval(()=>{passwordError.textContent = ''},2000)
         valid = false;
       }
 

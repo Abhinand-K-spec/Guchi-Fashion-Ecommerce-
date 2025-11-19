@@ -55,8 +55,10 @@ router.post('/edit-address/:id', userAuth, addressController.editAddress);
 router.get('/delete-address/:addressId', userAuth, addressController.deleteAddress);
 //-------------------------------------------------------------------------------------------------------->
 
-router.post('/verify-otp', userController.verifyOtp);
 router.get('/resend-otp', userController.resendOtp);
+router.post('/verify-otp', userController.verifyOtp);
+router.post('/forgot-verify-otp',userController.verifyForgotOtp)
+
 
 router.get('/auth/google', passport.authenticate('google', {
   scope: ['profile', 'email'],

@@ -191,7 +191,7 @@
       </form>
       <p class="wrong-email">
         Wrong Email?
-        <a href="/resend-otp" role="button" tabindex="0">Resend</a>
+        <a href="/forgot-password" role="button" tabindex="0">Resend</a>
       </p>
     </section>
   </main>
@@ -240,7 +240,7 @@
       try {
         const response = await $.ajax({
           type: 'POST',
-          url: '/verify-otp',
+          url: '/forgot-verify-otp',
           data: { otp },
           contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
           processData: true
@@ -256,11 +256,11 @@
           }).then(() => {
             window.location.href = response.redirect || '/login';
           });
-        } else if(response.error){
+        } else {
           Swal.fire({
             icon: 'error',
             title: 'Verification Failed',
-            text: response.message|| response.error.message || response.error || 'An error occurred during verification.',
+            text: response.message||response.error.message|| response.error || 'An error occurred during verification.',
           });
         }
       } catch (error) {
