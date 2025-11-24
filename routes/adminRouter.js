@@ -51,7 +51,7 @@ router.post('/order-details/:orderId/return-item/:itemId', adminAuth, orderContr
 //Coupon management -------------------------------------------------------------->
 router.get('/coupon',adminAuth,couponController.coupon);
 router.post('/addCoupon',adminAuth,couponController.addCoupon);
-router.get('/coupons', couponController.coupon);
+router.get('/coupons',adminAuth, couponController.coupon);
 router.post('/unlistCoupon/:couponId', adminAuth, couponController.unlist);
 router.post('/listCoupon/:couponId', adminAuth, couponController.list);
 // router.get('/editCoupon/:id', couponController.editCoupon);

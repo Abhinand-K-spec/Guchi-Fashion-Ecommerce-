@@ -57,8 +57,11 @@ const addCoupon = async (req, res) => {
         const start = new Date(StartDate);
         const end = new Date(EndDate);
         if (start > end) {
-            return res.status(400).json({ success: false, error: 'Start Date cannot be later than End Date' });
-        }
+            return res.status(400).json({ 
+              success: false, 
+              error: 'Start Date cannot be later than End Date' 
+            });
+          }
 
 
         const discountValue = parseFloat(Discount);

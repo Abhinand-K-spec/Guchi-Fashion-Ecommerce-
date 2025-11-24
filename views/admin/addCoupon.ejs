@@ -1,6 +1,8 @@
 <%- include("../partials/admin/header") %>
 <head>
     <title>Coupon Management - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -60,28 +62,12 @@
             padding: 10px;
             border-bottom: 1px solid #444;
         }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            min-width: 250px;
-            padding: 15px;
-            border-radius: 8px;
-            color: #fff;
-            background: green;
-            opacity: 0;
-            transition: opacity .3s;
-            z-index: 9999;
-        }
-        .toast.show { opacity: 1; }
-        .toast.error { background: #e11d48; }
         .error {
-    color: #ff4d4d !important;
-    font-size: 12px;
-    margin-top: 3px;
-    display: none;
-}
+            color: #ff4d4d !important;
+            font-size: 12px;
+            margin-top: 3px;
+            display: none;
+        }
 
     </style>
 </head>
@@ -203,24 +189,29 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
 <script>
 
-/* -------------------------- TOAST -------------------------- */
-function showToast(message, isError = false) {
-    const toast = document.createElement("div");
-    toast.className = "toast" + (isError ? " error" : "");
-    toast.innerText = message;
-    document.body.appendChild(toast);
 
-    setTimeout(() => toast.classList.add("show"), 50);
-    setTimeout(() => {
-        toast.classList.remove("show");
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
+function showToast(message, isError = false) {
+    Toastify({
+        text: message,
+        duration: 3000,
+        gravity: "bottom",
+        position: "right",
+        close: true,
+        style: {
+            background: isError ? "#dc3545" : "#28a745",
+            color: "#fff",
+            borderRadius: "6px",
+            padding: "10px 16px",
+            fontSize: "15px"
+        }
+    }).showToast();
 }
 
-/* ----------------------- FORM VALIDATION ----------------------- */
+
 function validateForm() {
     let ok = true;
 
@@ -239,7 +230,7 @@ function showErr(id) {
     return false;
 }
 
-/* ---------------------- CREATE COUPON ---------------------- */
+
 async function handleCouponSubmit(event) {
     event.preventDefault();
     if (!validateForm()) return;
@@ -248,24 +239,30 @@ async function handleCouponSubmit(event) {
     data.CouponCode = data.CouponCode.toUpperCase();
 
     try {
-        const res = await axios.post("/admin/addCoupon", data);
+        const res = await axios.post("/admin/addCoupon", data,{validateStatus:(status)=> status!==500});
 
         if (res.data.success) {
             showToast("Coupon created successfully");
             addCouponToTable(res.data.coupon);
             couponForm.reset();
         }else if(res.data.error){
-            showToast(res.data.error);
-        }
-        else {
+            showToast(res.data.error,true);
+            
+        }else {
             showToast(res.data.error|| res.error || "Something went wrong", true);
         }
     } catch (err) {
-    showToast(err.response.data.error, true);
-}
+        const msg =
+            err.response?.data?.error ||
+            err.response?.data?.message ||
+            err.response?.data?.msg ||
+            "Server error";
+
+        showToast(msg, true);
+    }
 }
 
-/* ------------------- Add New Row to Table ------------------- */
+
 function addCouponToTable(c) {
     const row = `
     <tr id="coupon-${c._id}">
@@ -287,7 +284,7 @@ function addCouponToTable(c) {
     couponTable.innerHTML = row + couponTable.innerHTML;
 }
 
-/* ------------------- List / Unlist Coupon ------------------- */
+
 async function toggleCouponStatus(id, current) {
     const action = current ? "unlistCoupon" : "listCoupon";
 
@@ -301,7 +298,7 @@ async function toggleCouponStatus(id, current) {
         const msg =
             err.response?.data?.error ||
             err.response?.data?.message ||
-            response.error ||
+            responsse.error ||
             "Error creating coupon";
         showToast(msg, true);
     }
@@ -316,7 +313,7 @@ function updateCouponStatus(id, status) {
     btn.setAttribute("onclick", `toggleCouponStatus('${id}', ${status})`);
 }
 
-/* --------------------------- SEARCH --------------------------- */
+
 function searchCoupons() {
     const term = document.getElementById("searchCoupons").value.toLowerCase();
 
@@ -332,7 +329,7 @@ function clearSearch() {
     });
 }
 
-/* ----------- Live validation for all input fields ----------- */
+
 document.getElementById("couponName").addEventListener("input", () => {
     const v = couponName.value.trim();
     document.getElementById("couponNameError").style.display = v ? "none" : "block";
