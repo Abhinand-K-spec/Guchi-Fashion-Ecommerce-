@@ -13,9 +13,8 @@
 
     .container {
       max-width: 1000px;
-      margin: 40px auto;
-      background: #faf9f9;
-      padding: 30px;
+      background: #000;
+      padding: 30prgb(105, 102, 102)
       border-radius: 8px;
       box-shadow: 0 14px 12px rgba(0, 0, 0, 0.1);
     }
@@ -101,7 +100,7 @@
     }
 
     .modal-content {
-      background-color: #fff;
+      background-color: #000;
       margin: 8% auto;
       padding: 20px;
       border: 1px solid #888;
@@ -128,23 +127,27 @@
       max-width: 100%;
       max-height: 400px;
     }
+    .form-container-pd{
+      padding-top: 10vh;
+    }
   </style>
 </head>
-<body>
 <%- include("../partials/admin/header") %>
+<body>
+
 
 <div class="container">
-  <h2>Edit Product</h2>
+  <div class="form-container-pd">
   <form method="POST" action="/admin/updateProduct/<%= product._id %>" enctype="multipart/form-data">
     <div class="form-grid">
       <div class="form-group">
-        <label>Product Name</label>
-        <input type="text" name="productName" value="<%= product.productName %>">
+        <label class="text-white">Product Name</label>
+        <input class="form-control bg-dark text-white border-secondary" type="text" name="productName" value="<%= product.productName %>">
       </div>
 
       <div class="form-group">
-        <label>Category</label>
-        <select name="category">
+        <label class="text-white">Category</label>
+        <select class="form-select bg-dark text-white border-secondary rounded-3 shadow-sm" name="category">
           <% categories.forEach(cat => { %>
             <option value="<%= cat.categoryName %>" <%= cat._id.toString() === product.Category._id.toString() ? 'selected' : '' %>><%= cat.categoryName %></option>
           <% }) %>
@@ -153,8 +156,8 @@
 
       <!-- Size Dropdown -->
       <div class="form-group">
-        <label>Size</label>
-        <select name="size" id="sizeSelect" class="form-control" onchange="updateVariantFields()">
+        <label class="text-white">Size</label>
+        <select name="size" class="form-select bg-dark text-white border-secondary" id="sizeSelect" class="form-control" onchange="updateVariantFields()">
           <% if (product.Variants && product.Variants.length > 0) { %>
             <% product.Variants.forEach(variant => { %>
               <option 
@@ -171,24 +174,24 @@
 
       <!-- Price -->
       <div class="form-group">
-        <label>Price</label>
-        <input type="number" id="priceInput" name="price" value="<%= product.selectedVariant?.Price || product.Variants[0]?.Price %>">
+        <label class="text-white">Price</label>
+        <input class="form-control bg-dark text-white border-secondary" type="number" id="priceInput" name="price" value="<%= product.selectedVariant?.Price || product.Variants[0]?.Price %>">
       </div>
 
       <!-- Stock -->
       <div class="form-group">
-        <label>Quantity</label>
-        <input type="number" id="stockInput" name="stock" value="<%= product.selectedVariant?.Stock || product.Variants[0]?.Stock %>" min="0">
+        <label class="text-white">Quantity</label>
+        <input class="form-control bg-dark text-white border-secondary" type="number" id="stockInput" name="stock" value="<%= product.selectedVariant?.Stock || product.Variants[0]?.Stock %>" min="0">
       </div>
     </div>
 
     <div class="form-group">
-      <label>Description</label>
-      <textarea name="description" rows="4" required><%= product.Description %></textarea>
+      <label class="text-white" >Description</label>
+      <textarea name="description" rows="4" class="form-control bg-dark text-white border-secondary" required><%= product.Description %></textarea>
     </div>
 
     <div class="form-group">
-      <label>Edit Product Images</label>
+      <label class="text-white">Edit Product Images</label>
       <div class="image-group">
         <% for (let i = 0; i < product.Image.length; i++) { %>
           <div class="image-box">
@@ -202,6 +205,7 @@
 
     <button type="submit" class="submit-btn">Update Product</button>
   </form>
+</div>
 </div>
 
 <!-- Modal -->

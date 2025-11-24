@@ -92,6 +92,7 @@
           <p><strong>Order ID:</strong> <%= order.OrderId %></p>
           <p><strong>Date:</strong> <%= new Date(order.OrderDate).toLocaleString() %></p>
           <p><strong>Return Policy:</strong> 7-day return policy</p>
+          <p><strong>Delivary charge: ₹40</strong></p>
           <p><strong>Payment Method: <%=order.PaymentMethod%></strong></p>
 
           <% if (order.PaymentMethod==='Online' && order.PaymentStatus!=='Completed' && order.Status==='Pending') { %>
@@ -125,7 +126,6 @@
             <p class="mb-1 text-muted"><del>Sales Price: ₹<%= originalPrice %></del></p>
             <% } %>
             <p>Taxes: ₹<%=((((originalPrice-itemDiscount)*item.quantity)*0.05)/100).toFixed(2)%></p>
-            <p>Delivary: ₹40</p>
             <p class="mb-1"><strong>Price:</strong> ₹<%= ((((originalPrice-itemDiscount)*item.quantity)+((((originalPrice-itemDiscount)*item.quantity)*0.05)/100))+40).toFixed(2) %></p>
             
           <p><strong>Status:</strong> 

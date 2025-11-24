@@ -102,67 +102,126 @@ const getShopPage = async (req, res) => {
   try {
     const limit = 6;
     const page = parseInt(req.query.page) || 1;
-    const search = req.query.search || '';
+    const search = req.query.search?.trim() || '';
     const sort = req.query.sort || '';
     const categoryId = req.query.category;
     const userId = req.session.user;
+
     const user = userId ? await User.findById(userId).lean() : null;
-    const filter = { IsListed: true };
+
+
+    let matchStage = { IsListed: true };
+
+
     if (search) {
-      filter.productName = { $regex: search, $options: 'i' };
+      matchStage.productName = { $regex: search, $options: 'i' };
     }
+
+
     if (categoryId) {
-      filter.Category = categoryId;
+      matchStage.Category = new mongoose.Types.ObjectId(categoryId);
     }
-    let sortOption = {};
-    if (sort === 'name-asc') sortOption.productName = 1;
-    else if (sort === 'name-desc') sortOption.productName = -1;
-    else if (sort === 'price-asc') sortOption['Variants.0.Price'] = 1;
-    else if (sort === 'price-desc') sortOption['Variants.0.Price'] = -1;
-    const total = await Products.countDocuments(filter);
-    const products = await Products.find(filter)
-      .populate('Category')
-      .sort(sortOption)
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean();
-    const productsWithOffers = await Promise.all(products.map(async (product) => {
-      if (!product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
+
+
+    const pipeline = [
+      { $match: matchStage },
+
+
+      {
+        $lookup: {
+          from: 'categories',        
+          localField: 'Category',
+          foreignField: '_id',
+          as: 'categoryData'
+        }
+      },
+
+
+      {
+        $match: {
+          $and: [
+            { 'categoryData.0': { $exists: true } }, 
+            { 'categoryData.0.isListed': true }              
+          ]
+        }
+      },
+
+      {
+        $addFields: {
+          Category: { $arrayElemAt: ['$categoryData', 0] }
+        }
+      },
+
+
+      { $sort: getSortOption(sort) },
+
+      { $skip: (page - 1) * limit },
+      { $limit: limit }
+    ];
+
+
+    const [products, totalDocs] = await Promise.all([
+      Products.aggregate(pipeline).exec(),
+      Products.aggregate([
+        { $match: matchStage },
+        { $lookup: { from: 'categories', localField: 'Category', foreignField: '_id', as: 'cat' } },
+        { $match: { 'cat.0.isListed': true } },
+        { $count: 'total' }
+      ]).then(res => res[0]?.total || 0)
+    ]);
+
+
+    const productsWithOffers = await Promise.all(
+      products.map(async (product) => {
+        if (!product.Variants?.length) {
+          return { ...product, Variants: [{ Price: 0, salePrice: 0, Stock: 0 }], offer: null };
+        }
+
+        const { offer, salePrice } = await getProductOffer(product);
+        const variant = product.Variants[0];
+
         return {
           ...product,
-          Variants: [{ Price: 0, salePrice: 0, Stock: 0 }],
-          offer: null
+          Variants: [{
+            Price: variant.Price || 0,
+            salePrice: salePrice ?? variant.Price ?? 0,
+            Stock: variant.Stock || 0
+          }],
+          offer
         };
-      }
-      const { offer, salePrice } = await getProductOffer(product);
-      const variant = product.Variants[0];
-      return {
-        ...product,
-        Variants: [{
-          Price: variant.Price || 0,
-          salePrice: salePrice || variant.Price || 0,
-          Stock: variant.Stock || 0
-        }],
-        offer
-      };
-    }));
-    const categories = await category.find();
+      })
+    );
+
+    const categories = await category.find({ isListed: true }).lean();
+
     res.render('shop-page', {
       products: productsWithOffers,
       categories,
       currentPage: page,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(totalDocs / limit),
       categoryId,
       search,
       sort,
       user,
       activePage: 'shopnow'
     });
+
   } catch (err) {
     console.error('Shop page error:', err);
     res.status(500).send('Something went wrong');
   }
 };
+
+
+function getSortOption(sort) {
+  switch (sort) {
+    case 'name-asc':   return { productName: 1 };
+    case 'name-desc':  return { productName: -1 };
+    case 'price-asc':  return { 'Variants.0.Price': 1 };
+    case 'price-desc': return { 'Variants.0.Price': -1 };
+    default:           return { CreatedDate: -1 }; 
+  }
+}
 
 
 

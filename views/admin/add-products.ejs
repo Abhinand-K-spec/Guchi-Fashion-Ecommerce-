@@ -139,13 +139,13 @@
     <form method="POST" action="/admin/addproduct" enctype="multipart/form-data" onsubmit="return validateForm()">
       <div id="productnamepart" class="row g-4">
         <div  class="col-md-6">
-          <label class="form-labe">Product Name</label>
-          <input type="text" name="productName" class="form-control" placeholder="Enter product name">
+          <label class="form-labe text-white p-1">Product Name</label>
+          <input type="text" name="productName" class="form-control bg-dark text-white border-secondary" placeholder="Enter product name">
         </div>
 
         <div class="col-md-6">
           <label class="form-label">Product Category</label>
-          <select name="category" class="form-select">
+          <select name="category" class="form-select bg-dark text-white border-secondary">
             <option value="">--Select Category--</option>
             <% for (let i = 0; i < cat.length; i++) { %>
               <option value="<%= cat[i].categoryName %>"><%= cat[i].categoryName %></option>
@@ -187,7 +187,7 @@
 
         <div class="col-12">
           <label class="form-label">Product Description</label>
-          <textarea name="description" rows="4" class="form-control" placeholder="Write a brief description..."></textarea>
+          <textarea name="description" rows="4" class="form-control bg-dark text-white border-secondary" placeholder="Write a brief description..."></textarea>
         </div>
 
         <div class="col-12">
