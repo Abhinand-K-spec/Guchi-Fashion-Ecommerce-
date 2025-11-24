@@ -118,7 +118,7 @@ const approveReturn = async (req, res) => {
     const tax = (((item.price * item.quantity) * 0.05)) / 100;
     
     const delivery = 40;
-    let refundAmount = item.price * item.quantity + tax + delivery ; 
+    let refundAmount = item.price * item.quantity + tax + delivery - item.itemDiscount; 
     
 
     if (order.PaymentMethod === 'Online' || order.PaymentMethod === 'COD') {

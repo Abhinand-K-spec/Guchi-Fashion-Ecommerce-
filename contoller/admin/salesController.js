@@ -1,7 +1,178 @@
 const Orders = require('../../model/ordersSchema');
 const PDFDocument = require('pdfkit');
+const XLSX = require("xlsx");
 const fs = require('fs');
 const path = require('path');
+
+
+
+
+
+
+const downloadSalesReportExcel = async (req, res) => {
+  try {
+    const { period, range, startDate, endDate } = req.query;
+
+    // ---------------- SAME FILTER LOGIC AS PDF ----------------
+    let filter = {};
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
+
+    if (period === "custom" && startDate && endDate) {
+      filter.OrderDate = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    } else {
+      let startDateFilter;
+      switch (range) {
+        case "1day":
+          startDateFilter = new Date(now);
+          startDateFilter.setDate(now.getDate() - 1);
+          break;
+        case "1week":
+          startDateFilter = new Date(now);
+          startDateFilter.setDate(now.getDate() - 7);
+          break;
+        case "1month":
+          startDateFilter = new Date(now);
+          startDateFilter.setMonth(now.getMonth() - 1);
+          break;
+        default:
+          startDateFilter = new Date(now);
+          startDateFilter.setDate(now.getDate() - 1);
+      }
+      filter.OrderDate = { $gte: startDateFilter, $lte: now };
+    }
+
+    const orders = await Orders.find(filter)
+      .populate("UserId", "name")
+      .sort({ OrderDate: -1 })
+      .lean();
+
+    // ---------------- PREPARE EXCEL CONTENT ----------------
+    const rows = [];
+
+    // Blank row at top for spacing
+    rows.push([""]);
+
+    // Title (like PDF)
+    rows.push(["Guchi Men's Fashion — Sales Report"]);
+    rows.push([""]);
+
+    // Period text
+    const periodText =
+      period === "custom"
+        ? `Period: ${startDate} to ${endDate}`
+        : `Period: ${range} (${new Date(filter.OrderDate.$gte).toLocaleDateString()} - ${now.toLocaleDateString()})`;
+
+    rows.push([periodText]);
+    rows.push([""]); // Extra space
+
+    // Table header
+    rows.push([
+      "Order ID",
+      "Order Date",
+      "Customer",
+      "Amount (₹)",
+      "Discount (₹)",
+      "Net Amount (₹)"
+    ]);
+
+    // Data rows
+    for (const order of orders) {
+      const totalAmount = order.Items?.reduce(
+        (sum, item) => sum + item.price * (item.quantity || 0),
+        0
+      ) || 0;
+
+      const itemDiscount = order.Items?.reduce(
+        (sum, item) => sum + (item.itemDiscount || 0),
+        0
+      ) || 0;
+
+      const couponDiscount = order.discountAmount
+        ? order.discountAmount - itemDiscount
+        : 0;
+
+      const netAmount = totalAmount - itemDiscount - couponDiscount;
+
+      // Last 4 characters formatting like PDF
+      const id = order.OrderId.toString();
+      const displayId = `ORD-${id.slice(-4)}`;
+
+      rows.push([
+        displayId,
+        new Date(order.OrderDate).toLocaleDateString(),
+        order.UserId?.name ?? "Unknown",
+        totalAmount.toFixed(2),
+        (itemDiscount + couponDiscount).toFixed(2),
+        netAmount.toFixed(2)
+      ]);
+    }
+
+    rows.push([""]); // Spacing
+    rows.push([""]); // Spacing
+
+    // Summary like PDF
+    const totalAmount = orders.reduce(
+      (sum, order) =>
+        sum +
+        order.Items.reduce(
+          (inner, item) => inner + item.price * (item.quantity || 0),
+          0
+        ),
+      0
+    );
+
+    const discountTotal = orders.reduce(
+      (sum, order) => sum + (order.discountAmount || 0),
+      0
+    );
+
+    rows.push([`Overall Sales Count: ${orders.length}`]);
+    rows.push([`Overall Order Amount: ₹${totalAmount.toFixed(2)}`]);
+    rows.push([`Overall Discount: ₹${discountTotal.toFixed(2)}`]);
+
+    // ---------------- CREATE WORKBOOK ----------------
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // Auto column width
+    const maxWidths = [];
+    rows.forEach(row => {
+      row.forEach((cell, i) => {
+        const len = cell ? cell.toString().length : 10;
+        maxWidths[i] = Math.max(maxWidths[i] || 10, len);
+      });
+    });
+
+    ws['!cols'] = maxWidths.map(w => ({ wch: w + 5 }));
+
+    // Workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sales Report");
+
+    const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="sales-report-${Date.now()}.xlsx"`
+    );
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    return res.send(buffer);
+
+  } catch (err) {
+    console.error("Excel download error:", err);
+    res.status(500).json({ error: "Error generating Excel report" });
+  }
+};
+
+
 
 const getSalesReport = async (req, res) => {
   try {
@@ -259,5 +430,6 @@ const downloadSalesReport = async (req, res) => {
 
 module.exports = {
   getSalesReport,
-  downloadSalesReport
+  downloadSalesReport,
+  downloadSalesReportExcel
 };

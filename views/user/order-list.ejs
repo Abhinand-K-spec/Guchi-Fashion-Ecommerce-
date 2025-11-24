@@ -66,13 +66,13 @@
                 <tr>
                   <td><%= order.OrderId || order._id.toString().slice(-6) %></td>
                   <td><%= new Date(order.OrderDate).toLocaleDateString() %></td>
-                  <td class="<%= order.PaymentStatus === 'Pending' ? 'text-danger fw-bold' : '' %>">
+                  <td class="<%= order.PaymentStatus === "Pending" && order.PaymentMethod == 'Online' ? 'text-danger fw-bold' : '' %>">
                     <% 
                       const statuses = order.Items.map(i => i.status);
                   
                       let displayStatus = "";
                   
-                      if (order.PaymentStatus === "Pending") {
+                      if (order.PaymentStatus === "Pending" && order.PaymentMethod == 'Online') {
                         displayStatus = "Payment Failed";
                       } else if (statuses.every(s => s === "Cancelled")) {
                         displayStatus = "Cancelled";

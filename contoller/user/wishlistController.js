@@ -39,39 +39,64 @@ const addToCartFromWishlist = async (req, res) => {
     console.log('addToCart came');
     const { productId } = req.body;
     const userId = req.session.user;
-    console.log('userId :',userId,'productId :',productId);
+
+    console.log('userId:', userId, 'productId:', productId);
+
     if (!userId || !productId) {
       return res.status(400).json({ success: false, message: 'User ID and Product ID are required' });
     }
 
     const product = await Product.findById(productId).lean();
-    if (!product || !product.Variants?.[0]?.Stock) {
-      return res.status(400).json({ success: false, message: 'Product is unavailable or out of stock' });
+    const variant = product?.Variants?.[0];
+
+    if (!product || !variant || variant.Stock <= 0) {
+      return res.status(400).json({ success: false, message: 'Product is out of stock' });
     }
 
     let cart = await Cart.findOne({ user: userId });
+
     if (!cart) {
-      cart = new Cart({ user: userId, items: [] });
+      cart = new Cart({ user: userId, Items: [] });
     }
 
     const existingItem = cart.Items.find(item => item.product.toString() === productId);
+
     if (existingItem) {
+      // MAX LIMIT CHECK — cannot exceed 5
+      if (existingItem.quantity >= 5) {
+        return res.status(400).json({ success: false, message: 'Maximum quantity limit reached (5)' });
+      }
+
+      // STOCK CHECK
+      if (existingItem.quantity + 1 > variant.Stock) {
+        return res.status(400).json({ success: false, message: 'Not enough stock available' });
+      }
+
+      // Increase by 1
       existingItem.quantity += 1;
+
     } else {
+      // Add first time → always 1 but check stock
+      if (variant.Stock < 1) {
+        return res.status(400).json({ success: false, message: 'Product is out of stock' });
+      }
+
       cart.Items.push({ product: productId, quantity: 1 });
     }
 
     await cart.save();
+
+    // Remove from wishlist
     await Wishlist.deleteOne({ UserId: userId, ProductId: productId });
 
+    return res.json({ success: true, message: 'Product added to cart' });
 
-
-    res.json({ success: true, message: 'Product added to cart' });
   } catch (err) {
     console.error('Add to cart from wishlist error:', err);
     res.status(500).json({ success: false, message: 'Error adding product to cart' });
   }
 };
+
 
 
 

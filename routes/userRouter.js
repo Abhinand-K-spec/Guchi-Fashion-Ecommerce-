@@ -53,6 +53,7 @@ router.get('/edit-address/:id', userAuth, addressController.getEditAddress);
 router.get('/edit-addressCheckout/:id', userAuth, addressController.getEditAddressCheckout);
 router.post('/edit-address/:id', userAuth, addressController.editAddress);
 router.get('/delete-address/:addressId', userAuth, addressController.deleteAddress);
+router.post('/set-default-address', userAuth, addressController.setDefaultAddress);
 //-------------------------------------------------------------------------------------------------------->
 
 router.get('/resend-otp', userController.resendOtp);

@@ -349,7 +349,7 @@ const checkout = async (req, res) => {
     }).lean();
 
 
-    const wallet = await Wallet.findOne({ UserId:userId }).lean() || { balance: 0 };
+    const wallet = await Wallet.findOne({ UserId:userId }).lean() || { Balance: 0 };
 
     let subtotal = 0;
     let totalItemDiscount = 0;

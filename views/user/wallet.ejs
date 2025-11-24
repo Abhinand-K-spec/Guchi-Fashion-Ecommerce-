@@ -9,81 +9,465 @@
   <link rel="icon" href="/images/favicon.png" type="image/png" />
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
-    body {
-      background: url('/img/background.svg');
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    .wallet-container { 
-      max-width: 800px;
-      margin: auto;
-      padding: 20px;
-     }
-    .balance-card { background-color: #fcfcfe; border-radius: 10px; padding: 20px; text-align: center; }
-    .balance-amount { font-size: 2rem; font-weight: bold; color: #28a745; }
-    .transaction-table {background-color: #f1f2f6; margin-top: 20px; text-align: center; }
-    .transaction-table th, .transaction-table td {background-color :#f7f7f9; text-align: center; }
-    .credit { color: #28a745; }
-    .debit { color: #dc3545; }
-    .add-funds-container { margin-top: 20px; }
-    .add-funds-input { max-width: 200px; }
-    .error-message { color: #dc3545; font-size: 0.9rem; margin-top: 0.5rem; }
-    .success-message { color: #28a745; font-size: 0.9rem; margin-top: 0.5rem; }
-    a{text-decoration: none;}
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #ffffff;
+      color: #1a1a1a;
+      line-height: 1.6;
+    }
+
+    /* Header matching your site */
+    .site-header {
+      background-color: #000000;
+      color: #ffffff;
+      padding: 15px 0;
+      margin-bottom: 40px;
+    }
+
+    .site-header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .site-logo {
+      font-size: 24px;
+      font-weight: 600;
+      color: #ffffff;
+      text-decoration: none;
+    }
+
+    .site-nav a {
+      color: #ffffff;
+      text-decoration: none;
+      margin-left: 30px;
+      font-size: 15px;
+      transition: opacity 0.2s;
+    }
+
+    .site-nav a:hover {
+      opacity: 0.7;
+    }
+
+    .site-nav a.active {
+      border-bottom: 2px solid #ffffff;
+      padding-bottom: 3px;
+    }
+
+    /* Main Container */
+    .wallet-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    .page-title {
+      font-size: 32px;
+      font-weight: 600;
+      margin-bottom: 40px;
+      color: #1a1a1a;
+      letter-spacing: -0.5px;
+    }
+
+    /* Balance Card - Modern Clean Design */
+    .balance-card {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .balance-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .balance-label {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .balance-amount {
+      font-size: 48px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 0;
+      letter-spacing: -1px;
+    }
+
+    /* Add Funds Section */
+    .add-funds-section {
+      background-color: #f8f8f8;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 40px;
+    }
+
+    .add-funds-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #1a1a1a;
+    }
+
+    .add-funds-form {
+      display: flex;
+      gap: 15px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .form-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 14px 18px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.2s;
+      background-color: #ffffff;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #1a1a1a;
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-add-funds {
+      padding: 14px 32px;
+      background-color: #ff6b6b;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-add-funds:hover {
+      background-color: #ff5252;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    }
+
+    .btn-add-funds:active {
+      transform: translateY(0);
+    }
+
+    /* Messages */
+    .message {
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-top: 15px;
+      display: none;
+    }
+
+    .error-message {
+      background-color: #ffe5e5;
+      color: #d32f2f;
+      border-left: 4px solid #d32f2f;
+    }
+
+    .success-message {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      border-left: 4px solid #2e7d32;
+    }
+
+    /* Transaction History */
+    .transaction-section {
+      background-color: #ffffff;
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 25px;
+      color: #1a1a1a;
+    }
+
+    .transaction-table {
+      width: 100%;
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      border: 1px solid #e0e0e0;
+    }
+
+    .transaction-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .transaction-table thead {
+      background-color: #f8f8f8;
+    }
+
+    .transaction-table th {
+      padding: 16px 20px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .transaction-table td {
+      padding: 18px 20px;
+      font-size: 15px;
+      color: #1a1a1a;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .transaction-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .transaction-table tbody tr:hover {
+      background-color: #fafafa;
+    }
+
+    .credit {
+      color: #2e7d32;
+      font-weight: 600;
+    }
+
+    .debit {
+      color: #d32f2f;
+      font-weight: 600;
+    }
+
+    .transaction-type {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .transaction-type.credit {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .transaction-type.debit {
+      background-color: #ffe5e5;
+      color: #d32f2f;
+    }
+
+   /* Pagination - Updated to match your theme */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+  gap: 8px;
+}
+
+.pagination-container button {
+  padding: 8px 16px;
+  border: 1px solid #e0e0e0;
+  background-color: #ffffff;
+  color: #1a1a1a;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* Hover state for all buttons */
+.pagination-container button:hover:not(:disabled) {
+  background-color: #f8f8f8;
+  border-color: #1a1a1a;
+}
+
+/* Active page button - Black background */
+.pagination-container button.btn-primary,
+.pagination-container .button.btn-primary {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+  border-color: #1a1a1a !important;
+}
+
+/* Inactive page numbers - White with border */
+.pagination-container button.btn-outline-primary,
+.pagination-container .button.btn-outline-primary {
+  background-color: #ffffff !important;
+  color: #1a1a1a !important;
+  border-color: #e0e0e0 !important;
+}
+
+/* Prev/Next buttons - Coral pink color matching your theme */
+.pagination-container button.btn-secondary {
+  background-color: #ff6b6b !important;
+  color: #ffffff !important;
+  border-color: #ff6b6b !important;
+}
+
+.pagination-container button.btn-secondary:hover:not(:disabled) {
+  background-color: #ff5252 !important;
+  border-color: #ff5252 !important;
+}
+
+/* Disabled state for Prev/Next */
+.pagination-container button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: #e0e0e0 !important;
+  border-color: #e0e0e0 !important;
+  color: #999 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pagination-container {
+    gap: 5px;
+  }
+  
+  .pagination-container button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .page-title {
+        font-size: 24px;
+        margin-bottom: 30px;
+      }
+
+      .balance-card {
+        padding: 30px 20px;
+      }
+
+      .balance-amount {
+        font-size: 36px;
+      }
+
+      .add-funds-form {
+        flex-direction: column;
+      }
+
+      .form-input {
+        width: 100%;
+      }
+
+      .btn-add-funds {
+        width: 100%;
+      }
+
+      .transaction-table {
+        overflow-x: auto;
+      }
+
+      .transaction-table table {
+        min-width: 500px;
+      }
+
+      .site-nav {
+        display: none;
+      }
+    }
+    a{
+      text-decoration: none;
+    }
   </style>
 </head>
 
 <body>
-  <div class="container wallet-container">
-    <h3>My Wallet</h3>
 
-    <!-- Wallet Balance -->
-    <div class="balance-card mb-4">
-      <h5>Current Balance</h5>
-      <p class="balance-amount">₹<%= wallet ? wallet.Balance.toFixed(2) : '0.00' %></p>
-      <!-- <a href="/checkout" class="btn btn-primary mt-2">
-        <i class="fas fa-shopping-cart me-1"></i> Use Wallet for Checkout
-      </a> -->
+  </div>
+
+  <div class="container wallet-container">
+    <h1 class="page-title">My Wallet</h1>
+
+    <!-- Wallet Balance Card -->
+    <div class="balance-card">
+      <div class="balance-label">Current Balance</div>
+      <p class="balance-amount">₹ <%=Math.round(wallet.Balance)%></p>
+    </div>
+
+    <!-- Add Funds Section -->
+    <div class="add-funds-section">
+      <h2 class="add-funds-title">Add Funds to Wallet</h2>
+      <form id="addFundsForm" class="add-funds-form">
+        <input 
+          type="number" 
+          id="amountInput" 
+          class="form-input" 
+          placeholder="Enter amount (₹)" 
+          min="1" 
+          step="0.01" 
+          required 
+        />
+        <button type="submit" class="btn-add-funds">
+          <i class="fa-solid fa-plus"></i> Add Funds
+        </button>
+      </form>
+      <div id="errorMessage" class="message error-message"></div>
+      <div id="successMessage" class="message success-message"></div>
     </div>
 
     <!-- Transaction History -->
-    <div class="transaction-table">
-      <h5>Transaction History</h5>
-      <% if (wallet && wallet.Transaction && wallet.Transaction.length > 0) { %>
-        <table class="table table-bordered">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Amount</th>
-            </tr>
-          </thead>
-          <tbody id="transactionBody"></tbody>
-        </table>
-      <% } else { %>
-        <p>No transactions found.</p>
-      <% } %>
+    <div class="transaction-section">
+      <div class="transaction-table">
+        <h5>Transaction History</h5>
+        <% if (wallet && wallet.Transaction && wallet.Transaction.length > 0) { %>
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody id="transactionBody"></tbody>
+          </table>
+        <% } else { %>
+          <p>No transactions found.</p>
+        <% } %>
+      </div>
+    </div>
+      
+      <!-- Pagination -->
+      <!-- <div class="pagination-container" id="paginationContainer">
+        <button disabled>Prev</button>
+        <button class="active">1</button>
+        <button>2</button>
+        <button>Next</button>
+      </div> -->
     </div>
   </div>
-  <!-- ===================== ADD FUNDS SECTION ===================== -->
-<div class="add-funds-container text-center">
-  <h5 class="mt-4">Add Funds to Wallet</h5>
-  <form id="addFundsForm" class="d-inline-flex flex-column align-items-center mt-3">
-    <input 
-      type="number" 
-      id="amountInput" 
-      class="form-control add-funds-input mb-2" 
-      placeholder="Enter amount (₹)" 
-      min="1" 
-      step="0.01" 
-      required 
-    />
-    <button type="submit" class="btn btn-success">
-      <i class="fa-solid fa-plus me-2"></i> Add Funds
-    </button>
-  </form>
 
-  <p id="errorMessage" class="error-message" style="display:none;"></p>
-  <p id="successMessage" class="success-message" style="display:none;"></p>
-</div>
 
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -93,7 +477,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       const walletData = <%- JSON.stringify(wallet || {}) %>;
       const transactions = walletData.Transaction || [];
-      const rowsPerPage = 5; // change this number if you want more or fewer per page
+      const rowsPerPage = 5; 
       let currentPage = 1;
 
       const tbody = document.getElementById('transactionBody');
@@ -102,7 +486,7 @@
       if (transactions.length > 0) {
         // Create pagination container
         const paginationContainer = document.createElement('div');
-        paginationContainer.classList.add('d-flex', 'justify-content-center', 'mt-3');
+        paginationContainer.classList.add('pagination-container','d-flex', 'justify-content-center', 'mt-3');
         transactionTable.appendChild(paginationContainer);
 
         function renderTable(page) {
@@ -114,7 +498,7 @@
           pageData.forEach(t => {
             const date = new Date(t.TransactionDate)
               .toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
-            const typeClass = t.TransactionType === 'credit' ? 'credit' : 'debit';
+            const typeClass = t.TransactionType === 'credit' ? 'text-success' : 'text-danger';
             const sign = t.TransactionType === 'credit' ? '+' : '-';
             const row = `
               <tr>
@@ -133,33 +517,50 @@
         }
 
         function renderPagination() {
-          const totalPages = Math.ceil(transactions.length / rowsPerPage);
-          paginationContainer.innerHTML = '';
+  const totalPages = Math.ceil(transactions.length / rowsPerPage);
+  paginationContainer.innerHTML = '';
 
-          const prevBtn = `<button class="btn btn-sm btn-secondary me-2" 
-            ${currentPage === 1 ? 'disabled' : ''}>Prev</button>`;
-          const nextBtn = `<button class="btn btn-sm btn-secondary ms-2" 
-            ${currentPage === totalPages ? 'disabled' : ''}>Next</button>`;
+  // Previous button with coral styling
+  const prevBtn = document.createElement('button');
+  prevBtn.textContent = 'Prev';
+  prevBtn.className = 'btn btn-sm btn-secondary me-2';
+  prevBtn.disabled = currentPage === 1;
+  paginationContainer.appendChild(prevBtn);
 
-          paginationContainer.insertAdjacentHTML('beforeend', prevBtn);
-          for (let i = 1; i <= totalPages; i++) {
-            paginationContainer.insertAdjacentHTML('beforeend', `
-              <button class="btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1">
-                ${i}
-              </button>`);
-          }
-          paginationContainer.insertAdjacentHTML('beforeend', nextBtn);
+  // Page number buttons
+  for (let i = 1; i <= totalPages; i++) {
+    const pageBtn = document.createElement('button');
+    pageBtn.textContent = i;
+    if (i === currentPage) {
+      pageBtn.className = 'btn btn-sm btn-primary mx-1'; // Active - Black
+    } else {
+      pageBtn.className = 'btn btn-sm btn-outline-primary mx-1'; // Inactive - White
+    }
+    paginationContainer.appendChild(pageBtn);
+  }
 
-          const buttons = paginationContainer.querySelectorAll('button');
-          buttons.forEach(btn => {
-            btn.addEventListener('click', () => {
-              if (btn.textContent === 'Prev' && currentPage > 1) currentPage--;
-              else if (btn.textContent === 'Next' && currentPage < totalPages) currentPage++;
-              else if (!isNaN(parseInt(btn.textContent))) currentPage = parseInt(btn.textContent);
-              renderTable(currentPage);
-            });
-          });
-        }
+  // Next button with coral styling
+  const nextBtn = document.createElement('button');
+  nextBtn.textContent = 'Next';
+  nextBtn.className = 'btn btn-sm btn-secondary ms-2';
+  nextBtn.disabled = currentPage === totalPages;
+  paginationContainer.appendChild(nextBtn);
+
+  // Add click event listeners
+  const buttons = paginationContainer.querySelectorAll('button');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.textContent === 'Prev' && currentPage > 1) {
+        currentPage--;
+      } else if (btn.textContent === 'Next' && currentPage < totalPages) {
+        currentPage++;
+      } else if (!isNaN(parseInt(btn.textContent))) {
+        currentPage = parseInt(btn.textContent);
+      }
+      renderTable(currentPage);
+    });
+  });
+}
 
         renderTable(currentPage);
       }

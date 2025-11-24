@@ -6,215 +6,163 @@
   <title>Add Address</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="/css/style.css" />
 
-  <!-- Custom CSS -->
   <style>
-    a{
-        text-decoration: none;
-    }
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: #f2f4f8;
-      margin: 0;
-      padding: 0;
+      background: #e6e9ec;
+      background: url('/img/background.svg') no-repeat;
+
     }
 
-    .card {
-      border: none;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-      padding: 30px;
+    .address-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 25px 30px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      max-width: 150vh;
+      margin: 50px auto;
     }
 
     h4 {
       font-weight: 600;
+      margin-bottom: 20px;
       text-align: center;
-      color: #343a40;
+      color: #333;
     }
 
-    label.form-label {
-      font-weight: 500;
+    .form-control {
+      padding: 8px 10px;
+    }
+
+    .row-gap {
+      row-gap: 12px;
     }
 
     .btn-primary {
-      background-color: #007bff;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
+      padding: 8px 18px;
     }
 
-    .btn-primary:hover {
-      background-color: #0056b3;
-    }
-
-    .btn-secondary {
-      background-color: #6c757d;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-    }
-
-    .btn-secondary:hover {
-      background-color: #545b62;
-    }
-
-    .form-container {
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #message {
+    .alert {
+      padding: 8px;
+      margin-top: 5px;
+      text-align: center;
+      border-radius: 5px;
+      font-size: 14px;
       display: none;
+    }
+    a{
+      text-decoration: none;
     }
   </style>
 </head>
 
 <body>
+
   <%- include('../partials/user/header') %>
 
-  <div class="container form-container">
-    <div class="col-md-6 col-lg-5">
-      <div class="card">
-        <h4 class="mb-4">Add New Address</h4> 
-        <div id="message" class="alert text-center"></div>
+  <div class="address-card">
+    <h4>Add New Address</h4>
 
-        <form id="addAddressForm">
-            <div class="mb-3">
-              <label for="name" class="form-label">Full Name</label>
-              <input type="text" class="form-control" id="name" name="name" />
-            </div>
-          
-            <div class="mb-3">
-              <label for="phone" class="form-label">Phone</label>
-              <input type="tel" class="form-control" maxlength="10" id="phone" name="phone" />
-            </div>
-          
-            <div class="mb-3">
-              <label for="alternativePhone" class="form-label">Alternative Phone</label>
-              <input type="tel" class="form-control" maxlength="10" id="alternativePhone" name="alternativePhone" />
-            </div>
-          
-            <div class="mb-3">
-              <label for="town" class="form-label">Town</label>
-              <input type="text" class="form-control" id="town" name="town" />
-            </div>
-          
-            <div class="mb-3">
-              <label for="city" class="form-label">City</label>
-              <input type="text" class="form-control" id="city" name="city" />
-            </div>
-          
-            <div class="mb-3">
-              <label for="state" class="form-label">State</label>
-              <input type="text" class="form-control" id="state" name="state" />
-            </div>
-          
-            <div class="mb-3">
-              <label for="postCode" class="form-label">Post Code</label>
-              <input type="text" class="form-control" id="postCode" name="postCode" maxlength="6" />
-            </div>
-           
-            <div class="d-flex justify-content-between">
-              <a href="/checkout" class="btn btn-secondary">Cancel</a>
-              <button type="submit" class="btn btn-primary">Save Address</button>
-            </div>
-          </form>
+    <div id="message" class="alert"></div>
+
+    <form id="addAddressForm">
+
+      <div class="row row-gap">
+        <div class="col-6">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="name" name="name" maxlength="20" class="form-control" />
+        </div>
+
+        <div class="col-6">
+          <label class="form-label">Phone</label>
+          <input type="tel" id="phone" name="phone" maxlength="10" class="form-control" />
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Alternative Phone</label>
+          <input type="tel" id="alternativePhone" name="alternativePhone" maxlength="10" class="form-control" />
+        </div>
+
+        <div class="col-6">
+          <label class="form-label">Town</label>
+          <input type="text" id="town" maxlength="20" name="town" class="form-control" />
+        </div>
+
+        <div class="col-6">
+          <label class="form-label">City</label>
+          <input type="text" id="city" maxlength="20" name="city" class="form-control" />
+        </div>
+
+        <div class="col-6">
+          <label class="form-label">State</label>
+          <input type="text" id="state" name="state" class="form-control" />
+        </div>
+
+        <div class="col-6">
+          <label class="form-label">Post Code</label>
+          <input type="text" id="postCode" name="postCode" maxlength="6" class="form-control" />
+        </div>
       </div>
-    </div>
-  </div>
 
+      <div class="d-flex justify-content-between mt-4">
+        <a href="/edit-profile" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save Address</button>
+      </div>
+
+    </form>
+  </div>
   <%- include('../partials/user/footer') %>
+
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
   <script>
-    $(document).ready(function() {
-      $('#addAddressForm').on('submit', function(e) {
+    $(function () {
+      $('#addAddressForm').on('submit', function (e) {
         e.preventDefault();
 
-        // Validation
         const name = $('#name').val().trim();
         const phone = $('#phone').val().trim();
-        const alternativePhone = $('#alternativePhone').val().trim();
+        const alt = $('#alternativePhone').val().trim();
         const town = $('#town').val().trim();
         const city = $('#city').val().trim();
         const state = $('#state').val().trim();
         const postCode = $('#postCode').val().trim();
 
-        let isValid = true;
-        let message = '';
+        let msg = "";
+        let valid = true;
 
-        if (!name && name.length>10) {
-          isValid = false;
-          message = 'Please enter a valid name';
-        } else if (!/^[a-zA-Z\s]+$/.test(name)) {
-          isValid = false;
-          message = 'Name should contain only letters and spaces';
-        } else if (!phone || !/^\d{10}$/.test(phone)) {
-          isValid = false;
-          message = 'Please enter a valid 10-digit phone number';
-        } else if (alternativePhone && (!/^\d{10}$/.test(alternativePhone) || alternativePhone === phone)) {
-          isValid = false;
-          message = 'Alternative phone must be a valid 10-digit number different from the primary phone or leave it empty';
-        } else if (!town) {
-          isValid = false;
-          message = 'Please enter a town';
-        } else if (!/^[a-zA-Z\s]+$/.test(town)) {
-          isValid = false;
-          message = 'Town should contain only letters and spaces';
-        } else if (!city) {
-          isValid = false;
-          message = 'Please enter a city';
-        } else if (!/^[a-zA-Z\s]+$/.test(city)) {
-          isValid = false;
-          message = 'City should contain only letters and spaces';
-        } else if (!state) {
-          isValid = false;
-          message = 'Please enter a state';
-        } else if (!/^[a-zA-Z\s]+$/.test(state)) {
-          isValid = false;
-          message = 'State should contain only letters and spaces';
-        } else if (!postCode || !/^\d+$/.test(postCode)) {
-          isValid = false;
-          message = 'Please enter a valid post code containing only numbers';
-        } else if (postCode.length !== 6) {
-          isValid = false;
-          message = 'Post code must be exactly 6 digits';
-        }
+        if (!/^[a-zA-Z\s]{3,20}$/.test(name)) msg = "Enter a valid name", valid = false;
+        else if (!/^\d{10}$/.test(phone)) msg = "Enter valid phone", valid = false;
+        else if (alt && (!/^\d{10}$/.test(alt) || alt === phone)) msg = "Invalid alternative phone", valid = false;
+        else if (!/^[a-zA-Z\s]+$/.test(town)) msg = "Invalid town", valid = false;
+        else if (!/^[a-zA-Z\s]+$/.test(city)) msg = "Invalid city", valid = false;
+        else if (!/^[a-zA-Z\s]+$/.test(state)) msg = "Invalid state", valid = false;
+        else if (!/^\d{6}$/.test(postCode)) msg = "Post code must be 6 digits", valid = false;
 
-        if (!isValid) {
-          $('#message').removeClass('alert-success').addClass('alert-danger').text(message).show();
+        if (!valid) {
+          $('#message').removeClass("alert-success").addClass("alert-danger").text(msg).show();
           return;
         }
 
-        // AJAX Request
         $.ajax({
-          url: '/add-address',
           type: 'POST',
-          data: {
-            name: name,
-            phone: phone,
-            alternativePhone: alternativePhone,
-            town: town,
-            city: city,
-            state: state,
-            postCode: postCode
+          url: '/add-address',
+          data: { name, phone, alternativePhone: alt, town, city, state, postCode },
+          success: function () {
+            $('#message').removeClass('alert-danger').addClass('alert-success').text("Address added successfully").show();
+            setTimeout(() => window.location.href = '/checkout', 1200);
           },
-          success: function(response) {
-            $('#message').removeClass('alert-danger').addClass('alert-success').text('Address added successfully').show();
-            setTimeout(function() {
-              window.location.href = '/checkout';
-            }, 1000);
-          },
-          error: function(xhr, status, error) {
-            const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred. Please try again.';
-            $('#message').removeClass('alert-success').addClass('alert-danger').text(errorMsg).show();
+          error: function (xhr) {
+            const msg = xhr.responseJSON?.message || "Something went wrong";
+            $('#message').removeClass('alert-success').addClass('alert-danger').text(msg).show();
           }
         });
+
       });
     });
   </script>
+
 </body>
 </html>

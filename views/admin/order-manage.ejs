@@ -132,7 +132,7 @@
             
                 let computedStatus = "";
             
-                if (order.PaymentStatus === "Pending") {
+                if (order.PaymentStatus === "Pending" && order.PaymentMethod== 'Online') {
                   computedStatus = "Payment Failed";
                 } else if (statuses.every(s => s === "Delivered")) {
                   computedStatus = "Delivered";

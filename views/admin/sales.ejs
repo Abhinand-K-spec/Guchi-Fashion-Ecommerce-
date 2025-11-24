@@ -144,6 +144,13 @@
       <button type="submit" class="btn-generate">Generate Report</button>
       <a href="/admin/sales/download?period=<%= period %>&range=<%= range %>&startDate=<%= startDate %>&endDate=<%= endDate %>" class="btn-download">Download PDF</a>
       <!-- <button type="button" class="btn-visualize" onclick="generateChart()">Visualize Sales</button> -->
+      <a 
+      href="/admin/sales/download-excel?period=<%= period %>&range=<%= range %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
+      class="btn-download"
+    >
+      Download Excel
+    </a>
+    
     </form>
 
     <% if (report && report.length > 0) { %>

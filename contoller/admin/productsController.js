@@ -145,6 +145,7 @@ const getAllProducts = async (req, res) => {
 
     const products = await Product.find(filter)
       .populate('Category')
+      .sort({UpdatedAt:-1})
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();

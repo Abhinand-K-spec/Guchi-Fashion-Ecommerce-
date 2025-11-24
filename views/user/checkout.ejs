@@ -71,7 +71,7 @@
               <div class="form-check mb-3 border rounded p-2">
                 <div class="d-flex justify-content-between align-items-start">
                   <div>
-                    <input class="form-check-input me-2" type="radio" name="selectedAddressId" value="<%= address._id %>" <%= i === 0 ? 'checked' : '' %> required>
+                    <input class="form-check-input me-2" type="radio" name="selectedAddressId" value="<%= address._id %>" <%= address.isDefault ? 'checked' : '' %> required>
                     <label class="form-check-label">
                       <strong><%= address.name %></strong><br>
                       <%= address.town %>, <%= address.city %>, <%= address.state %> - <%= address.postCode %><br>
@@ -168,6 +168,14 @@
                 Online Payment
               </label>
             </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="paymentMethod" id="paymentWallet" value="Wallet">
+              <label class="form-check-label" for="paymentWallet">
+                Wallet Payment (Balance: ₹<%= Math.round(wallet.Balance) || 0 %>)
+              </label>
+              <p id="walletError" class="text-danger"></p>
+            </div>
+            
             <p id="paymentError" class="payment-error" style="display: none;"></p>
           </div>
           <div id="addressWarning" style="display:none; color: red; margin-bottom: 10px;">
@@ -260,6 +268,10 @@
       const razorpayPaymentId = document.getElementById('razorpayPaymentId');
       const razorpayOrderId = document.getElementById('razorpayOrderId');
       const razorpaySignature = document.getElementById('razorpaySignature');
+      const paymentWallet = document.getElementById('paymentWallet');
+      const walletError = document.getElementById('walletError');
+      const wallerBalance = <%= wallet.Balance %>;
+
 
       const originalSubtotal = <%= subtotal %>;
       const originalItemDiscount = <%= totalItemDiscount %>;
@@ -284,14 +296,16 @@
         return;
       }
 
-      // Update Place Order button text based on payment method
       const updatePlaceOrderButton = () => {
-        if (paymentCOD.checked) {
-          placeOrderButton.innerHTML = '<i class="fas fa-shopping-bag me-1"></i> Place Order (Cash on Delivery)';
-        } else if (paymentOnline.checked) {
-          placeOrderButton.innerHTML = '<i class="fas fa-credit-card me-1"></i> Proceed to Payment (Online)';
-        }
-      };
+  if (paymentCOD.checked) {
+    placeOrderButton.innerHTML = '<i class="fas fa-shopping-bag me-1"></i> Place Order (Cash on Delivery)';
+  } else if (paymentOnline.checked) {
+    placeOrderButton.innerHTML = '<i class="fas fa-credit-card me-1"></i> Proceed to Payment (Online)';
+  } else if (paymentWallet.checked) {
+    placeOrderButton.innerHTML = '<i class="fas fa-wallet me-1"></i> Pay With Wallet';
+  }
+};
+
 
       // Disable COD if final total > 1000
 const finalTotalValue = Number(
@@ -306,7 +320,7 @@ if (finalTotalValue > 1500) {
   codRadio.disabled = true;
   codRadio.checked = false;
   
-  const codp = document.getElementById('cod-p').innerHTML = 'COD not allowed above 100/-'
+  const codp = document.getElementById('cod-p').innerHTML = 'COD not allowed above 1500/-'
     onlineRadio.checked = true; // auto-select Online Payment
     codLabel.style.opacity = "0.5";
     codLabel.style.cursor = "not-allowed";
@@ -323,13 +337,15 @@ if (finalTotalValue > 1500) {
       // Update button text on payment method change
       paymentCOD.addEventListener('change', updatePlaceOrderButton);
       paymentOnline.addEventListener('change', updatePlaceOrderButton);
+      paymentWallet.addEventListener('change', updatePlaceOrderButton);
+
 
       // Handle form submission
       checkoutForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         console.log('Form submission initiated', { paymentMethod: paymentCOD.checked ? 'COD' : 'Online' });
 
-        if (!paymentCOD.checked && !paymentOnline.checked) {
+        if (!paymentCOD.checked && !paymentOnline.checked && !paymentWallet.checked)  {
           paymentError.textContent = 'Please select a payment method.';
           paymentError.style.display = 'block';
           console.error('No payment method selected');
@@ -465,38 +481,86 @@ if (!selectedAddress) {
           }
         } else {
 
-          try {
-            const response = await fetch('/place-order', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                userId,
-                selectedAddressId: document.querySelector('input[name="selectedAddressId"]:checked').value,
-                coupon: couponInput.value.trim(),
-                paymentMethod: 'COD',
-                finalTotal: parseFloat(finalTotalEl.textContent)
-              })
-            });
+// ---------------- WALLET PAYMENT (ADDED) ------------------
+if (paymentWallet.checked) {
+  const finalTotal = Number(finalTotalEl.textContent.replace('₹','').trim());
 
-            const result = await response.json();
-            console.log('COD place order response:', result);
+  if (wallerBalance < finalTotal) {
+    walletError.textContent = 'Insufficient wallet balance.';
+    walletError.style.display = 'block';
+    return;
+  }
 
-            if (!response.ok || !result.success) {
-              console.error('COD place order failed:', result.message);
-              paymentError.textContent = result.message || 'Failed to place COD order. Please try again.';
-              paymentError.style.display = 'block';
-              return;
-            }
+  walletError.style.display = 'none';
 
-            // Redirect to order success page
-            window.location.href = '/order-confirmation/' + result.orderId;
-          } catch (err) {
-            console.error('Error placing COD order:', err);
-            paymentError.textContent = 'Error placing COD order. Please try again.';
-            paymentError.style.display = 'block';
-          }
-        }
+  try {
+    const response = await fetch('/place-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        selectedAddressId: document.querySelector('input[name="selectedAddressId"]:checked').value,
+        coupon: couponInput.value.trim(),
+        paymentMethod: 'Wallet',
+        finalTotal
+      })
+    });
+
+    const result = await response.json();
+    console.log('Wallet place order response:', result);
+
+    if (!response.ok || !result.success) {
+      walletError.textContent = result.message || 'Wallet payment failed.';
+      walletError.style.display = 'block';
+      return;
+    }
+
+    window.location.href = '/order-confirmation/' + result.orderId;
+
+  } catch (err) {
+    console.error('Error placing wallet order:', err);
+    walletError.textContent = 'Error processing wallet payment.';
+    walletError.style.display = 'block';
+  }
+
+  return; // important to stop COD block
+}
+
+// ---------------- COD PAYMENT (ORIGINAL CODE) ------------------
+try {
+  const response = await fetch('/place-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId,
+      selectedAddressId: document.querySelector('input[name="selectedAddressId"]:checked').value,
+      coupon: couponInput.value.trim(),
+      paymentMethod: 'COD',
+      finalTotal: parseFloat(finalTotalEl.textContent)
+    })
+  });
+
+  const result = await response.json();
+  console.log('COD place order response:', result);
+
+  if (!response.ok || !result.success) {
+    console.error('COD place order failed:', result.message);
+    paymentError.textContent = result.message || 'Failed to place COD order. Please try again.';
+    paymentError.style.display = 'block';
+    return;
+  }
+
+  window.location.href = '/order-confirmation/' + result.orderId;
+} catch (err) {
+  console.error('Error placing COD order:', err);
+  paymentError.textContent = 'Error placing COD order. Please try again.';
+  paymentError.style.display = 'block';
+}
+
+}
+
       });
+      
 
       // Copy coupon code to clipboard
       document.getElementById('couponModal').addEventListener('click', function(e) {

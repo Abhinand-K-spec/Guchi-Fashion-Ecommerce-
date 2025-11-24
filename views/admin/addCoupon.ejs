@@ -20,7 +20,6 @@
             margin-bottom: 10px;
             width: 30%;
             display: inline-block;
-            vertical-align: top;
             margin-right: 3%;
         }
         .form-group:nth-child(3n) {
@@ -33,17 +32,14 @@
             display: block;
             margin-bottom: 3px;
             color: #bbb;
-            font-size: 14px;
         }
-        input, select {
+        input {
             width: 100%;
-            padding: 5px;
-            box-sizing: border-box;
+            padding: 6px;
             border: 1px solid #444;
             border-radius: 4px;
             background: #333;
             color: #fff;
-            font-size: 13px;
         }
         .btn {
             background-color: #007bff;
@@ -54,375 +50,323 @@
             cursor: pointer;
             margin-right: 5px;
         }
-        .btn:hover {
-            background-color: #0056b3;
-        }
         .btn-danger {
             background-color: #dc3545;
         }
-        .btn-danger:hover {
-            background-color: #c82333;
-        }
-        .table-container {
-            margin-top: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+        .btn:hover { background-color: #0056b3; }
+        .btn-danger:hover { background-color: #c82333; }
+
         th, td {
             padding: 10px;
-            text-align: left;
             border-bottom: 1px solid #444;
         }
-        th {
-            background-color: #343a40;
-        }
-        .error {
-            color: #dc3545;
-            font-size: 12px;
-            margin-top: 3px;
-            display: none;
-        }
-        .pagination {
-            margin-top: 10px;
-        }
+
         .toast {
             position: fixed;
             bottom: 20px;
             right: 20px;
             min-width: 250px;
-            background-color: rgb(15, 160, 15);
-            color: #fff;
-            border: 1px solid #444;
-            border-radius: 8px;
             padding: 15px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-            z-index: 1000;
+            border-radius: 8px;
+            color: #fff;
+            background: green;
             opacity: 0;
-            transition: opacity 0.3s ease-in-out;
+            transition: opacity .3s;
+            z-index: 9999;
         }
-        .toast.show {
-            opacity: 1;
-        }
-        .toast.error {
-            background-color: #e11d48;
-            border-color: #b91c1c;
-        }
+        .toast.show { opacity: 1; }
+        .toast.error { background: #e11d48; }
+        .error {
+    color: #ff4d4d !important;
+    font-size: 12px;
+    margin-top: 3px;
+    display: none;
+}
+
     </style>
 </head>
-<body>
-    <div class="container">
-        <h2>Add New Coupon</h2>
-        <form action="/admin/addCoupon" method="POST" id="couponForm" onsubmit="return handleCouponSubmit(event)">
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="couponName">Coupon Name:</label>
-                    <input type="text" id="couponName" name="CouponName">
-                    <span class="error" id="couponNameError">Coupon Name is required.</span>
-                </div>
-                <div class="form-group">
-                    <label for="couponCode">Coupon Code:</label>
-                    <input type="text" id="couponCode" name="CouponCode" pattern="[A-Za-z0-9]{4,}" title="Use 4 or more alphanumeric characters">
-                    <span class="error" id="couponCodeError">Coupon Code must be at least 4 alphanumeric characters.</span>
-                </div>
-                <div class="form-group">
-                    <label for="usageLimit">Usage Limit:</label>
-                    <input type="number" id="usageLimit" name="UsageLimit" min="1">
-                    <span class="error" id="usageLimitError">Usage Limit must be at least 1.</span>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="startDate">Start Date:</label>
-                    <input type="date" id="startDate" name="StartDate">
-                    <span class="error" id="startDateError">Start Date is required.</span>
-                </div>
-                <div class="form-group">
-                    <label for="endDate">End Date:</label>
-                    <input type="date" id="endDate" name="EndDate">
-                    <span class="error" id="endDateError">End Date is required and must be after Start Date.</span>
-                </div>
-                <div class="form-group">
-                    <label for="discount">Discount (%):</label>
-                    <input type="number" id="discount" name="Discount" min="0" max="100" step="0.01">
-                    <span class="error" id="discountError">Discount must be between 0 and 100.</span>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="minCartValue">Min Cart Value:</label>
-                    <input type="number" id="minCartValue" name="MinCartValue" min="0">
-                </div>
-                <div class="form-group">
-                    <label for="maxCartValue">Max Cart Value:</label>
-                    <input type="number" id="maxCartValue" name="MaxCartValue" min="0">
-                </div>
-                <div class="form-group" style="visibility: hidden; height: 0;">
-                    <input type="text" style="display: none;">
-                </div>
-            </div>
-            <button type="submit" class="btn" style="width: auto; display: block; margin-top: 10px;">Create Coupon</button>
-        </form>
 
-        <div class="table-container">
-            <div class="d-flex">
-                <h2>Coupon Management</h2>
-                <div class="p-2" style="margin-bottom: 10px;">
-                    <input type="text" id="searchCoupons" placeholder="Search coupons" style="width: 200px; padding: 6px; margin-right: 10px;">
-                    <button class="btn" onclick="searchCoupons()">Search</button>
-                    <button class="btn" onclick="clearSearch()">Clear</button>
-                </div>
+<body>
+<div class="container">
+
+    <h2>Add New Coupon</h2>
+
+    <!-- FORM IS COMPLETELY SEPARATE FROM TABLE -->
+    <form id="couponForm" onsubmit="handleCouponSubmit(event)">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Coupon Name</label>
+                <input type="text" id="couponName" name="CouponName">
+                <span class="error" id="couponNameError">Coupon Name is required</span>
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Coupon Name</th>
-                        <th>Coupon Code</th>
-                        <th>Discount (%)</th>
-                        <th>Usage Limit</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="couponTable">
-                    <% coupons.forEach(coupon => { %>
-                        <tr id="coupon-<%= coupon._id %>">
-                            <td><%= coupon.CouponName %></td>
-                            <td><%= coupon.CouponCode %></td>
-                            <td><%= coupon.Discount ? coupon.Discount.toFixed(2) : 'N/A' %></td>
-                            <td><%= coupon.UsageLimit %></td>
-                            <td><%= new Date(coupon.StartDate).toLocaleDateString() %></td>
-                            <td><%= new Date(coupon.ExpiryDate).toLocaleDateString() %></td>
-                            <td class="status"><%= coupon.IsListed ? 'Listed' : 'Unlisted' %></td>
-                            <td>
-                                <button class="btn btn-danger" onclick="toggleCouponStatus('<%= coupon._id %>', <%= coupon.IsListed ? 'true' : 'false' %>)"><%= coupon.IsListed ? 'Unlist' : 'List' %></button>
-                            </td>
-                        </tr>
-                    <% }) %>
-                </tbody>
-            </table>
-            <div class="pagination justify-content-center">
-                <button class="btn" onclick="window.location.href='/admin/coupons?page=<%= currentPage - 1 %>'" <%= !hasPrevPage ? 'disabled' : '' %>>Previous</button>
-                <% for(let i = 1; i <= totalPages; i++) { %>
-                    <button class="btn" onclick="window.location.href='/admin/coupons?page=<%= i %>'" <%= currentPage === i ? 'disabled' : '' %>><%= i %></button>
-                <% } %>
-                <button class="btn" onclick="window.location.href='/admin/coupons?page=<%= currentPage + 1 %>'" <%= !hasNextPage ? 'disabled' : '' %>>Next</button>
+
+            <div class="form-group">
+                <label>Coupon Code</label>
+                <input type="text" id="couponCode" name="CouponCode">
+                <span class="error" id="couponCodeError">Enter 4+ alphanumeric characters</span>
+            </div>
+
+            <div class="form-group">
+                <label>Usage Limit</label>
+                <input type="number" id="usageLimit" name="UsageLimit">
+                <span class="error" id="usageLimitError">Must be at least 1</span>
             </div>
         </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Start Date</label>
+                <input type="date" id="startDate" name="StartDate">
+                <span class="error" id="startDateError">Required</span>
+            </div>
+
+            <div class="form-group">
+                <label>End Date</label>
+                <input type="date" id="endDate" name="EndDate">
+                <span class="error" id="endDateError">Required</span>
+            </div>
+
+            <div class="form-group">
+                <label>Discount (%)</label>
+                <input type="number" id="discount" name="Discount">
+                <span class="error" id="discountError">0 - 100 only</span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn">Create Coupon</button>
+    </form>
+
+    <!-- ❗ NOTHING BELOW IS INSIDE FORM -->
+    <hr>
+
+    <h2>Coupon Management</h2>
+
+    <div style="margin-bottom: 10px;">
+        <input type="text" id="searchCoupons" placeholder="Search..." style="padding: 6px;">
+        <button type="button" class="btn" onclick="searchCoupons()">Search</button>
+        <button type="button" class="btn" onclick="clearSearch()">Clear</button>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script>
-        function showToast(message, isError = false) {
-            const toast = document.createElement('div');
-            toast.className = `toast ${isError ? 'error' : ''}`;
-            toast.innerText = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 100);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Code</th>
+            <th>Discount</th>
+            <th>Usage</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
 
-        function validateForm() {
-            let isValid = true;
-
-            // Coupon Name validation
-            const couponName = document.getElementById('couponName').value.trim();
-            if (!couponName) {
-                document.getElementById('couponNameError').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('couponNameError').style.display = 'none';
-            }
-
-            // Coupon Code validation
-            const couponCode = document.getElementById('couponCode').value.trim();
-            if (!couponCode || !/^[A-Za-z0-9]{4,}$/.test(couponCode)) {
-                document.getElementById('couponCodeError').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('couponCodeError').style.display = 'none';
-            }
-
-            // Usage Limit validation
-            const usageLimit = parseInt(document.getElementById('usageLimit').value);
-            if (isNaN(usageLimit) || usageLimit < 1) {
-                document.getElementById('usageLimitError').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('usageLimitError').style.display = 'none';
-            }
-
-            // Start Date and End Date validation
-            const startDate = new Date(document.getElementById('startDate').value);
-            const endDate = new Date(document.getElementById('endDate').value);
-            if (!startDate || isNaN(startDate) || !endDate || isNaN(endDate)) {
-                document.getElementById('startDateError').style.display = 'block';
-                document.getElementById('endDateError').style.display = 'block';
-                isValid = false;
-            } else if (startDate > endDate) {
-                document.getElementById('endDateError').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('startDateError').style.display = 'none';
-                document.getElementById('endDateError').style.display = 'none';
-            }
-
-            // Discount validation
-            const discount = parseFloat(document.getElementById('discount').value);
-            if (isNaN(discount) || discount < 0 || discount > 100) {
-                document.getElementById('discountError').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('discountError').style.display = 'none';
-            }
-
-            return isValid;
-        }
-
-        async function handleCouponSubmit(event) {
-            event.preventDefault();
-            if (!validateForm()) {
-                console.log('Form validation failed');
-                return;
-            }
-
-            const form = event.target;
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData);
-            // Convert fields to correct types
-            data.UsageLimit = parseInt(data.UsageLimit);
-            data.Discount = parseFloat(data.Discount);
-            data.MinCartValue = parseFloat(data.MinCartValue) || 0;
-            data.MaxCartValue = parseFloat(data.MaxCartValue) || 0;
-            data.CouponName = data.CouponName.trim();
-            data.CouponCode = data.CouponCode.trim().toUpperCase();
-
-            console.log('Submitting coupon data:', data);
-
-            try {
-                const response = await axios.post('/admin/addCoupon', data, {
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                console.log('Server response:', response.data);
-
-                if (response.data.success && response.data.coupon) {
-                    console.log('Coupon successfully created:', response.data.coupon);
-                    showToast('Coupon created successfully');
-                    addCouponToTable(response.data.coupon);
-                    form.reset();
-                } else {
-                    console.error('Invalid server response:', response.data);
-                    showToast('Failed to create coupon: Invalid server response', true);
-                }
-            } catch (error) {
-                console.error('Coupon creation error:', error.response?.data || error.message);
-                showToast(error.response?.data?.error || 'Failed to create coupon: Server error', true);
-            }
-        }
-
-        async function toggleCouponStatus(couponId, isListed) {
-            console.log(`Toggling coupon ${couponId}, currently ${isListed ? 'listed' : 'unlisted'}`);
-            const action = isListed ? 'unlistCoupon' : 'listCoupon';
-            try {
-                const response = await axios.post(`/admin/${action}/${couponId}`);
-                console.log(`${action} response:`, response.data);
-                if (response.data.success) {
-                    showToast(`Coupon ${isListed ? 'unlisted' : 'listed'} successfully`);
-                    updateCouponStatus(couponId, !isListed);
-                } else {
-                    showToast(response.data.error || `Failed to ${isListed ? 'unlist' : 'list'} coupon`, true);
-                }
-            } catch (error) {
-                console.error(`${action} error:`, error.response?.data || error.message);
-                showToast(error.response?.data?.error || `Failed to ${isListed ? 'unlist' : 'list'} coupon`, true);
-            }
-        }
-
-        function addCouponToTable(coupon) {
-            console.log('Attempting to add coupon to table:', coupon);
-            const table = document.getElementById('couponTable');
-            if (!table) {
-                console.error('Coupon table not found in DOM');
-                showToast('Failed to add coupon: Table not found', true);
-                return;
-            }
-
-            // Validate coupon data
-            if (!coupon || !coupon._id || !coupon.CouponName || !coupon.CouponCode) {
-                console.error('Invalid coupon data:', coupon);
-                showToast('Failed to add coupon: Invalid coupon data', true);
-                return;
-            }
-
-            const row = document.createElement('tr');
-            row.id = `coupon-${coupon._id}`;
-            row.innerHTML = `
-                <td>${coupon.CouponName || 'N/A'}</td>
-                <td>${coupon.CouponCode || 'N/A'}</td>
-                <td>${coupon.Discount ? coupon.Discount.toFixed(2) : 'N/A'}</td>
-                <td>${coupon.UsageLimit || 'N/A'}</td>
-                <td>${coupon.StartDate ? new Date(coupon.StartDate).toLocaleDateString() : 'N/A'}</td>
-                <td>${coupon.ExpiryDate ? new Date(coupon.ExpiryDate).toLocaleDateString() : 'N/A'}</td>
-                <td class="status">${coupon.IsListed ? 'Listed' : 'Unlisted'}</td>
+        <tbody id="couponTable">
+        <% coupons.forEach(coupon => { %>
+            <tr id="coupon-<%= coupon._id %>">
+                <td><%= coupon.CouponName %></td>
+                <td><%= coupon.CouponCode %></td>
+                <td><%= coupon.Discount %></td>
+                <td><%= coupon.UsageLimit %></td>
+                <td><%= new Date(coupon.StartDate).toLocaleDateString() %></td>
+                <td><%= new Date(coupon.ExpiryDate).toLocaleDateString() %></td>
+                <td class="status"><%= coupon.IsListed ? "Listed" : "Unlisted" %></td>
                 <td>
-                    <button class="btn btn-danger" onclick="toggleCouponStatus('${coupon._id}', ${coupon.IsListed ? 'true' : 'false'})">${coupon.IsListed ? 'Unlist' : 'List'}</button>
+                    <button 
+                        type="button" 
+                        class="btn btn-danger"
+                        onclick="toggleCouponStatus('<%= coupon._id %>', <%= coupon.IsListed %>)">
+                        <%= coupon.IsListed ? "Unlist" : "List" %>
+                    </button>
                 </td>
-            `;
+            </tr>
+        <% }) %>
+        </tbody>
+    </table>
 
-            // Insert the new row and ensure it’s visible
-            table.insertBefore(row, table.firstChild);
-            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            console.log('Coupon row added to table:', row.id);
+    <!-- pagination stays normal -->
+    <div class="pagination">
+        <% if (hasPrevPage) { %>
+            <button type="button" class="btn" onclick="window.location.href='/admin/coupons?page=<%= currentPage - 1 %>'">Previous</button>
+        <% } %>
+
+        <% for (let i=1; i<= totalPages; i++) { %>
+            <button type="button" class="btn" onclick="window.location.href='/admin/coupons?page=<%= i %>'"><%= i %></button>
+        <% } %>
+
+        <% if (hasNextPage) { %>
+            <button type="button" class="btn" onclick="window.location.href='/admin/coupons?page=<%= currentPage + 1 %>'">Next</button>
+        <% } %>
+    </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+
+/* -------------------------- TOAST -------------------------- */
+function showToast(message, isError = false) {
+    const toast = document.createElement("div");
+    toast.className = "toast" + (isError ? " error" : "");
+    toast.innerText = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.classList.add("show"), 50);
+    setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+/* ----------------------- FORM VALIDATION ----------------------- */
+function validateForm() {
+    let ok = true;
+
+    if (!couponName.value.trim()) ok = showErr("couponNameError");
+    if (!couponCode.value.trim() || couponCode.value.length < 4) ok = showErr("couponCodeError");
+    if (!usageLimit.value.trim() || usageLimit.value < 1) ok = showErr("usageLimitError");
+    if (!startDate.value) ok = showErr("startDateError");
+    if (!endDate.value) ok = showErr("endDateError");
+    if (discount.value < 0 || discount.value > 100) ok = showErr("discountError");
+
+    return ok;
+}
+
+function showErr(id) {
+    document.getElementById(id).style.display = "block";
+    return false;
+}
+
+/* ---------------------- CREATE COUPON ---------------------- */
+async function handleCouponSubmit(event) {
+    event.preventDefault();
+    if (!validateForm()) return;
+
+    const data = Object.fromEntries(new FormData(couponForm));
+    data.CouponCode = data.CouponCode.toUpperCase();
+
+    try {
+        const res = await axios.post("/admin/addCoupon", data);
+
+        if (res.data.success) {
+            showToast("Coupon created successfully");
+            addCouponToTable(res.data.coupon);
+            couponForm.reset();
+        }else if(res.data.error){
+            showToast(res.data.error);
         }
-
-        function updateCouponStatus(couponId, isListed) {
-            console.log(`Updating status for coupon ${couponId} to ${isListed ? 'Listed' : 'Unlisted'}`);
-            const row = document.getElementById(`coupon-${couponId}`);
-            if (!row) {
-                console.error(`Row for coupon ${couponId} not found`);
-                showToast('Failed to update coupon status: Coupon not found', true);
-                return;
-            }
-            const statusCell = row.querySelector('.status');
-            const actionButton = row.querySelector('button');
-            if (!statusCell || !actionButton) {
-                console.error(`Status cell or button not found for coupon ${couponId}`);
-                showToast('Failed to update coupon status: UI elements missing', true);
-                return;
-            }
-            statusCell.textContent = isListed ? 'Listed' : 'Unlisted';
-            actionButton.textContent = isListed ? 'Unlist' : 'List';
-            actionButton.onclick = () => toggleCouponStatus(couponId, isListed);
+        else {
+            showToast(res.data.error|| res.error || "Something went wrong", true);
         }
+    } catch (err) {
+    showToast(err.response.data.error, true);
+}
+}
 
-        function searchCoupons() {
-            const searchTerm = document.getElementById('searchCoupons').value.toLowerCase();
-            const rows = document.querySelectorAll('#couponTable tr');
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
-        }
+/* ------------------- Add New Row to Table ------------------- */
+function addCouponToTable(c) {
+    const row = `
+    <tr id="coupon-${c._id}">
+        <td>${c.CouponName}</td>
+        <td>${c.CouponCode}</td>
+        <td>${c.Discount}</td>
+        <td>${c.UsageLimit}</td>
+        <td>${new Date(c.StartDate).toLocaleDateString()}</td>
+        <td>${new Date(c.ExpiryDate).toLocaleDateString()}</td>
+        <td class="status">${c.IsListed ? "Listed" : "Unlisted"}</td>
+        <td>
+            <button type="button" class="btn btn-danger"
+                onclick="toggleCouponStatus('${c._id}', ${c.IsListed})">
+                ${c.IsListed ? "Unlist" : "List"}
+            </button>
+        </td>
+    </tr>`;
 
-        function clearSearch() {
-            document.getElementById('searchCoupons').value = '';
-            const rows = document.querySelectorAll('#couponTable tr');
-            rows.forEach(row => row.style.display = '');
-        }
+    couponTable.innerHTML = row + couponTable.innerHTML;
+}
 
-        // Initialize button event listeners
-        document.querySelectorAll('#couponTable button').forEach(button => {
-            const row = button.closest('tr');
-            const couponId = row.id.replace('coupon-', '');
-            const isListed = row.querySelector('.status').textContent === 'Listed';
-            button.onclick = () => toggleCouponStatus(couponId, isListed);
-        });
-    </script>
+/* ------------------- List / Unlist Coupon ------------------- */
+async function toggleCouponStatus(id, current) {
+    const action = current ? "unlistCoupon" : "listCoupon";
+
+    try {
+        const res = await axios.post(`/admin/${action}/${id}`);
+        
+        showToast(res.data.message);
+        updateCouponStatus(id, !current);
+    } catch (err) {
+        console.log("CAUGHT ERROR:", err.response?.data);
+        const msg =
+            err.response?.data?.error ||
+            err.response?.data?.message ||
+            response.error ||
+            "Error creating coupon";
+        showToast(msg, true);
+    }
+}
+
+function updateCouponStatus(id, status) {
+    const row = document.getElementById(`coupon-${id}`);
+    row.querySelector(".status").innerText = status ? "Listed" : "Unlisted";
+
+    const btn = row.querySelector("button");
+    btn.innerText = status ? "Unlist" : "List";
+    btn.setAttribute("onclick", `toggleCouponStatus('${id}', ${status})`);
+}
+
+/* --------------------------- SEARCH --------------------------- */
+function searchCoupons() {
+    const term = document.getElementById("searchCoupons").value.toLowerCase();
+
+    document.querySelectorAll("#couponTable tr").forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(term) ? "" : "none";
+    });
+}
+
+function clearSearch() {
+    document.getElementById("searchCoupons").value = "";
+    document.querySelectorAll("#couponTable tr").forEach(row => {
+        row.style.display = "";
+    });
+}
+
+/* ----------- Live validation for all input fields ----------- */
+document.getElementById("couponName").addEventListener("input", () => {
+    const v = couponName.value.trim();
+    document.getElementById("couponNameError").style.display = v ? "none" : "block";
+});
+
+document.getElementById("couponCode").addEventListener("input", () => {
+    const valid = /^[A-Za-z0-9]{4,}$/.test(couponCode.value.trim());
+    document.getElementById("couponCodeError").style.display = valid ? "none" : "block";
+});
+
+document.getElementById("usageLimit").addEventListener("input", () => {
+    const v = parseInt(usageLimit.value);
+    document.getElementById("usageLimitError").style.display = v >= 1 ? "none" : "block";
+});
+
+document.getElementById("startDate").addEventListener("change", () => {
+    document.getElementById("startDateError").style.display = startDate.value ? "none" : "block";
+});
+
+document.getElementById("endDate").addEventListener("change", () => {
+    const start = new Date(startDate.value);
+    const end = new Date(endDate.value);
+    const error = (!endDate.value || end < start);
+    document.getElementById("endDateError").style.display = error ? "block" : "none";
+});
+
+document.getElementById("discount").addEventListener("input", () => {
+    const v = parseFloat(discount.value);
+    const valid = !isNaN(v) && v >= 0 && v <= 100;
+    document.getElementById("discountError").style.display = valid ? "none" : "block";
+});
+
+</script>
+
+
 </body>
 </html>

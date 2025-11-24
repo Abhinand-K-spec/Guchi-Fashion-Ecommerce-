@@ -221,7 +221,7 @@ const updateEmailRequestOtp = async (req, res) => {
       );
 
       const updatedUser = await User.findById(userId);
-      req.session.user = updatedUser;
+      req.session.user = updatedUser._id;
 
   
       res.status(200).json({ message: 'Username updated successfully' });

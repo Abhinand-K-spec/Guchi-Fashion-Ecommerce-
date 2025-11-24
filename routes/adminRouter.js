@@ -50,23 +50,24 @@ router.post('/order-details/:orderId/return-item/:itemId', adminAuth, orderContr
 
 //Coupon management -------------------------------------------------------------->
 router.get('/coupon',adminAuth,couponController.coupon);
-router.post('/addCoupon',userAuth,couponController.addCoupon);
+router.post('/addCoupon',adminAuth,couponController.addCoupon);
 router.get('/coupons', couponController.coupon);
-router.post('/addCoupon', couponController.addCoupon);
 router.post('/unlistCoupon/:couponId', adminAuth, couponController.unlist);
 router.post('/listCoupon/:couponId', adminAuth, couponController.list);
 // router.get('/editCoupon/:id', couponController.editCoupon);
 // router.post('/updateCoupon/:id', couponController.updateCoupon);
 
 
-router.post('/addCategoryOffer/:id', offerController.addCategoryOffer);
-router.post('/removeCategoryOffer/:id', offerController.removeCategoryOffer);
-router.post('/addProductOffer/:id', offerController.addProductOffer);
-router.post('/removeProductOffer/:id', offerController.removeProductOffer);
+router.post('/addCategoryOffer/:id', adminAuth,offerController.addCategoryOffer);
+router.post('/removeCategoryOffer/:id',adminAuth, offerController.removeCategoryOffer);
+router.post('/addProductOffer/:id',adminAuth, offerController.addProductOffer);
+router.post('/removeProductOffer/:id',adminAuth, offerController.removeProductOffer);
 
 
-router.get('/sales', salesController.getSalesReport);
-router.get('/sales/download', salesController.downloadSalesReport);
+router.get('/sales',adminAuth, salesController.getSalesReport);
+router.get('/sales/download',adminAuth, salesController.downloadSalesReport);
+router.get("/sales/download-excel",adminAuth, salesController.downloadSalesReportExcel);
+
 
 
 

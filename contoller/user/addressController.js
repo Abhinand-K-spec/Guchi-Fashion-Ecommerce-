@@ -202,6 +202,47 @@ const editAddress = async (req, res) => {
     }
   };
 
+  const setDefaultAddress = async (req, res) => {
+    try {
+      const userId = req.session.user;
+      console.log(userId);
+      
+      const { addressId } = req.body;
+  
+      if (!userId || !addressId) {
+        return res.json({ success: false, message: "Invalid request" });
+      }
+  
+      // Verify the address belongs to this user
+      const address = await Address.findOne({ _id: addressId, userId });
+      if (!address) {
+        return res.json({ success: false, message: "Address not found" });
+      }
+  
+      // Remove default from all user's addresses
+      await Address.updateMany(
+        { userId },
+        { $set: { isDefault: false } }
+      );
+  
+      // Set the selected one as default
+      address.isDefault = true;
+      await address.save();
+  
+      return res.json({
+        success: true,
+        message: "Default address updated"
+      });
+  
+    } catch (err) {
+      console.error("Set default address error:", err);
+      return res.json({
+        success: false,
+        message: "Server error"
+      });
+    }
+  };
+
 
 module.exports = {
     getAddAddress,
@@ -210,5 +251,6 @@ module.exports = {
     getEditAddress,
     getEditAddressCheckout,
     editAddress,
-    deleteAddress
+    deleteAddress,
+    setDefaultAddress
 };

@@ -49,13 +49,10 @@ const addCoupon = async (req, res) => {
         const existingCoupon = await Coupon.findOne({ CouponCode });
         if (existingCoupon) {
             return res.status(400).json({
-                success: false,
                 error: "Coupon code already exists"
             });
             
         }
-
-
 
         const start = new Date(StartDate);
         const end = new Date(EndDate);

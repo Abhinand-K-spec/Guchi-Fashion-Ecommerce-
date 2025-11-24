@@ -112,17 +112,16 @@ const cancelOrder = async (req, res) => {
           await product.save();
           item.status = 'Cancelled';
           item.cancelReason = reason; 
-          refundAmount += item.price * item.quantity;
         }
       }
     }
 
-    if (order.discountAmount > 0) {
+
       const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
-      const totalDiscountedAmount = order.Items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-      const overallDiscount = order.discountAmount * (totalDiscountedAmount / totalOrderAmountBeforeDiscount);
-      refundAmount -= overallDiscount;
-    }
+      const overallDiscount = order.Items.reduce((sum,item)=> sum+=item.itemDiscount,0);
+      const tax = ((totalOrderAmountBeforeDiscount-overallDiscount)*0.5)/100 ;
+      refundAmount = totalOrderAmountBeforeDiscount - overallDiscount + tax + 40 ;
+    
 
     const allCancelled = order.Items.every(i => i.status === 'Cancelled');
     if (allCancelled) {
@@ -193,7 +192,7 @@ const cancelItem = async (req, res) => {
     const delivery = 40;
     const tax = (((item.price * item.quantity) * 0.05)) / 100;
 
-    let refundAmount = item.price * item.quantity + tax + delivery ;
+    let refundAmount = item.price * item.quantity + tax + delivery - item.itemDiscount ;
 
     if (order.PaymentMethod === 'Wallet' || order.PaymentMethod === 'Online') {
       let wallet = await Wallet.findOne({ UserId: order.UserId });
@@ -582,7 +581,7 @@ const placeOrder = async (req, res) => {
 
 
     if (paymentMethod === 'Wallet') {
-      let wallet = await Wallet.findOne({ userId });
+      let wallet = await Wallet.findOne({ UserId:userId });
       if (!wallet) {
         wallet = new Wallet({ userId, Balance: 0, Transaction: [] });
         await wallet.save();
@@ -594,8 +593,8 @@ const placeOrder = async (req, res) => {
       }
       wallet.Balance -= finalTotal;
       wallet.Transaction.push({
-        amount: -finalTotal,
-        type: 'debit',
+        TransactionAmount: -finalTotal,
+        TransactionType:'debit',
         description: `Order payment for order ID: ${order.OrderId}`,
         date: new Date()
       });
