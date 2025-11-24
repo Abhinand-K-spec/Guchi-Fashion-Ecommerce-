@@ -66,13 +66,21 @@
         <!-- Address Section -->
         <div class="col-md-6">
           <h5>Delivery Address</h5>
+          <% let hasDefault = addresses.some(a => a.isDefault); %>
           <% if (addresses.length > 0) { %>
             <% addresses.forEach((address, i) => { %>
               <div class="form-check mb-3 border rounded p-2">
                 <div class="d-flex justify-content-between align-items-start">
                   <div>
-                    <input class="form-check-input me-2" type="radio" name="selectedAddressId" value="<%= address._id %>" <%= address.isDefault ? 'checked' : '' %> required>
-                    <label class="form-check-label">
+                    <input 
+                    class="form-check-input me-2" 
+                    type="radio" 
+                    name="selectedAddressId" 
+                    value="<%= address._id %>" 
+                    <%= address.isDefault || (!hasDefault && i === 0) ? 'checked' : '' %> 
+                    required
+                  >
+                                      <label class="form-check-label">
                       <strong><%= address.name %></strong><br>
                       <%= address.town %>, <%= address.city %>, <%= address.state %> - <%= address.postCode %><br>
                       Phone: <%= address.phone %><br>
