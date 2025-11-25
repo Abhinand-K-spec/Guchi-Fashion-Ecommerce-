@@ -25,16 +25,16 @@ const downloadSalesReportExcel = async (req, res) => {
       };
     } else {
       let startDateFilter;
-      switch (range) {
-        case "1day":
+      switch (period) {
+        case "daily":
           startDateFilter = new Date(now);
           startDateFilter.setDate(now.getDate() - 1);
           break;
-        case "1week":
+        case "weekly":
           startDateFilter = new Date(now);
           startDateFilter.setDate(now.getDate() - 7);
           break;
-        case "1month":
+        case "yearly":
           startDateFilter = new Date(now);
           startDateFilter.setMonth(now.getMonth() - 1);
           break;
@@ -189,16 +189,16 @@ const getSalesReport = async (req, res) => {
       };
     } else {
       let startDateFilter;
-      switch (range) {
-        case '1day':
+      switch (period) {
+        case 'daily':
           startDateFilter = new Date(now);
           startDateFilter.setDate(now.getDate() - 1);
           break;
-        case '1week':
+        case 'weekly':
           startDateFilter = new Date(now);
           startDateFilter.setDate(now.getDate() - 7);
           break;
-        case '1month':
+        case 'yearly':
           startDateFilter = new Date(now);
           startDateFilter.setMonth(now.getMonth() - 1);
           break;

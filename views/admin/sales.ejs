@@ -129,28 +129,22 @@
       <select name="period" id="period" onchange="toggleDateRange(this)">
         <option value="daily" <%= period === 'daily' ? 'selected' : '' %>>Daily</option>
         <option value="weekly" <%= period === 'weekly' ? 'selected' : '' %>>Weekly</option>
-        <option value="monthly" <%= period === 'monthly' ? 'selected' : '' %>>Monthly</option>
+        <option value="yearly" <%= period === 'yearly' ? 'selected' : '' %>>Yearly</option>
         <option value="custom" <%= period === 'custom' ? 'selected' : '' %>>Custom Date</option>
       </select>
       <div id="dateRange" style="display: <%= period === 'custom' ? 'block' : 'none' %>;">
         <input type="date" name="startDate" value="<%= startDate %>" />
         <input type="date" name="endDate" value="<%= endDate %>" />
       </div>
-      <select name="range" id="range" style="display: <%= period === 'custom' ? 'none' : 'block' %>;">
-        <option value="1day" <%= range === '1day' ? 'selected' : '' %>>1 Day</option>
-        <option value="1week" <%= range === '1week' ? 'selected' : '' %>>1 Week</option>
-        <option value="1month" <%= range === '1month' ? 'selected' : '' %>>1 Month</option>
-      </select>
+
       <button type="submit" class="btn-generate">Generate Report</button>
       <a href="/admin/sales/download?period=<%= period %>&range=<%= range %>&startDate=<%= startDate %>&endDate=<%= endDate %>" class="btn-download">Download PDF</a>
-      <!-- <button type="button" class="btn-visualize" onclick="generateChart()">Visualize Sales</button> -->
       <a 
       href="/admin/sales/download-excel?period=<%= period %>&range=<%= range %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
       class="btn-download"
     >
       Download Excel
     </a>
-    
     </form>
 
     <% if (report && report.length > 0) { %>
@@ -202,13 +196,11 @@
   <script>
     function toggleDateRange(select) {
       const dateRange = document.getElementById('dateRange');
-      const rangeSelect = document.getElementById('range');
       if (select.value === 'custom') {
         dateRange.style.display = 'block';
         rangeSelect.style.display = 'none';
       } else {
         dateRange.style.display = 'none';
-        rangeSelect.style.display = 'block';
       }
     }
 

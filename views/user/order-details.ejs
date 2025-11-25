@@ -151,7 +151,7 @@
           <% } %>
         </div>
         <div class="col-md-3 text-end">
-          <% if (item.status === 'Pending' && item.status !== 'Cancelled' && item.returnStatus === 'NotRequested') { %>
+          <% if (item.status === 'Pending' && item.status !== 'Cancelled' && item.returnStatus === 'NotRequested' && order.PaymentStatus==='Completed') { %>
             <form class="cancel-item-form mb-2" data-item-id="<%= item._id %>" data-action="/order/<%= order._id %>/cancel-item/<%= item._id %>">
               <input type="text" name="reason" class="form-control mb-2 cancel-reason" placeholder="Reason for cancellation (required)" required />
               <div class="invalid-feedback">Please provide a cancellation reason.</div>
@@ -192,6 +192,7 @@
               x => x.status === 'Pending' &&
                   x.status !== 'Cancelled' &&
                   x.returnStatus === 'NotRequested'
+                  && order.PaymentStatus==='Completed'
             )
           ) { %>
             <button class="btn btn-danger btn-custom cancel-full-order-btn" data-bs-toggle="modal" data-bs-target="#cancelFullOrderModal">
