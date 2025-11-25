@@ -194,7 +194,7 @@ const cancelItem = async (req, res) => {
 
     let refundAmount = item.originalPrice * item.quantity + delivery + tax - item.itemDiscount;
 
-    if (order.PaymentMethod === 'Wallet' || order.PaymentMethod === 'Online') {
+    if (order.PaymentMethod === 'Wallet' || order.PaymentMethod === 'Online' && order.PaymentStatus!== 'Pending') {
       let wallet = await Wallet.findOne({ UserId: order.UserId });
       if (!wallet) {
         wallet = new Wallet({ UserId: order.UserId, Balance: 0, Transaction: [] });

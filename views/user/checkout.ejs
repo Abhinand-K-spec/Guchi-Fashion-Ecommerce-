@@ -267,7 +267,7 @@
       const discountEl = document.getElementById('discount');
       const taxEl = document.getElementById('tax');
       const deliveryChargeEl = document.getElementById('deliveryCharge');
-      const finalTotalEl = <%=finalTotal%>;
+      const finalTotalEl = document.getElementById('finalTotal');
       const checkoutForm = document.getElementById('checkoutForm');
       const placeOrderButton = document.getElementById('placeOrderButton');
       const paymentCOD = document.getElementById('paymentCOD');
@@ -458,7 +458,7 @@ if (!selectedAddress) {
               },
               prefill: {
                 name: '<%= addresses[0]?.name || "" %>',
-                contact: '<%= addresses[0]?.phone || "" %>',
+                contact: '',
                 email: '<%= user?.email || "guest@gmail.com"%>'
               },
               notes: {

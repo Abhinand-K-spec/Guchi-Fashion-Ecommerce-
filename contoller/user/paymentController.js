@@ -190,6 +190,7 @@ const retryPayment =  async (req, res) => {
     if (!existingOrder) {
       return res.status(404).json({ success: false, message: 'Order not found.' });
     }
+    
 
     // Validate for retry
     if (existingOrder.PaymentMethod !== 'Online') {
@@ -207,12 +208,11 @@ const retryPayment =  async (req, res) => {
     }
 
     // Calculate payable amount again
-const totalOriginalPrice = existingOrder.Items.reduce((sum,item)=> sum+=item.originalPrice,0);
+const totalOriginalPrice = existingOrder.Items.reduce((sum,item)=> sum+=(item.originalPrice * item.quantity),0);
 const delivary = 40;
 const discountAmount = existingOrder.discountAmount;
 const finalAmount = totalOriginalPrice - discountAmount + delivary
       
-
 
     if (finalAmount < 1) {
       return res.status(400).json({

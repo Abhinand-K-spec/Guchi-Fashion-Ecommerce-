@@ -120,22 +120,7 @@
       box-shadow: 0 6px 12px rgba(15,76,117,0.5);
       outline: none;
     }
-    .wrong-email {
-      margin-top: 20px;
-      font-size: 0.95rem;
-      color: #374151;
-    }
-    .wrong-email a {
-      color: #4bafaf;
-      text-decoration: none;
-      font-weight: 600;
-      cursor: pointer;
-      margin-left: 6px;
-    }
-    .wrong-email a:hover,
-    .wrong-email a:focus {
-      text-decoration: underline;
-    }
+
     @media (max-width: 767px) {
       header, footer {
         flex-direction: column;
@@ -189,8 +174,7 @@
         </p>
         <button type="submit" class="submit-btn" aria-label="Submit OTP">Submit</button>
       </form>
-      <p class="wrong-email">
-        Wrong Email?
+      <p class="resend" id="resendBox" style="display:none;">
         <a href="/resend-otp" role="button" tabindex="0">Resend</a>
       </p>
     </section>
@@ -198,20 +182,25 @@
 
   <script>
     let timeLeft = 40;
-    const countdownSpan = document.getElementById('countdown');
-    const timeoutText = document.querySelector('.timeout-text');
+const countdownSpan = document.getElementById('countdown');
+const timeoutText = document.querySelector('.timeout-text');
+const resendBox = document.getElementById('resendBox');
 
-    function startCountdown() {
-      const countdownInterval = setInterval(() => {
-        timeLeft--;
-        if (timeLeft > 0) {
-          countdownSpan.textContent = timeLeft;
-        } else {
-          clearInterval(countdownInterval);
-          timeoutText.textContent = "You can now request a new code.";
-        }
-      }, 1000);
+function startCountdown() {
+  const countdownInterval = setInterval(() => {
+    timeLeft--;
+    if (timeLeft > 0) {
+      countdownSpan.textContent = timeLeft;
+    } else {
+      clearInterval(countdownInterval);
+      timeoutText.textContent = "You can now request a new code.";
+      resendBox.style.display = 'block';   
     }
+  }, 1000);
+}
+
+window.onload = startCountdown;
+
 
     window.onload = startCountdown;
 

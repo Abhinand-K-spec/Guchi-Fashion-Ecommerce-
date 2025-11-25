@@ -463,6 +463,7 @@
             // res.data.order.id  -> Razorpay order id
             // res.data.orderId   -> your DB order id
             const razorOrder = res.data.order;
+            const razorAmount = res.data
             const dbOrderId = res.data.orderId || orderId; // fallback
 
             if (!razorOrder || !razorOrder.id) {
@@ -516,7 +517,7 @@
               },
               prefill: {
                 name: '<%= order.ShippingAddress?.name || "" %>',
-                contact: '<%= order.ShippingAddress?.phone || "" %>',
+                contact: '',
                 email: '<%= user?.email || "" %>'
               },
               notes: {
