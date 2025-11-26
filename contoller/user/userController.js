@@ -84,9 +84,6 @@ const googleCallbackHandler = async (req, res) => {
   }
 };
 
-const getForgotPasswordPage = (req, res) => {
-  res.render('forgot-password', { msg: '' });
-};
 
 const handleForgotPassword = async (req, res) => {
   const { email,password } = req.body;
@@ -573,6 +570,103 @@ const getOrders = async (req, res) => {
 };
 
 
+
+const getForgotPasswordPage = (req, res) => {
+  res.render('forgot-password', { msg: '', error: '' });
+};
+
+const sendForgotOtp = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.render('forgot-password', { error: "No account found with this email" });
+    }
+
+    const otp = generateOtp();
+    const sent = await sendVerification(email, otp);
+    console.log('otp sent:',otp);
+    
+
+    if (!sent) {
+      return res.render('forgot-password', { error: "Failed to send OTP. Try again." });
+    }
+
+    req.session.forgotEmail = email;
+    req.session.forgotOtp = otp;
+    req.session.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 min expiry
+
+    res.redirect('/forgot-verify-otp');
+  } catch (err) {
+    console.error(err);
+    res.render('forgot-password', { error: "Server error. Try again later." });
+  }
+};
+
+const getForgotOtpPage = (req, res) => {
+  if (!req.session.forgotEmail) {
+    return res.redirect('/forgot-password');
+  }
+  res.render('forgot-verify-otp', { msg: 'OTP sent to your email' });
+};
+
+const verifyForgotOtpAndReset = async (req, res) => {
+  try {
+    const { otp, password } = req.body;
+
+    if (!req.session.forgotOtp || !req.session.forgotEmail) {
+      return res.json({ error: "Session expired. Please try again." });
+    }
+
+    if (Date.now() > req.session.otpExpiry) {
+      clearForgotSession(req);
+      return res.json({ error: "OTP expired. Please request a new one." });
+    }
+
+    if (otp !== req.session.forgotOtp) {
+      return res.json({ error: "Invalid OTP" });
+    }
+
+    const hashedPassword = await securePassword(password);
+    await User.findOneAndUpdate(
+      { email: req.session.forgotEmail },
+      { password: hashedPassword }
+    );
+
+    clearForgotSession(req);
+    return res.json({ success: true, message: "Password reset successfully!" });
+
+  } catch (error) {
+    console.error(error);
+    return res.json({ error: "Something went wrong" });
+  }
+};
+
+const resendForgotOtp = async (req, res) => {
+  if (!req.session.forgotEmail) {
+    return res.redirect('/forgot-password');
+  }
+
+  const otp = generateOtp();
+  const sent = await sendVerification(req.session.forgotEmail, otp);
+  console.log('new otp:',otp);
+  
+
+  if (sent) {
+    req.session.forgotOtp = otp;
+    req.session.otpExpiry = Date.now() + 5 * 60 * 1000;
+    res.render('forgot-verify-otp', { msg: "New OTP sent successfully!" });
+  } else {
+    res.render('forgot-verify-otp', { msg: "Failed to resend OTP" });
+  }
+};
+
+function clearForgotSession(req) {
+  delete req.session.forgotEmail;
+  delete req.session.forgotOtp;
+  delete req.session.otpExpiry;
+}
+
 module.exports = {
   loadHomePage,
   pageNotFound,
@@ -592,5 +686,9 @@ module.exports = {
   changePassword,
   getOrders,
   getProductOffer,
-  verifyForgotOtp
+  verifyForgotOtp,
+  resendForgotOtp,
+  verifyForgotOtpAndReset,
+  getForgotOtpPage,
+  sendForgotOtp
 };

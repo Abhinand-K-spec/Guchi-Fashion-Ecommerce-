@@ -28,6 +28,8 @@ router.get('/login', userController.loadLogin);
 router.post('/login', userController.login);
 
 router.get('/forgot-password', userController.getForgotPasswordPage);
+router.post('/forgot-password', userController.sendForgotOtp);
+router.get('/forgot-verify-otp', userController.getForgotOtpPage); 
 router.post('/forgot-password', userController.handleForgotPassword);
 router.get('/change-password', userAuth, userController.getChangePassword);
 router.post('/change-password', userAuth, userController.changePassword);
@@ -58,8 +60,8 @@ router.post('/set-default-address', userAuth, addressController.setDefaultAddres
 
 router.get('/resend-otp', userController.resendOtp);
 router.post('/verify-otp', userController.verifyOtp);
-router.post('/forgot-verify-otp',userController.verifyForgotOtp)
-
+router.post('/forgot-verify-otp', userController.verifyForgotOtpAndReset);
+router.get('/resend-forgot-otp', userController.resendForgotOtp);
 
 router.get('/auth/google', passport.authenticate('google', {
   scope: ['profile', 'email'],
