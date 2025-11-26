@@ -229,7 +229,7 @@
             <input type="file" name="profileImage" class="form-control" accept="image/*" required>
           </div>
           <div class="modal-footer">
-            <button type="submit" class="btn btn-primary">Upload</button>
+            <button id="uploadButton" type="submit" class="btn btn-primary">Upload</button>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           </div>
         </form>
@@ -267,6 +267,7 @@
     const cancelBtn = document.getElementById('cancelUsernameEdit');
     const form = document.getElementById('editUsernameForm');
     const display = document.getElementById('usernameDisplay');
+    const uploadbtn = document.getElementById('uploadButton');
   
     // Modal references
     const deleteModalEl = document.getElementById('deleteAddressModal');
@@ -279,8 +280,19 @@
       document.getElementById("toastMessage").innerText = msg;
       new bootstrap.Toast(toastEl).show();
     }
+
+    uploadbtn.addEventListener('click', (e) => {
+  e.preventDefault();      
+  uploadbtn.classList.add('d-none');
+
+
+  setTimeout(() => {
+    uploadbtn.closest('form').submit();
+  }, 50);
+});
+
   
-    // Username edit open / cancel
+
     editBtn?.addEventListener('click', () => {
       form.style.display = 'block';
       display.style.display = 'none';
