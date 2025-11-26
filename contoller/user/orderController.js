@@ -462,7 +462,7 @@ const placeOrder = async (req, res) => {
     for (const item of cart.Items) {
       const product = item.product;
       const variant = product?.Variants?.[0];
-      if (!product || !variant) {
+      if (!product || !variant || !product.IsListed) {
         console.error(`Invalid order item: productId=${item.product?._id || 'missing'}`);
         continue;
       }
@@ -494,7 +494,7 @@ const placeOrder = async (req, res) => {
 
     if (!orderItems.length) {
       console.log('No valid order items after validation');
-      return res.status(400).json({ success: false, message: 'No valid items in cart.' });
+      return res.status(400).json({ success: false, message: 'No valid items in cart. Please try again' });
     }
 
 

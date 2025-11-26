@@ -51,7 +51,7 @@
       <h5>Items</h5>
       <% order.Items.forEach(item => { %>
         <p>
-          <%= item.product.name %> (Qty: <%= item.quantity %>) - ₹<%= item.price.toFixed(2) %>
+          <%= item.product.name %> (Qty: <%= item.quantity %>) - ₹<%= (item.originalPrice - item.itemDiscount).toFixed(2) %>
         </p>
       <% }) %>
       <a href="/orders" class="btn btn-primary mt-3">View All Orders</a>

@@ -207,7 +207,7 @@ const addToCart = async (req, res) => {
     const index = cart.Items.findIndex(item => item.product.toString() === productId);
 
     if (index >= 0) {
-      if (cart.Items[index].quantity < product.Variants[0].Stock) {
+      if (cart.Items[index].quantity < product.Variants[0].Stock && cart.Items[index].quantity < 5) {
         cart.Items[index].quantity += 1;
       } else {
         return res.status(400).json({ error: 'Not enough stock available' });
