@@ -499,7 +499,7 @@ const placeOrder = async (req, res) => {
 
 
 
-    const tax = Math.round(subtotal * 0.005);
+    const tax = Math.round(subtotal * 0.0005);
     const deliveryCharge = 40;
     let couponDiscount = 0;
     let couponData = null;
@@ -532,7 +532,7 @@ const placeOrder = async (req, res) => {
       }
     }
 
-    const discountAmount = totalItemDiscount + couponDiscount;
+    const discountAmount =  couponDiscount;
 
     if (isNaN(discountAmount)) {
       console.error('Invalid discountAmount calculated:', discountAmount);
@@ -541,8 +541,8 @@ const placeOrder = async (req, res) => {
 
 
 
-
-    const finalTotal = subtotal - discountAmount + tax + deliveryCharge;
+      console.log("datas are:", subtotal , discountAmount , tax , deliveryCharge)
+    const finalTotal = (subtotal -discountAmount) + tax + deliveryCharge;
 
     if (finalTotal < 1) {
 

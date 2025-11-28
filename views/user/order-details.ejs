@@ -125,8 +125,8 @@
             <p class="mb-1 text-success"><strong>Item Discount:</strong> -₹<%= itemDiscount.toFixed(2) %></p>
             <p class="mb-1 text-muted"><del>Sales Price: ₹<%= originalPrice %></del></p>
             <% } %>
-            <p>Taxes: ₹<%=((((originalPrice-itemDiscount)*item.quantity)*0.05)/100).toFixed(2)%></p>
-            <p class="mb-1"><strong>Price:</strong> ₹<%= ((((originalPrice-itemDiscount)*item.quantity)+((((originalPrice-itemDiscount)*item.quantity)*0.05)/100))+40).toFixed(2) %></p>
+            <p>Taxes: ₹<%=((((originalPrice*item.quantity)-itemDiscount)*0.05)/100).toFixed(2)%></p>
+            <p class="mb-1"><strong>Price:</strong> ₹<%= ((((originalPrice*item.quantity)-item.itemDiscount)+((((originalPrice*item.quantity)-itemDiscount)*0.05)/100))+40).toFixed(2) %></p>
             
           <p><strong>Status:</strong> 
             <span class="badge 
