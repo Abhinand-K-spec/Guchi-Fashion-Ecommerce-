@@ -42,6 +42,9 @@ const OrdersSchema = new Schema({
         ref: 'Product',
         required: true
       },
+      size:{
+        type:String
+      },
       quantity: {
         type: Number,
         required: true

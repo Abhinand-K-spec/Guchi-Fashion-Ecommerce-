@@ -46,7 +46,7 @@ router.get('/order-details/:orderId', adminAuth, orderController.getOrderDetails
 router.post('/approve-return/:orderId', adminAuth, orderController.approveReturn);
 router.post('/reject-return/:orderId', adminAuth, orderController.rejectReturn);
 router.post('/order-details/:orderId/cancel-item/:itemId', adminAuth, orderController.cancelSingleItem);
-router.post('/order-details/:orderId/return-item/:itemId', adminAuth, orderController.returnSingleItem);
+// router.post('/order-details/:orderId/return-item/:itemId', adminAuth, orderController.returnSingleItem);
 
 //Coupon management -------------------------------------------------------------->
 router.get('/coupon',adminAuth,couponController.coupon);

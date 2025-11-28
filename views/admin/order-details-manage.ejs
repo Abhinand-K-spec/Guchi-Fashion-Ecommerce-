@@ -4,330 +4,178 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Order Details - Admin</title>
+
   <!-- Bootstrap & Font Awesome -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <!-- jQuery -->
+
+  <!-- jQuery & Axios -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <!-- Axios -->
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 
 <style>
-  body {
-    background-color: #1e1e1e;
-    color: #ffffff;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  }
-  .container {
-    background-color: #2a2a2a;
-    border-radius: 10px;
-    padding: 30px;
-    margin-top: 30px;
-  }
-  .card {
-    background-color: #333;
-    border: none;
-    color: #fff;
-    border-radius: 8px;
-  }
-  .badge {
-    font-size: 0.9rem;
-  }
-  .img-fluid {
-    max-height: 100px;
-    object-fit: cover;
-    border-radius: 8px;
-  }
-  .btn-sm {
-    border-radius: 20px;
-  }
-  .text-muted {
-    color: #bbb !important;
-  }
-  hr {
-    border-color: #444;
-  }
-  .alert-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
-    max-width: 400px;
-  }
-  .form-control-sm {
-    background-color: #3a3a3a;
-    color: white;
-    border: 1px solid #555;
-  }
-  .admin-content-scroll {
-    width: 100%;
-  height: 100vh;
-  overflow-y: auto;
-
-}
+  body { background-color: #1e1e1e; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+  .container { background-color: #2a2a2a; border-radius: 10px; padding: 30px; margin-top: 30px; }
+  .card { background-color: #333; color: #fff; border-radius: 8px; }
+  .badge { font-size: 0.9rem; }
+  .img-fluid { max-height: 100px; object-fit: cover; border-radius: 8px; }
+  .text-muted { color: #bbb !important; }
+  hr { border-color: #444; }
+  .form-control-sm { background-color: #3a3a3a; color: white; border: 1px solid #555; }
+  .alert-container { position: fixed; top: 20px; right: 20px; z-index: 1000; max-width: 400px; }
+  .admin-content-scroll { height: 100vh; overflow-y: auto; }
 </style>
 
 <body>
   <div class="alert-container"></div>
 
-  <div class="admin-content-scroll">
-    <div class="container">
-  
-    <h3 class="mb-4 text-white">Order Details</h3>
 
-    <% if (order) { %>
+    <div class="container admin-content-scroll">
+
+      <h3 class="mb-4 text-white">Order Details</h3>
+
+      <% if (order) { %>
       <div class="card p-4 mb-4">
+
+        <!-- ORDER SUMMARY -->
         <div class="row">
           <div class="col-md-6">
             <p><strong>Order ID:</strong> <%= order.OrderId %></p>
             <p><strong>User Name:</strong> <%= order.UserId?.name || 'N/A' %></p>
             <p><strong>Email:</strong> <%= order.UserId?.email || 'N/A' %></p>
             <p><strong>Order Date:</strong> <%= new Date(order.OrderDate).toLocaleString() %></p>
-           
+
             <% if (order.CancelReason) { %>
-              <p class="text-muted"><strong>Cancel Reason:</strong> <%= order.CancelReason %></p>
+            <p class="text-muted"><strong>Cancel Reason:</strong> <%= order.CancelReason %></p>
             <% } %>
           </div>
+
           <div class="col-md-6">
-            <p><strong>Address:</strong> 
-              <%= order.Address?.name || 'N/A' %>, 
-              <%= order.Address?.line1 || '' %>,
-              <%= order.Address?.city || '' %>,
-              <%= order.Address?.state || '' %> - 
-              <%= order.Address?.postCode || 'N/A' %>
+            <p><strong>Address:</strong>
+              <%= order.Address?.name %>, 
+              <%= order.Address?.line1 %>,
+              <%= order.Address?.city %>,
+              <%= order.Address?.state %> -
+              <%= order.Address?.postCode %>
             </p>
             <p><strong>Phone:</strong> <%= order.Address?.phone || 'N/A' %></p>
+
             <% if (order.Address?.alternativePhone) { %>
-              <p><strong>Alternative Phone:</strong> <%= order.Address?.alternativePhone %></p>
+            <p><strong>Alternative Phone:</strong> <%= order.Address.alternativePhone %></p>
             <% } %>
           </div>
         </div>
 
         <hr>
 
-        <h6 class="text-success"><strong>Payment method: <%=order.PaymentMethod%></strong></h6>
-        <h5 class="mb-3">Ordered Items:</h5>
-        <% order.Items.forEach(item => { %>
-          <div class="row border rounded p-2 mb-3" style="background-color:#3a3a3a;" id="item-<%= item._id %>">
-            <div class="col-md-2 d-flex align-items-center justify-content-center">
-              <img src="<%= item.product?.Image?.[0] || 'default.jpg' %>" class="img-fluid" alt="Product Image">
-            </div>
-            <div class="col-md-7">
-              <h6><strong><%= item.product?.productName || 'Unknown Product' %></strong></h6>
-              <p>Quantity: <%= item.quantity %></p>
-              <p>Discount: ₹<%= (item.itemDiscount ).toFixed(2)%></p>
-              <p>taxes: <%=((((item.originalPrice-item.itemDiscount)*item.quantity)*0.05)/100).toFixed(2)%></p>
-              <p>Delivary: 40</p>
-              <p class="text-success"><strong>Final Price: ₹<%= ((((item.originalPrice-item.itemDiscount)*item.quantity)+((((item.originalPrice-item.itemDiscount)*item.quantity)*0.05)/100))+40).toFixed(2) || 0 %></strong></p>
-              <p>Status: 
-                <% if(order.PaymentMethod==='Online' && order.PaymentStatus!=='Completed' && order.Status==='Pending') { %>
-                        <h3 class="text-danger">Payment failed</h3>
-                <% } else { %>
-                <span class="badge 
-                  <% if(item.status === 'Delivered') { %> bg-success
-                  <% } else if(item.status === 'Cancelled') { %> bg-danger
-                  <% } else if(item.status === 'Shipped') { %> bg-primary
-                  <% } else if(item.status === 'OutForDelivery') { %> bg-info text-dark
-                  <% } else if(item.status === 'Returned') { %> bg-warning text-dark
-                  <% } else { %> bg-secondary <% } %>"
-                  id="item-status-<%= item._id %>">
-                  <%= item.status %>
-                </span> 
-                 
-              </p>
+        <h6 class="text-success"><strong>Payment method:</strong> <%= order.PaymentMethod %></h6>
 
-              <% if (item.status !== 'Cancelled'&& item.status !== 'Delivered' && item.status !== 'Returned' && item.returnStatus !== 'Return Requested' && item.returnStatus !== 'Request Approved') { %>
-                <form class="update-item-status-form mt-2" data-item-id="<%= item._id %>" action="/admin/order-details/<%= order._id %>/update-item-status/<%= item._id %>" method="POST">
-                  <select name="status" class="form-control form-control-sm">
-                    <option value="Pending" <%= item.status === 'Pending' ? 'selected' : '' %>>Pending</option>
-                    <option value="Shipped" <%= item.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
-                    <option value="OutForDelivery" <%= item.status === 'OutForDelivery' ? 'selected' : '' %>>Out for Delivery</option>
-                    <option value="Delivered" <%= item.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
-                    <option value="Cancelled" <%= item.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
-                  </select>
-                </form>
-                <% } %>
-              <% } %>
-              <% if (item.cancelReason) { %>
-                <p class="text-muted"><strong>Cancel Reason:</strong> <%= item.cancelReason %></p>
-              <% } %>
-              <% if (item.returnReason) { %>
-                <p class="text-muted"><strong>Return Reason:</strong> <%= item.returnReason %></p>
-              <% } %>
-              <% if (item.returnRequestedAt) { %>
-                <p class="text-muted"><strong>Return Requested At:</strong> <%= new Date(item.returnRequestedAt).toLocaleString() %></p>
-              <% } %>
-            </div>
-            <div class="col-md-3 text-end">
-              <% if (order.Status === 'Pending' && item.status !== 'Cancelled' && item.returnStatus === 'NotRequested' && item.status !== 'Delivered' && order.paymentStatus==='Confirmed') { %>
-                <form class="cancel-item-form mb-2" data-item-id="<%= item._id %>" action="/admin/order-details/<%= order._id %>/cancel-item/<%= item._id %>" method="POST">
-                  <input type="text" name="reason" class="form-control form-control-sm mb-2" placeholder="Reason for cancellation (optional)">
-                  <button type="submit" class="btn btn-sm btn-danger">Cancel Item</button>
-                </form>
-              <% } %>
-              <% if (item.returnStatus === 'Return Requested' && item.status !== 'Cancelled') { %>
-                <form action="/admin/approve-return/<%= order._id %>?productId=<%= item.product?._id %>" method="POST" class="d-inline">
-                  <button class="btn btn-success btn-sm">Approve Return</button>
-                </form>
-                <form action="/admin/reject-return/<%= order._id %>?productId=<%= item.product?._id %>" method="POST" class="d-inline">
-                  <button class="btn btn-danger btn-sm">Reject Return</button>
-                </form>
-              <% } %>
-              <% if (item.returnStatus !== 'NotRequested') { %>
-                <p><strong>Return Status:</strong> 
-                  <span class="badge 
-                    <% if(item.returnStatus === 'Return Requested') { %> bg-warning text-dark
-                    <% } else if(item.returnStatus === 'Request Approved') { %> bg-success
-                    <% } else if(item.returnStatus === 'Request Denied') { %> bg-danger
-                    <% } %>">
-                    <%= item.returnStatus %>
-                  </span>
-                </p>
-              <% } %>
-            </div>
+        <h5 class="mt-4 mb-3">Ordered Items</h5>
+
+        <!-- ITEM LIST -->
+        <% order.Items.forEach(item => {
+            const variant = item.product?.Variants?.find(v => v.Size === item.size);
+        %>
+
+        <div class="row border rounded p-3 mb-3" style="background-color:#3a3a3a;" id="item-<%= item._id %>">
+          <div class="col-md-2 d-flex align-items-center justify-content-center">
+            <img src="<%= item.product?.Image?.[0] || '/images/default.jpg' %>" class="img-fluid" />
           </div>
-        <% }) %>
+
+          <div class="col-md-7">
+            <h6><strong><%= item.product?.productName %></strong></h6>
+
+            <p><strong>Quantity:</strong> <%= item.quantity %></p>
+
+            <!-- 🔥 NEW: VARIANT INFO -->
+            <p><strong>Size:</strong> <%= item.size || 'N/A' %></p>
+
+            <p><strong>
+              Sale Price:</strong> ₹<%= item.originalPrice %></p>
+
+            <p>Discount: ₹<%= item.itemDiscount.toFixed(2) %></p>
+
+            <p>Tax: ₹<%= (((item.originalPrice - item.itemDiscount) * item.quantity) * 0.05 / 100).toFixed(2) %></p>
+
+            <p>Delivery: ₹40</p>
+
+            <p class="text-success fw-bold">
+              Final Price: ₹
+              <%= (
+                ((item.originalPrice - item.itemDiscount) * item.quantity) +
+                ((((item.originalPrice - item.itemDiscount) * item.quantity) * 0.05) / 100) +
+                40
+              ).toFixed(2) %>
+            </p>
+
+            <p>Status:
+              <span class="badge
+                <% if(item.status === 'Delivered') { %> bg-success
+                <% } else if(item.status === 'Cancelled') { %> bg-danger
+                <% } else if(item.status === 'Shipped') { %> bg-primary
+                <% } else if(item.status === 'OutForDelivery') { %> bg-info text-dark
+                <% } else if(item.status === 'Returned') { %> bg-warning text-dark
+                <% } else { %> bg-secondary <% } %>"
+                id="item-status-<%= item._id %>">
+                <%= item.status %>
+              </span>
+            </p>
+
+            <% if (item.cancelReason) { %>
+            <p class="text-muted"><strong>Cancel Reason:</strong> <%= item.cancelReason %></p>
+            <% } %>
+
+            <% if (item.returnReason) { %>
+            <p class="text-muted"><strong>Return Reason:</strong> <%= item.returnReason %></p>
+            <% } %>
+
+            <% if (item.returnRequestedAt) { %>
+            <p class="text-muted">
+              <strong>Return Requested At:</strong>
+              <%= new Date(item.returnRequestedAt).toLocaleString() %>
+            </p>
+            <% } %>
+
+          </div>
+
+          <div class="col-md-3 text-end">
+            <% if (item.returnStatus === 'Return Requested') { %>
+              <form action="/admin/approve-return/<%= order._id %>?productId=<%= item.product._id %>" method="POST" class="d-inline">
+                <button class="btn btn-success btn-sm">Approve</button>
+              </form>
+              <form action="/admin/reject-return/<%= order._id %>?productId=<%= item.product._id %>" method="POST" class="d-inline">
+                <button class="btn btn-danger btn-sm">Reject</button>
+              </form>
+            <% } %>
+
+            <% if (item.returnStatus !== 'NotRequested') { %>
+            <p><strong>Return Status:</strong>
+              <span class="badge
+                <% if(item.returnStatus === 'Return Requested') { %> bg-warning text-dark
+                <% } else if(item.returnStatus === 'Request Approved') { %> bg-success
+                <% } else if(item.returnStatus === 'Request Denied') { %> bg-danger <% } %>">
+                <%= item.returnStatus %>
+              </span>
+            </p>
+            <% } %>
+          </div>
+
+        </div>
+
+        <% }) %> <!-- END FOR EACH ITEM -->
+
       </div>
-    <% } else { %>
+
+      <% } else { %>
       <p class="text-danger">Order not found.</p>
-    <% } %>
+      <% } %>
+
     </div>
   </div>
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-  <script>document.addEventListener('DOMContentLoaded', () => {
-    // Handle item cancellation
-    document.querySelectorAll('.cancel-item-form').forEach(form => {
-      form.addEventListener('submit', async e => {
-        e.preventDefault();
-        const formElement = e.target;
-        const itemId = formElement.dataset.itemId;
-        const url = formElement.getAttribute('action');
-        const data = new FormData(formElement);
-        const formData = Object.fromEntries(data.entries());
-  
-        try {
-          const response = await axios.post(url, formData);
-          if (response.data.success) {
-            const itemCard = document.querySelector(`#item-${itemId}`);
-            itemCard.querySelector('.cancel-item-form')?.remove();
-            itemCard.querySelector('.update-item-status-form')?.remove();
-            const badge = itemCard.querySelector('.badge');
-            badge.classList.remove('bg-success', 'bg-warning', 'bg-primary', 'bg-info', 'text-dark');
-            badge.classList.add('bg-danger');
-            badge.textContent = 'Cancelled';
-            const reason = formElement.querySelector('input[name="reason"]').value;
-            if (reason) {
-              itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Cancel Reason:</strong> ${reason}</p>`);
-            }
-            if (response.data.orderStatus === 'Cancelled') {
-              const orderStatus = document.querySelector('#order-status');
-              orderStatus.classList.remove('bg-info', 'bg-warning', 'bg-primary', 'bg-success', 'text-dark');
-              orderStatus.classList.add('bg-danger');
-              orderStatus.textContent = 'Cancelled';
-            }
-            showAlert('success', response.data.message);
-          } else {
-            showAlert('danger', response.data.message);
-          }
-        } catch (error) {
-          showAlert('danger', error.response?.data?.message || 'An error occurred while cancelling the item');
-        }
-      });
-    });
-  
-    // Handle item status update
-    document.querySelectorAll('.update-item-status-form select[name="status"]').forEach(select => {
-      select.addEventListener('change', async e => {
-        e.preventDefault();
-        const formElement = e.target.closest('form');
-        const itemId = formElement.dataset.itemId;
-        const url = formElement.getAttribute('action');
-        const status = e.target.value;
-  
-        console.log('Updating status:', { itemId, url, status }); // Debug log
-  
-        try {
-          const response = await axios.post(url, { status }, {
-            headers: { 'Content-Type': 'application/json' }
-          });
-  
-          console.log('Response:', response.data); // Debug log
-  
-          if (response.data.success) {
-            const itemCard = document.querySelector(`#item-${itemId}`);
-            if (!itemCard) {
-              console.error('Item card not found for ID:', itemId);
-              showAlert('danger', 'Item card not found');
-              return;
-            }
-            const badge = itemCard.querySelector(`#item-status-${itemId}`);
-            if (!badge) {
-              console.error('Badge not found for ID:', itemId);
-              showAlert('danger', 'Status badge not found');
-              return;
-            }
-            badge.classList.remove('bg-success', 'bg-warning', 'bg-primary', 'bg-info', 'bg-danger', 'text-dark');
-            if (status === 'Delivered') {
-              badge.classList.add('bg-success');
-              badge.textContent = 'Delivered';
-              itemCard.querySelector('.update-item-status-form')?.remove();
-              itemCard.querySelector('.cancel-item-form')?.remove();
-            } else if (status === 'Cancelled') {
-              badge.classList.add('bg-danger');
-              badge.textContent = 'Cancelled';
-              itemCard.querySelector('.update-item-status-form')?.remove();
-              itemCard.querySelector('.cancel-item-form')?.remove();
-            } else if (status === 'Shipped') {
-              badge.classList.add('bg-primary');
-              badge.textContent = 'Shipped';
-            } else if (status === 'OutForDelivery') {
-              badge.classList.add('bg-info', 'text-dark');
-              badge.textContent = 'Out for Delivery';
-            } else {
-              badge.classList.add('bg-secondary');
-              badge.textContent = 'Pending';
-            }
-            showAlert('success', response.data.message || 'Item status updated successfully');
-          } else {
-            console.error('Update failed:', response.data.message);
-            showAlert('danger', response.data.message || 'Failed to update item status');
-          }
-        } catch (error) {
-          console.error('Status update error:', {
-            message: error.message,
-            response: error.response?.data,
-            status: error.response?.status,
-            url
-          });
-          showAlert('danger', error.response?.data?.message || 'An error occurred while updating the item status');
-        }
-      });
-    });
-  
-    function showAlert(type, message) {
-      console.log('Showing alert:', { type, message }); // Debug log
-      const alertHtml = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-          ${message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      `;
-      const alertContainer = document.querySelector('.alert-container');
-      alertContainer.insertAdjacentHTML('beforeend', alertHtml);
-      setTimeout(() => {
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(alert => {
-          alert.classList.add('fade');
-          setTimeout(() => alert.remove(), 500);
-        });
-      }, 3000);
-    }
-  });
-  </script>
 
   <%- include('../partials/admin/footer') %>
 </body>

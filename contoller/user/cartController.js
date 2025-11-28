@@ -10,29 +10,25 @@ const mongoose = require('mongoose');
 
 
 
-const getProductOffer = async (product) => {
+const getProductOffer = async (product, variant) => {
   try {
-    if (!product || !product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
-      console.error(`Invalid product data: ${JSON.stringify(product)}`);
-      return { offer: null, salePrice: 0 };
-    }
+    if (!variant) return { offer: null, salePrice: 0 };
 
     const now = new Date();
-    const variantPrice = product.Variants[0].Price || 0;
+    const variantPrice = variant.Price || 0;
 
     const [productOffer, categoryOffer] = await Promise.all([
       Offers.findOne({
         Product: product._id,
         Category: null,
         StartDate: { $lte: now },
-        EndDate: { $gte: now },
-       
+        EndDate: { $gte: now }
       }).lean(),
       Offers.findOne({
         Category: product.Category,
         Product: null,
         StartDate: { $lte: now },
-        EndDate: { $gte: now },
+        EndDate: { $gte: now }
       }).lean()
     ]);
 
@@ -43,14 +39,12 @@ const getProductOffer = async (product) => {
       offer = productOffer || categoryOffer;
     }
 
-    if (!offer) {
-      return { offer: null, salePrice: variantPrice };
-    }
+    if (!offer) return { offer: null, salePrice: variantPrice };
 
     const salePrice = variantPrice * (1 - offer.Discount / 100);
     return { offer, salePrice };
   } catch (err) {
-    console.error(`Error fetching offer for productId: ${product?._id || 'unknown'}`, err);
+    console.error("Offer error:", err);
     return { offer: null, salePrice: 0 };
   }
 };
@@ -79,52 +73,37 @@ const cart = async (req, res) => {
     const validItems = [];
     for (const item of cartData.Items) {
       const product = item.product;
-      if (!product || !product.productName) {
-        cartItems.push({
-          _id: '',
-          name: 'Unnamed Product',
-          image: 'images/default.jpg',
-          price: 0,
-          quantity: item.quantity,
-          stock: 0,
-          itemTotal: 0
-        });
-        continue;
-      }
+      const size = item.size;
 
-      const variant = product.Variants?.[0];
-      const { offer, salePrice } = await getProductOffer(product); 
-      const price = salePrice || variant?.Price || 0; 
-      const quantity = item.quantity;
-      const itemTotal = price * quantity;
+      const variant = product.Variants.find(v => v.Size === size);
 
-      let imagePath = 'images/default.jpg';
-      if (product.Image?.length) {
-        const raw = product.Image[0];
-        imagePath = raw.startsWith('http') ? raw : `${raw}`;
-      }
+      if (!product || !variant) continue;
+
+      const { offer, salePrice } = await getProductOffer(product, variant);
+
+      const price = salePrice || variant.Price;
+      const itemTotal = price * item.quantity;
 
       cartItems.push({
         _id: product._id,
+        size,
         name: product.productName,
-        image: imagePath,
+        image: product.Image[0],
         price,
-        quantity,
-        stock: variant?.Stock || 0,
+        quantity: item.quantity,
+        stock: variant.Stock,
         itemTotal,
-        offer: offer ? offer.Discount : null 
+        offer: offer ? offer.Discount : null
       });
 
-      if (variant?.Stock >= item.quantity) {
-        totalPrice += itemTotal;
+      if (variant.Stock >= item.quantity) {
         validItems.push(item);
+        totalPrice += itemTotal;
       }
     }
 
-    await Cart.updateOne(
-      { user: userId },
-      { $set: { Items: validItems } }
-    );
+    // Remove invalid items
+    await Cart.updateOne({ user: userId }, { $set: { Items: validItems } });
 
     res.render('cart', {
       cartItems,
@@ -132,274 +111,271 @@ const cart = async (req, res) => {
       user,
       activePage: 'cart'
     });
-  } catch (error) {
-    console.error('Error rendering cart page:', error);
+  } catch (err) {
+    console.error("Cart render error:", err);
     res.status(500).render('page-404');
   }
 };
 
 
 
+// ======================================================
+// 🟦 API - Get Cart Data
+// ======================================================
 const getCartData = async (req, res) => {
   try {
     const userId = req.session.user;
-    if (!userId) return res.json({ success: false, message: 'User not logged in' });
 
     const cartData = await Cart.findOne({ user: userId }).populate('Items.product').lean();
-
-    if (!cartData || !cartData.Items.length) {
+    if (!cartData || !cartData.Items.length)
       return res.json({ success: true, cartItems: [], totalPrice: 0 });
-    }
 
     let totalPrice = 0;
+
     const cartItems = cartData.Items.map(item => {
       const product = item.product;
-      const variant = product?.Variants?.[0];
-      const price = variant?.Price || 0;
-      const quantity = item.quantity;
-      const itemTotal = price * quantity;
-      if (variant?.Stock >= item.quantity) {
-        totalPrice += itemTotal;
-      }
-      let imagePath = 'images/default.jpg';
-      if (product.Image?.length) {
-        const raw = product.Image[0];
-        imagePath = raw.startsWith('http') ? raw : `${raw}`;
-      }
+      const variant = product.Variants.find(v => v.Size === item.size);
+
+      if (!product || !variant) return null;
+
+      const price = variant.Price;
+      const itemTotal = price * item.quantity;
+
+      if (variant.Stock >= item.quantity) totalPrice += itemTotal;
+
       return {
         _id: product._id,
         name: product.productName,
-        image: imagePath,
+        size: item.size,
+        image: product.Image[0],
         price,
-        quantity,
-        stock: variant?.Stock || 0,
+        quantity: item.quantity,
+        stock: variant.Stock,
         itemTotal
       };
-    });
+    }).filter(Boolean);
 
     res.json({ success: true, cartItems, totalPrice });
   } catch (err) {
-    console.error('Get cart data error:', err);
-    res.json({ success: false, message: 'Error fetching cart data' });
+    console.error("Cart API error:", err);
+    res.json({ success: false, message: "Error fetching cart data" });
   }
 };
 
+
+
+// ======================================================
+// 🟩 ADD TO CART (MULTI-SIZE SUPPORT)
+// ======================================================
 const addToCart = async (req, res) => {
   try {
-
     const userId = req.session.user;
     const productId = req.params.productId;
+    const size = req.body.size;
 
-    if (!userId) return res.redirect('/login');
+    if (!size) return res.status(400).json({ error: "Please select a size" });
 
-    const product = await Products.findById(productId);
-    if (!product) return res.redirect('/shop');
-    if (product.Variants[0]?.Stock <= 0) {
-      return res.status(400).json({ error: 'This product is currently out of stock' });
-    }
+    const product = await Products.findById(productId).lean();
+    if (!product) return res.status(400).json({ error: "Product not found" });
+
+    const variant = product.Variants.find(v => v.Size === size);
+    if (!variant) return res.status(400).json({ error: "Invalid size selected" });
+
+    if (variant.Stock <= 0) return res.status(400).json({ error: "This size is out of stock" });
 
     let cart = await Cart.findOne({ user: userId });
+    if (!cart) cart = new Cart({ user: userId, Items: [] });
 
-    if (!cart) {
-      cart = new Cart({ user: userId, Items: [] });
-    }
-
-    const index = cart.Items.findIndex(item => item.product.toString() === productId);
+    // Check SAME product AND SAME size
+    const index = cart.Items.findIndex(item =>
+      item.product.toString() === productId && item.size === size
+    );
 
     if (index >= 0) {
-      if (cart.Items[index].quantity < product.Variants[0].Stock && cart.Items[index].quantity < 5) {
+      if (cart.Items[index].quantity < 5 && cart.Items[index].quantity < variant.Stock) {
         cart.Items[index].quantity += 1;
       } else {
-        return res.status(400).json({ error: 'Not enough stock available' });
+        return res.status(400).json({ error: "Not enough stock" });
       }
     } else {
-      cart.Items.push({ product: productId, quantity: 1 });
+      cart.Items.push({
+        product: productId,
+        size,
+        quantity: 1
+      });
     }
 
     await cart.save();
-    return res.json({success:'Successfully added to cart'})
+    return res.json({ success: "Successfully added to cart" });
+
   } catch (err) {
-    console.error('Add to cart error:', err);
-    res.redirect('/shop');
+    console.error("Add to cart error:", err);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
+
+
+// ======================================================
+// 🟧 UPDATE QUANTITY (MULTI-SIZE SUPPORT)
+// ======================================================
 const updateCartQuantity = async (req, res) => {
   try {
     const userId = req.session.user;
-    const productId = req.params.id;
-    const { action } = req.body;
-
-    if (!userId || !productId || !action) {
-      return res.json({ success: false, message: 'Invalid request data.' });
-    }
+    const { id: productId } = req.params;
+    const { action, size } = req.body;
 
     const cart = await Cart.findOne({ user: userId }).populate('Items.product');
-    
-    if (!cart) {
-      return res.json({ success: false, message: 'Cart not found.' });
-    }
+    if (!cart) return res.json({ success: false, message: "Cart not found" });
 
-    const item = cart.Items.find(i => String(i.product._id) === String(productId));
-    if (!item) {
-      return res.json({ success: false, message: 'Item not found in cart.' });
-    }
+    const item = cart.Items.find(i =>
+      String(i.product._id) === String(productId) && i.size === size
+    );
 
-    if (action === 'increment') {
+    if (!item) return res.json({ success: false, message: "Item not found" });
+
+    const variant = item.product.Variants.find(v => v.Size === size);
+    if (!variant) return res.json({ success: false, message: "Invalid size variant" });
+
+    if (action === "increment") {
+      if (item.quantity >= 5) return res.json({ success: false, message: "Max quantity is 5" });
+      if (item.quantity >= variant.Stock) return res.json({ success: false, message: `Only ${variant.Stock} available` });
       item.quantity += 1;
-      const stock = item.product?.Variants?.[0]?.Stock || 0;
-      if (item.quantity > 5) {
-        item.quantity -= 1; 
-        item.quantity = 5;
-        return res.json({ success: false, message: 'You cannot add more than 5 items.' });
-      }
-      if (item.quantity > stock) {
-        item.quantity -= 1;
-        item.quantity = stock;
-        return res.json({ success: false, message: `Only ${stock} items are available.` });
-      }
-    } else if (action === 'decrement') {
-      if (item.quantity <= 1) {
-        return res.json({ success: false, message: 'Quantity cannot be less than 1.' });
-      }
+    }
+
+    if (action === "decrement") {
+      if (item.quantity <= 1) return res.json({ success: false, message: "Min quantity is 1" });
       item.quantity -= 1;
-    } else {
-      return res.json({ success: false, message: 'Invalid action.' });
     }
 
     await cart.save();
 
+    // Recalculate totals
     let totalPrice = 0;
-    const cartItems = cart.Items.map(item => {
-      const product = item.product;
-      const variant = product?.Variants?.[0];
-      const price = variant?.Price || 0;
-      const quantity = item.quantity;
-      const itemTotal = price * quantity;
-      if (variant?.Stock >= item.quantity) {
-        totalPrice += itemTotal;
-      }
-      let imagePath = 'images/default.jpg';
-      if (product.Image?.length) {
-        const raw = product.Image[0];
-        imagePath = raw.startsWith('http') ? raw : `${raw}`;
-      }
+    const cartItems = cart.Items.map(i => {
+      const vp = i.product.Variants.find(v => v.Size === i.size);
+      const price = vp.Price;
+      const itemTotal = price * i.quantity;
+      totalPrice += itemTotal;
+
       return {
-        _id: product._id,
-        name: product.productName,
-        image: imagePath,
+        _id: i.product._id,
+        name: i.product.productName,
+        size: i.size,
+        image: i.product.Image[0],
         price,
-        quantity,
-        stock: variant?.Stock || 0,
+        quantity: i.quantity,
+        stock: vp.Stock,
         itemTotal
       };
     });
 
-    res.json({ success: true, cartItems, totalPrice });
+    return res.json({ success: true, cartItems, totalPrice });
+
   } catch (err) {
-    console.error('Update quantity error:', err);
-    res.json({ success: false, message: 'Error updating quantity' });
+    console.error("Update quantity error:", err);
+    res.json({ success: false, message: "Error updating quantity" });
   }
 };
 
+
+
+// ======================================================
+// ❌ REMOVE FROM CART (NOW REMOVES PRODUCT + SIZE ONLY)
+// ======================================================
 const removeFromCart = async (req, res) => {
   try {
-  const userId = req.session.user;
-  const productId = req.params.id;
+    const userId = req.session.user;
+    const productId = req.params.id;
+    const { size } = req.body;
 
-  if (!userId) {
-      return res.json({ success: false, message: 'User not logged in' });
-  }
-      const result = await Cart.findOneAndUpdate(
-          { user: userId },
-          { $pull: { Items: { product: productId } } }, 
-          { new: true } 
-      ).lean();
+    const result = await Cart.findOneAndUpdate(
+      { user: userId },
+      { $pull: { Items: { product: productId, size } } },
+      { new: true }
+    ).lean();
 
-      if (!result) {
-          return res.json({ success: false, message: 'Cart not found or item already removed.' });
-      }
+    if (!result) return res.json({ success: false, message: "Item not found" });
 
-      return res.json({ success: true, message: 'Item successfully removed from cart.' });
-
+    return res.json({ success: true, message: "Item removed" });
   } catch (err) {
-      console.error('Remove cart error:', err);
-      return res.json({ success: false, message: 'Error removing item from cart' });
+    console.error("Remove cart error:", err);
+    res.json({ success: false, message: "Error removing item" });
   }
 };
 
 
+
+// ======================================================
+// 🟨 CHECKOUT — PROPER PER-VARIANT PRICING
+// ======================================================
 const checkout = async (req, res) => {
   try {
-    
     const userId = req.session.user;
+
     const user = await User.findById(userId).lean();
     const addresses = await Address.find({ userId }).lean();
     const cartData = await Cart.findOne({ user: userId }).populate('Items.product').lean();
-    if (!cartData || !cartData.Items.length) {
-      return res.redirect('/cart');
-    }
-    
+
+    if (!cartData || !cartData.Items.length) return res.redirect('/cart');
 
     const coupons = await Coupon.find({
       StartDate: { $lte: new Date() },
-      ExpiryDate: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+      ExpiryDate: { $gte: new Date() },
       IsListed: true,
       $or: [{ UserId: null }, { UserId: new mongoose.Types.ObjectId(userId) }]
     }).lean();
 
-
-    const wallet = await Wallet.findOne({ UserId:userId }).lean() || { Balance: 0 };
+    const wallet = await Wallet.findOne({ UserId: userId }).lean() || { Balance: 0 };
 
     let subtotal = 0;
     let totalItemDiscount = 0;
     const cartItems = [];
     const validCartItems = [];
+
     for (const item of cartData.Items) {
       const product = item.product;
-      const variant = product?.Variants?.[0];
-      if (!product || !variant || !product._id || !product.Category) {
-        console.error(`Invalid cart item: productId=${item.product?._id || 'missing'}`);
-        continue;
-      }
-      const { offer, salePrice } = await getProductOffer(product);
-      const price = salePrice || variant.Price || 0;
-      const originalPrice = variant.Price || 0;
-      const quantity = item.quantity;
-      const itemTotal = price * quantity;
-      const itemDiscount = (originalPrice - price) * quantity;
+      const variant = product.Variants.find(v => v.Size === item.size);
+
+      if (!variant) continue;
+
+      const { offer, salePrice } = await getProductOffer(product, variant);
+
+      const price = salePrice || variant.Price;
+      const itemTotal = price * item.quantity;
+      const itemDiscount = (variant.Price - price) * item.quantity;
+
       cartItems.push({
         _id: product._id,
+        size: item.size,
         name: product.productName,
-        image: product.Image[0] ? `${product.Image[0]}` : 'public/uploads/product-images/default.jpg',
+        image: product.Image[0],
         price,
-        originalPrice,
-        itemDiscount,
+        originalPrice: variant.Price,
         offer,
-        quantity,
+        itemDiscount,
+        quantity: item.quantity,
         itemTotal,
-        stock: variant.Stock || 0
+        stock: variant.Stock
       });
+
       if (variant.Stock >= item.quantity) {
         subtotal += itemTotal;
         totalItemDiscount += itemDiscount;
         validCartItems.push(item);
       }
     }
-    if (!cartItems.length) {
-      return res.redirect('/cart');
-    }
-    await Cart.findOneAndUpdate(
-      { user: userId },
-      { $set: { Items: validCartItems } }
-    );
-    const tax = (subtotal * 0.05)/100;
-    const discount = 0; 
+
+    await Cart.updateOne({ user: userId }, { $set: { Items: validCartItems } });
+
+    const tax = (subtotal * 0.05) / 100;
     const deliveryCharge = 40;
+    const discount = 0;
+
     const finalTotal = subtotal - discount + tax + deliveryCharge;
 
     res.render('checkout', {
-      pageTitle: 'Checkout',
+      pageTitle: "Checkout",
       cartItems,
       subtotal,
       totalItemDiscount,
@@ -411,10 +387,11 @@ const checkout = async (req, res) => {
       coupons,
       user,
       wallet,
-      activePage: 'checkout',
+      activePage: "checkout",
       userId,
       RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID
     });
+
   } catch (err) {
     console.error("Checkout error:", err);
     res.status(500).render('page-404');
@@ -423,10 +400,8 @@ const checkout = async (req, res) => {
 
 
 
-
-
-
-module.exports = { 
+// EXPORT
+module.exports = {
   cart,
   getCartData,
   addToCart,

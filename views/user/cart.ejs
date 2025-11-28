@@ -82,95 +82,6 @@
       color: #999;
       text-decoration: line-through;
     }
-.typing-indicator {
-  width: 60px;
-  height: 30px;
-  left: 50%;
-  position: relative;
-  z-index: 4;
-}
-
-.typing-circle {
-  width: 8px;
-  height: 8px;
-  position: absolute;
-  border-radius: 50%;
-  background-color: #000;
-  animation: typing-circle7124 0.5s alternate infinite ease;
-}
-
-@keyframes typing-circle7124 {
-  0% {
-    top: 20px;
-    height: 5px;
-    border-radius: 50px 50px 25px 25px;
-    transform: scaleX(1.7);
-  }
-
-  40% {
-    height: 8px;
-    border-radius: 50%;
-    transform: scaleX(1);
-  }
-
-  100% {
-    top: 0%;
-  }
-}
-
-.typing-circle:nth-child(1) {
-  left: 15%;
-}
-
-.typing-circle:nth-child(2) {
-  left: 45%;
-  animation-delay: 0.2s;
-}
-
-.typing-circle:nth-child(3) {
-  right: 15%;
-  animation-delay: 0.3s;
-}
-
-.typing-shadow {
-  width: 5px;
-  height: 4px;
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.2);
-  position: absolute;
-  top: 30px;
-  transform-origin: 50%;
-  z-index: 3;
-  filter: blur(1px);
-  animation: typing-shadow046 0.5s alternate infinite ease;
-}
-
-@keyframes typing-shadow046 {
-  0% {
-    transform: scaleX(1.5);
-  }
-
-  40% {
-    transform: scaleX(1);
-    opacity: 0.7;
-  }
-
-  100% {
-    transform: scaleX(0.2);
-    opacity: 0.4;
-  }
-}
-
-.typing-shadow:nth-child(4) {
-  left: 45%;
-  animation-delay: 0.2s;
-}
-
-.typing-shadow:nth-child(5) {
-  right: 15%;
-  animation-delay: 0.3s;
-}
-
   </style>
 </head>
 
@@ -180,25 +91,17 @@
   <div class="container">
     <div class="row">
       <div class="col-lg-12">
+
         <% if (cartItems.length === 0) { %>
-          <div class="typing-indicator"  class="text-center">
-            <div class="typing-circle"></div>
-            <div class="typing-circle"></div>
-            <div class="typing-circle"></div>
-            <div class="typing-shadow"></div>
-            <div class="typing-shadow"></div>
-            <div class="typing-shadow"></div>
-        </div>
-          <tr><td>
-            <h4>Your cart is empty or The item is already ordered</h4>
-          </td></tr>
-          <% } else { %>
+          <h4 class="text-center">Your cart is empty or the item was already ordered.</h4>
+        <% } else { %>
         <div class="cart__table">
           <table>
             <thead>
               <tr>
                 <th>Image</th>
                 <th class="p-name">Product Name</th>
+                <th>Size</th>
                 <th>Price</th>
                 <th>Quantity</th>
                 <th>Total</th>
@@ -206,46 +109,48 @@
               </tr>
             </thead>
             <tbody>
-              
-              
-                <% cartItems.forEach(item => { %>
-                  <tr data-product-id="<%= item._id %>">
-                    <td class="cart__product__item">
-                      <img src="<%= item.image %>" alt="Product Image" />
-                    </td>
-                    <td class="cart__product__item__title">
-                      <h6><%= item.name %></h6>
-                    </td>
-                    <td class="cart__price">
-                      <% if (item.offer) { %>
-                        <div class="price-container">
-                          <span class="product-price">₹<%= item.price.toFixed(2) %></span>
+              <% cartItems.forEach(item => { %>
+                <tr data-product-id="<%= item._id %>" data-size="<%= item.size %>">
+                  <td class="cart__product__item">
+                    <img src="<%= item.image %>" alt="Product Image" />
+                  </td>
 
-                        </div>
-                      <% } else { %>
-                        <span class="product-price">₹<%= item.price.toFixed(2) %></span>
-                      <% } %>
-                    </td>
-                    <td class="cart__quantity">
-                      <% if (item.stock > 0) { %>
-                        <div class="pro-qty" data-stock="<%= item.stock %>">
-                          <button class="dec qtybtn" data-id="<%= item._id %>">-</button>
-                          <input type="text" value="<%= item.quantity %>" readonly />
-                          <button class="inc qtybtn" data-id="<%= item._id %>">+</button>
-                        </div>
-                      <% } else { %>
-                        <span class="text-danger">Out of Stock</span>
-                      <% } %>
-                    </td>
-                    <td class="cart__total">₹<%= item.itemTotal.toFixed(2) %></td>
-                    <td class="cart__close">
-                      <button class="remove-from-cart" data-id="<%= item._id %>">
-                        <i class="fa fa-close"></i>
-                      </button>
-                    </td>
-                  </tr>
-                <% }) %>
-              <% } %>
+                  <td class="cart__product__item__title">
+                    <h6><%= item.name %></h6>
+                  </td>
+
+                  <td>
+                    <span class="badge bg-dark"><%= item.size %></span>
+                  </td>
+
+                  <td class="cart__price">
+                    <span class="product-price">₹<%= item.price.toFixed(2) %></span>
+                  </td>
+
+                  <td class="cart__quantity">
+                    <% if (item.stock > 0) { %>
+                      <div class="pro-qty" data-stock="<%= item.stock %>">
+                        <button class="dec qtybtn" data-id="<%= item._id %>">-</button>
+                        <input type="text" value="<%= item.quantity %>" readonly />
+                        <button class="inc qtybtn" data-id="<%= item._id %>">+</button>
+                      </div>
+                    <% } else { %>
+                      <span class="text-danger">Out of Stock</span>
+                    <% } %>
+                  </td>
+
+                  <td class="cart__total">₹<%= item.itemTotal.toFixed(2) %></td>
+
+                  <td class="cart__close">
+                    <button
+                      class="remove-from-cart btn btn-sm btn-outline-danger"
+                      data-id="<%= item._id %>"
+                      data-size="<%= item.size %>">
+                      <i class="fa fa-close"></i>
+                    </button>
+                  </td>
+                </tr>
+              <% }) %>
             </tbody>
           </table>
         </div>
@@ -256,270 +161,248 @@
               <a href="/shopnow">Continue Shopping</a>
             </div>
           </div>
+
           <div class="col-lg-6 text-right">
             <div class="cart__total">
               <h6>Cart total</h6>
               <ul>
-                
                 <li>Subtotal <span class="subtotal">₹<%= totalPrice.toFixed(2) %></span></li>
-               
               </ul>
-              <% const hasOutOfStock = cartItems.some(item => item.stock === 0 || item.stock < item.quantity); %>
+
+              <% const hasOutOfStock = cartItems.some(item => item.stock < item.quantity); %>
+
               <% if (hasOutOfStock) { %>
-                <p class="text-danger">Please remove the out-of-stock product to proceed.</p>
+                <p class="text-danger out-of-stock-msg">
+                  Please remove the out-of-stock item to continue.
+                </p>
               <% } %>
-              <a href="/checkout" class="primary-btn <%= hasOutOfStock ? 'hide' : '' %>">Proceed to checkout</a>
+
+              <a href="/checkout" class="primary-btn <%= hasOutOfStock ? 'hide' : '' %>">
+                Proceed to checkout
+              </a>
             </div>
           </div>
         </div>
+
+        <% } %>
+
       </div>
     </div>
   </div>
 
-
-  <div class="modal fade" id="qtyLimitModal" tabindex="-1" aria-labelledby="qtyLimitModalLabel" aria-hidden="true">
+  <!-- Quantity limit modal -->
+  <div class="modal fade" id="qtyLimitModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content text-center">
         <div class="modal-header">
-          <h5 class="modal-title" id="qtyLimitModalLabel">Quantity Limit</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <h5 class="modal-title">Quantity Limit</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body" id="qtyModalMessage"></div>
       </div>
     </div>
   </div>
-</section>
 
-<div class="modal fade" id="removeCartModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Remove Item</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        Are you sure you want to remove this item from your cart?
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button id="confirmRemoveBtn" class="btn btn-danger">Remove</button>
+  <!-- Remove modal -->
+  <div class="modal fade" id="removeCartModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Remove Item</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">Are you sure you want to remove this item?</div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button id="confirmRemoveBtn" class="btn btn-danger">Remove</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
+</section>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
   function showQtyModal(message) {
-    const messageEl = document.getElementById("qtyModalMessage");
+    const msgEl = document.getElementById("qtyModalMessage");
     const modalEl = document.getElementById("qtyLimitModal");
-    if (messageEl && modalEl) {
-      messageEl.innerText = message;
-      const modal = new bootstrap.Modal(modalEl);
-      modal.show();
-      setTimeout(() => modal.hide(), 2000);
-    }
+
+    msgEl.innerText = message;
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+    setTimeout(() => modal.hide(), 2000);
   }
 
+  // 🔥 UPDATE CART UI AFTER AJAX RESPONSE
   function updateCartUI(cartItems, totalPrice) {
     const tbody = document.querySelector('.cart__table tbody');
-    const subtotalEl = document.querySelector('.cart__total .subtotal');
+    const subtotalEl = document.querySelector('.subtotal');
     const proceedBtn = document.querySelector('.cart__total .primary-btn');
-    const outOfStockMsg = document.querySelector('.cart__total .text-danger');
+    const totalBox = document.querySelector('.cart__total');
 
-
-    const hasOutOfStock = cartItems.some(item => item.stock === 0 || item.stock < item.quantity);
-
-
-    subtotalEl.textContent = `₹${totalPrice.toFixed(2)}`;
-
-
-    if (hasOutOfStock) {
-      proceedBtn.classList.add('hide');
-      if (!outOfStockMsg) {
-        const msg = document.createElement('p');
-        msg.className = 'text-danger';
-        msg.textContent = 'Please remove the out-of-stock product to proceed.';
-        proceedBtn.parentNode.insertBefore(msg, proceedBtn);
-      }
-    } else {
-      proceedBtn.classList.remove('hide');
-      if (outOfStockMsg) {
-        outOfStockMsg.remove();
-      }
+    if (subtotalEl) {
+      subtotalEl.textContent = `₹${totalPrice.toFixed(2)}`;
     }
 
-
+    // Update each row (quantity + line total)
     cartItems.forEach(item => {
-      const row = tbody.querySelector(`tr[data-product-id="${item._id}"]`);
+      const row = tbody.querySelector(
+        `tr[data-product-id="${item._id}"][data-size="${item.size}"]`
+      );
+
       if (row) {
-        const qtyCell = row.querySelector('.cart__quantity');
-        const priceCell = row.querySelector('.cart__price');
+        const qtyInput = row.querySelector('.pro-qty input');
         const totalCell = row.querySelector('.cart__total');
-        if (item.stock > 0) {
-          qtyCell.innerHTML = `
-            <div class="pro-qty" data-stock="${item.stock}">
-              <button class="dec qtybtn" data-id="${item._id}">-</button>
-              <input type="text" value="${item.quantity}" readonly />
-              <button class="inc qtybtn" data-id="${item._id}">+</button>
-            </div>
-          `;
-        } else {
-          qtyCell.innerHTML = '<span class="text-danger">Out of Stock</span>';
-        }
-        priceCell.innerHTML = item.offer
-          ? `<div class="price-container">
-               <span class="product-price">₹${item.price.toFixed(2)}</span>
-               <span class="offer-percentage">${item.offer.Discount}% OFF</span>
-               <span class="regular-price">₹${item.originalPrice.toFixed(2)}</span>
-             </div>`
-          : `<span class="product-price">₹${item.price.toFixed(2)}</span>`;
-        totalCell.textContent = `₹${item.itemTotal.toFixed(2)}`;
+        const qtyContainer = row.querySelector('.pro-qty');
+
+        if (qtyInput) qtyInput.value = item.quantity;
+        if (totalCell) totalCell.textContent = `₹${item.itemTotal.toFixed(2)}`;
+        if (qtyContainer) qtyContainer.dataset.stock = item.stock;
       }
     });
 
+    // Recompute out-of-stock flag from updated items
+    const hasOutOfStock = cartItems.some(item => item.stock < item.quantity);
 
+    // Handle "Proceed to checkout" button + message
+    if (proceedBtn) {
+      if (hasOutOfStock) {
+        proceedBtn.classList.add('hide');
+      } else {
+        proceedBtn.classList.remove('hide');
+      }
+    }
+
+    // Manage out-of-stock warning message
+    let msgEl = totalBox.querySelector('.out-of-stock-msg');
+    if (hasOutOfStock) {
+      if (!msgEl) {
+        msgEl = document.createElement('p');
+        msgEl.className = 'text-danger out-of-stock-msg';
+        msgEl.textContent = 'Please remove the out-of-stock item to continue.';
+        totalBox.insertBefore(msgEl, proceedBtn);
+      }
+    } else {
+      if (msgEl) msgEl.remove();
+    }
+
+    // Re-attach quantity listeners (since DOM may be updated)
     attachQtyButtonListeners();
   }
 
+  // 🔥 ATTACH QTY BUTTON EVENTS (NO LOCAL INCREMENT, BACKEND IS SOURCE OF TRUTH)
   function attachQtyButtonListeners() {
     document.querySelectorAll(".qtybtn").forEach(btn => {
-      btn.addEventListener("click", function () {
-        const productId = this.dataset.id;
+      btn.onclick = async function () {
+        const row = this.closest("tr");
+        const productId = row.dataset.productId;
+        const size = row.dataset.size;
+
         const isIncrement = this.classList.contains("inc");
-        const qtyContainer = this.closest(".pro-qty");
+        const qtyContainer = row.querySelector(".pro-qty");
         const input = qtyContainer.querySelector("input");
-        const currentQty = parseInt(input.value) || 0;
-        const stock = parseInt(qtyContainer.dataset.stock) || 100;
 
-        if (!productId) {
-          showQtyModal(" Invalid product.");
-          return;
+        const currentQty = parseInt(input.value);
+        const stock = parseInt(qtyContainer.dataset.stock);
+
+        // Validation only – do NOT change UI here
+        if (isIncrement && currentQty >= 5) {
+          return showQtyModal("Max 5 allowed.");
+        }
+        if (isIncrement && currentQty >= stock) {
+          return showQtyModal(`Only ${stock} available.`);
+        }
+        if (!isIncrement && currentQty <= 1) {
+          return showQtyModal("Min quantity is 1.");
         }
 
-        if (isIncrement) {
-          if (currentQty >= 5) {
-            showQtyModal(" You can't add more than 5 items.");
-            currentQty = 5
-            return;
-          }
-          if (currentQty >= stock) {
-            showQtyModal(` Only ${stock} items are available.`);
-            currentQty = stock
-            return;
-          }
-        } else {
-          if (currentQty <= 1) {
-            showQtyModal(" Quantity cannot be less than 1.");
-            return;
-          }
-        }
+        // Disable +/- buttons to prevent double clicks
+        const buttons = qtyContainer.querySelectorAll(".qtybtn");
+        buttons.forEach(b => (b.disabled = true));
 
-        fetch(`/cart/update-quantity/${productId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: isIncrement ? "increment" : "decrement" })
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              updateCartUI(data.cartItems, data.totalPrice);
-            } else {
-              showQtyModal(data.message === 'You cannot add more than 5 items.' || data.message.startsWith('Only') ? data.message : " Failed to update quantity.");
-            }
-          })
-          .catch(err => {
-            console.error("Quantity update error:", err);
-            showQtyModal(" Something went wrong.");
+        try {
+          const res = await fetch(`/cart/update-quantity/${productId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: isIncrement ? "increment" : "decrement",
+              size: size
+            })
           });
-      });
+
+          const data = await res.json();
+
+          if (data.success) {
+            updateCartUI(data.cartItems, data.totalPrice);
+          } else {
+            showQtyModal(data.message || "Failed to update quantity.");
+          }
+        } catch (err) {
+          console.error("Quantity update error:", err);
+          showQtyModal("Something went wrong.");
+        } finally {
+          // Re-enable buttons
+          buttons.forEach(b => (b.disabled = false));
+        }
+      };
     });
   }
 
-
-
-  let removeProductId = null;
-
-const removeCartModal = new bootstrap.Modal(document.getElementById("removeCartModal"));
-const confirmRemoveBtn = document.getElementById("confirmRemoveBtn");
-
-// When user clicks the delete icon
-document.querySelectorAll(".remove-from-cart").forEach(btn => {
-  btn.addEventListener("click", function () {
-    removeProductId = this.dataset.id;
-    removeCartModal.show();
-  });
-});
-
-// When user clicks "Remove" in modal
-confirmRemoveBtn.addEventListener("click", function () {
-  if (!removeProductId) return;
-
-  fetch(`/cart/remove/${removeProductId}`, { method: "DELETE" })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        const row = document.querySelector(`tr[data-product-id="${removeProductId}"]`);
-        if (row) row.remove();
-
-        // Refresh cart summary + totals
-        fetch('/cart/data')
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              updateCartUI(data.cartItems, data.totalPrice);
-            } else {
-              showQtyModal("Failed to refresh cart.");
-            }
-          });
-      } else {
-        showQtyModal("Failed to remove item.");
-      }
-    })
-    .catch(err => {
-      console.error("Remove error:", err);
-      showQtyModal("Something went wrong.");
-    })
-    .finally(() => {
-      removeProductId = null;
-      removeCartModal.hide();
-    });
-});
-
-
-  // document.querySelectorAll(".remove-from-cart").forEach(btn => {
-  //   btn.addEventListener("click", function () {
-  //     const productId = this.dataset.id;
-  //     fetch(`/cart/remove/${productId}`, {
-  //       method: "DELETE"
-  //     })
-  //       .then(res => res.json())
-  //       .then(data => {
-  //         if (data.success) {
-  //           const row = document.querySelector(`tr[data-product-id="${productId}"]`);
-  //           if (row) row.remove();
-  //           // Fetch updated cart data
-  //           fetch('/cart/data')
-  //             .then(res => res.json())
-  //             .then(data => {
-  //               if (data.success) {
-  //                 updateCartUI(data.cartItems, data.totalPrice);
-  //               } else {
-  //                 showQtyModal(" Failed to refresh cart.");
-  //               }
-  //             });
-  //         }
-  //       })
-  //       .catch(err => {
-  //         console.error("Remove error:", err);
-  //         showQtyModal(" Something went wrong.");
-  //       });
-  //   });
-  // });
-
-
   attachQtyButtonListeners();
+
+  // 🔥 REMOVE FROM CART (PRODUCT + SIZE)
+  let removeProductId = null;
+  let removeSize = null;
+
+  const removeModal = new bootstrap.Modal(document.getElementById("removeCartModal"));
+  const confirmRemoveBtn = document.getElementById("confirmRemoveBtn");
+
+  document.querySelectorAll(".remove-from-cart").forEach(btn => {
+    btn.onclick = function () {
+      removeProductId = this.dataset.id;
+      removeSize = this.dataset.size;
+      removeModal.show();
+    };
+  });
+
+  confirmRemoveBtn.onclick = function () {
+    if (!removeProductId || !removeSize) return;
+
+    fetch(`/cart/remove/${removeProductId}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ size: removeSize })
+    })
+      .then(res => res.json())
+      .then(async data => {
+        if (data.success) {
+          const row = document.querySelector(
+            `tr[data-product-id="${removeProductId}"][data-size="${removeSize}"]`
+          );
+          if (row) row.remove();
+
+          // After remove, refresh totals + quantities from backend
+          const res = await fetch('/cart/data');
+          const json = await res.json();
+          if (json.success) {
+            updateCartUI(json.cartItems, json.totalPrice);
+          }
+        } else {
+          showQtyModal("Failed to remove item.");
+        }
+      })
+      .catch(err => {
+        console.error("Remove error:", err);
+        showQtyModal("Something went wrong.");
+      })
+      .finally(() => {
+        removeProductId = null;
+        removeSize = null;
+        removeModal.hide();
+      });
+  };
 </script>
 
 <%- include('../partials/user/footer') %>

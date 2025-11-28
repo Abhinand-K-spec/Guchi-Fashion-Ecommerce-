@@ -374,10 +374,16 @@
         addToCartBtn.disabled = true;
         addToCartBtn.textContent = 'Adding...';
 
+        const selectedSize = document.getElementById('sizeSelector').value;
+
+
         try {
           const response = await fetch(`/addToCart/${productId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ size: selectedSize })
           });
 
           const result = await response.json();
