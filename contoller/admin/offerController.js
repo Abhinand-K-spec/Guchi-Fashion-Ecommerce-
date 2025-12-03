@@ -14,6 +14,7 @@ const addCategoryOffer = async (req, res) => {
 
     const start = new Date(StartDate);
     const end = new Date(EndDate);
+    const now  = new Date();
     if (isNaN(start) || isNaN(end)) {
       return res.status(400).json({ error: 'Invalid date format.' });
     }
@@ -21,8 +22,12 @@ const addCategoryOffer = async (req, res) => {
       return res.status(400).json({ error: 'Start date cannot be later than end date.' });
     }
 
-    if (isNaN(Discount) || Discount < 0 || Discount > 100) {
-      return res.status(400).json({ error: 'Discount must be between 0 and 100.' });
+    if(end<=now){
+      return res.status(400).json({error:'End date must greater than today'})
+    }
+
+    if (isNaN(Discount) || Discount < 0 || Discount > 90) {
+      return res.status(400).json({ error: 'Discount must be between 0 and 90.' });
     }
 
     if (MinPrice && (isNaN(MinPrice) || MinPrice < 0)) {
@@ -40,7 +45,7 @@ const addCategoryOffer = async (req, res) => {
       return res.status(404).json({ error: 'Category not found.' });
     }
 
-    const now = new Date();
+
     const existingOffer = await Offers.findOne({
       Category: id,
       Product: null,
@@ -103,7 +108,8 @@ const addProductOffer = async (req, res) => {
     if (!OfferName || !StartDate || !EndDate || !Discount) {
       return res.status(400).json({ error: 'Offer name, start date, end date, and discount are required.' });
     }
-
+    
+    const now = new Date();
     const start = new Date(StartDate);
     const end = new Date(EndDate);
     if (isNaN(start) || isNaN(end)) {
@@ -113,8 +119,12 @@ const addProductOffer = async (req, res) => {
       return res.status(400).json({ error: 'Start date cannot be later than end date.' });
     }
 
-    if (isNaN(Discount) || Discount < 0 || Discount > 100) {
-      return res.status(400).json({ error: 'Discount must be between 0 and 100.' });
+    if(end<=now){
+      return res.status(400).json({error:'End date must greater than today'})
+    }
+
+    if (isNaN(Discount) || Discount < 0 || Discount > 90) {
+      return res.status(400).json({ error: 'Discount must be between 0 and 90.' });
     }
 
     if (MinPrice && (isNaN(MinPrice) || MinPrice < 0)) {
@@ -132,7 +142,6 @@ const addProductOffer = async (req, res) => {
       return res.status(404).json({ error: 'Product not found.' });
     }
 
-    const now = new Date();
     const existingOffer = await Offers.findOne({
       Product: id,
       Category: null,

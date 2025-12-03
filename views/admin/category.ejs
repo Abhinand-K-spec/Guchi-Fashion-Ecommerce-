@@ -395,8 +395,6 @@
         <input type="date" class="offer-input" id="startDate-${categoryId}" />
         <input type="date" class="offer-input" id="endDate-${categoryId}" />
         <input type="number" class="offer-input" id="discount-${categoryId}" placeholder="Discount %" min="0" max="100" />
-        <input type="number" class="offer-input" id="minPrice-${categoryId}" placeholder="Min Price (optional)" min="0" />
-        <input type="number" class="offer-input" id="maxPrice-${categoryId}" placeholder="Max Price (optional)" min="0" />
       `;
     }
 
@@ -426,8 +424,6 @@
       const startDate = document.getElementById(`startDate-${categoryId}`)?.value;
       const endDate = document.getElementById(`endDate-${categoryId}`)?.value;
       const discount = document.getElementById(`discount-${categoryId}`)?.value.trim();
-      const minPrice = document.getElementById(`minPrice-${categoryId}`)?.value.trim();
-      const maxPrice = document.getElementById(`maxPrice-${categoryId}`)?.value.trim();
 
       if (!offerName || !startDate || !endDate || !discount) {
         displayErrorMessage('offer-error', 'Offer name, start date, end date, and discount are required.');
@@ -444,20 +440,7 @@
         return;
       }
 
-      if (minPrice && (isNaN(minPrice) || minPrice < 0)) {
-        displayErrorMessage('offer-error', 'Minimum price must be a non-negative number.');
-        return;
-      }
 
-      if (maxPrice && (isNaN(maxPrice) || maxPrice < 0)) {
-        displayErrorMessage('offer-error', 'Maximum price must be a non-negative number.');
-        return;
-      }
-
-      if (minPrice && maxPrice && parseFloat(minPrice) > parseFloat(maxPrice)) {
-        displayErrorMessage('offer-error', 'Minimum price cannot be greater than maximum price.');
-        return;
-      }
 
       fetch(`/admin/addCategoryOffer/${categoryId}?page=${page}`, {
         method: 'POST',
@@ -467,8 +450,6 @@
           StartDate: startDate,
           EndDate: endDate,
           Discount: discount,
-          MinPrice: minPrice || null,
-          MaxPrice: maxPrice || null
         })
       })
       .then(res => {

@@ -54,6 +54,7 @@ const addCoupon = async (req, res) => {
             
         }
 
+        const now = new Date();
         const start = new Date(StartDate);
         const end = new Date(EndDate);
         if (start > end) {
@@ -63,10 +64,16 @@ const addCoupon = async (req, res) => {
             });
           }
 
+          if (now > end) {
+            return res.status(400).json({ 
+              success: false, 
+              error: 'End Date cannot be earlier than today Date' 
+            });
+          }
 
         const discountValue = parseFloat(Discount);
-        if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
-            return res.status(400).json({ success: false, error: 'Discount must be between 0 and 100' });
+        if (isNaN(discountValue) || discountValue < 0 || discountValue > 90) {
+            return res.status(400).json({ success: false, error: 'Discount must be between 0 and 90' });
         }
 
 
