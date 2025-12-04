@@ -20,13 +20,14 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET
 });
 
-const getProductOffer = async (product) => {
+const getProductOffer = async (product, variantIndex = 0) => {
   try {
     if (!product || !product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
       return { offer: null, salePrice: 0 };
     }
     const now = new Date();
-    const variantPrice = product.Variants[0].Price || 0;
+    const validVariantIndex = Math.max(0, Math.min(variantIndex, product.Variants.length - 1));
+    const variantPrice = product.Variants[validVariantIndex].Price || 0;
     const [productOffer, categoryOffer] = await Promise.all([
       Offers.findOne({
         Product: product._id,
@@ -111,10 +112,12 @@ const verifyPayment = async (req, res) => {
     await order.save();
     await Cart.findOneAndUpdate({ user: userId }, { Items: [] });
     for (const item of order.Items) {
-      await Products.findByIdAndUpdate(item.product, { 
-        $inc: { 'Variants.0.Stock': -item.quantity }
-      });
+      await Products.findByIdAndUpdate(
+        item.product,
+        { $inc: { [`Variants.${item.variantIndex}.Stock`]: -item.quantity } }
+      );
     }
+
     return res.status(200).json({
       success: true,
       orderId: order._id,
@@ -134,7 +137,7 @@ const getPaymentSuccess = async (req, res) => {
     if (!order) {
       return res.status(404).render('page-404');
     }
-    
+
     const userId = req.session.user;
     const user = await User.findById(userId).lean();
     const address = await Address.findOne({ userId }).lean();
@@ -177,7 +180,7 @@ const getPaymentFailure = async (req, res) => {
 };
 
 
-const retryPayment =  async (req, res) => {
+const retryPayment = async (req, res) => {
   try {
     const { orderId } = req.body;
     const userId = req.session.user;
@@ -190,7 +193,7 @@ const retryPayment =  async (req, res) => {
     if (!existingOrder) {
       return res.status(404).json({ success: false, message: 'Order not found.' });
     }
-    
+
 
     // Validate for retry
     if (existingOrder.PaymentMethod !== 'Online') {
@@ -208,11 +211,11 @@ const retryPayment =  async (req, res) => {
     }
 
     // Calculate payable amount again
-const totalOriginalPrice = existingOrder.Items.reduce((sum,item)=> sum+=(item.originalPrice * item.quantity),0);
-const delivary = 40;
-const discountAmount = existingOrder.discountAmount;
-const finalAmount = totalOriginalPrice - discountAmount + delivary
-      
+    const totalOriginalPrice = existingOrder.Items.reduce((sum, item) => sum += (item.originalPrice * item.quantity), 0);
+    const delivary = 40;
+    const discountAmount = existingOrder.discountAmount;
+    const finalAmount = totalOriginalPrice - discountAmount + delivary
+
 
     if (finalAmount < 1) {
       return res.status(400).json({
@@ -249,11 +252,11 @@ const finalAmount = totalOriginalPrice - discountAmount + delivary
 
 const verifyRetryPayment = async (req, res) => {
   try {
-    const { 
-      razorpay_payment_id, 
-      razorpay_order_id, 
-      razorpay_signature, 
-      orderId 
+    const {
+      razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_signature,
+      orderId
     } = req.body;
 
     if (!orderId) {
@@ -305,7 +308,7 @@ const verifyRetryPayment = async (req, res) => {
 
     for (const item of existingOrder.Items) {
       await Products.findByIdAndUpdate(item.product, {
-        $inc: { 'Variants.0.Stock': -item.quantity }
+        $inc: { [`Variants.${item.variantIndex}.Stock`]: -item.quantity }
       });
     }
 
@@ -326,11 +329,11 @@ const verifyRetryPayment = async (req, res) => {
 
 
 module.exports = {
-    getPaymentFailure,
-    getPaymentSuccess,
-    verifyPayment,
-    getProductOffer,
-    retryPayment,
-    verifyRetryPayment
-    
+  getPaymentFailure,
+  getPaymentSuccess,
+  verifyPayment,
+  getProductOffer,
+  retryPayment,
+  verifyRetryPayment
+
 };

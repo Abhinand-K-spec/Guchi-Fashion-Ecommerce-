@@ -21,37 +21,37 @@ const securePassword = async (password) => {
 };
 
 
-function generateOtp(){
-    return Math.floor(100000+Math.random()*(900000)).toString();
+function generateOtp() {
+  return Math.floor(100000 + Math.random() * (900000)).toString();
 }
 
 
-async function sendVerification(email,otp){
-    try {
-        const transporter = nodemailer.createTransport({
-            service:'gmail',
-            port:587,
-            secure:false,
-            requireTLS:true,
-            auth:{
-                user:process.env.NODEMIALER_GMAIL,
-                pass:process.env.NODEMAILER_PASSWORD
-            }
-        });
+async function sendVerification(email, otp) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      port: 587,
+      secure: false,
+      requireTLS: true,
+      auth: {
+        user: process.env.NODEMIALER_GMAIL,
+        pass: process.env.NODEMAILER_PASSWORD
+      }
+    });
 
-        const info = await transporter.sendMail({
-            from:process.env.NODEMAILER_GMAIL,
-            to:email,
-            subject:'Verify your account',
-            text:`Your OTP is ${otp}`,
-            html:`<b>Your OTP: ${otp} </b>`
-        });
+    const info = await transporter.sendMail({
+      from: process.env.NODEMAILER_GMAIL,
+      to: email,
+      subject: 'Verify your account',
+      text: `Your OTP is ${otp}`,
+      html: `<b>Your OTP: ${otp} </b>`
+    });
 
-        return info.accepted.length>0;
-    } catch (error) {
-        console.error('error sending otp',error);
-        return false;
-    }
+    return info.accepted.length > 0;
+  } catch (error) {
+    console.error('error sending otp', error);
+    return false;
+  }
 }
 
 function generateReferralCode() {
@@ -86,20 +86,20 @@ const googleCallbackHandler = async (req, res) => {
 
 
 const handleForgotPassword = async (req, res) => {
-  const { email,password } = req.body;
+  const { email, password } = req.body;
   try {
 
     const otp = generateOtp();
-    const emailSend = sendVerification(email,otp);
-    if(!emailSend){
-      return res.render('forgot-password',{msg:`Can't send verification to mail`})
+    const emailSend = sendVerification(email, otp);
+    if (!emailSend) {
+      return res.render('forgot-password', { msg: `Can't send verification to mail` })
     }
 
     req.session.tempPass = password;
     req.session.email = email;
     req.session.otp = otp;
 
-    console.log('OTP sent:',otp);
+    console.log('OTP sent:', otp);
     res.render('forgot-verify-otp',);
   } catch (err) {
     console.error('Forgot password error:', err);
@@ -141,44 +141,45 @@ const verifyForgotOtp = async (req, res) => {
 };
 
 
-const getProductOffer = async (product) => {
-    try {
-      if (!product || !product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
-        return { offer: null, salePrice: 0 };
-      }
-      const now = new Date();
-      const variantPrice = product.Variants[0].Price || 0;
-      const [productOffer, categoryOffer] = await Promise.all([
-        Offers.findOne({
-          Product: product._id,
-          Category: null,
-          StartDate: { $lte: now },
-          EndDate: { $gte: now },
-        }).lean(),
-        Offers.findOne({
-          Category: product.Category,
-          Product: null,
-          StartDate: { $lte: now },
-          EndDate: { $gte: now },
-          
-        }).lean()
-      ]);
-      let offer = null;
-      if (productOffer && categoryOffer) {
-        offer = productOffer.Discount >= categoryOffer.Discount ? productOffer : categoryOffer;
-      } else {
-        offer = productOffer || categoryOffer;
-      }
-      if (!offer) {
-        return { offer: null, salePrice: variantPrice };
-      }
-      const salePrice = variantPrice * (1 - offer.Discount / 100);
-      return { offer, salePrice };
-    } catch (err) {
-      console.error(`Error fetching offer for productId: ${product?._id || 'unknown'}`, err);
+const getProductOffer = async (product, variantIndex = 0) => {
+  try {
+    if (!product || !product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
       return { offer: null, salePrice: 0 };
     }
-  };
+    const now = new Date();
+    const validVariantIndex = Math.max(0, Math.min(variantIndex, product.Variants.length - 1));
+    const variantPrice = product.Variants[validVariantIndex].Price || 0;
+    const [productOffer, categoryOffer] = await Promise.all([
+      Offers.findOne({
+        Product: product._id,
+        Category: null,
+        StartDate: { $lte: now },
+        EndDate: { $gte: now },
+      }).lean(),
+      Offers.findOne({
+        Category: product.Category,
+        Product: null,
+        StartDate: { $lte: now },
+        EndDate: { $gte: now },
+
+      }).lean()
+    ]);
+    let offer = null;
+    if (productOffer && categoryOffer) {
+      offer = productOffer.Discount >= categoryOffer.Discount ? productOffer : categoryOffer;
+    } else {
+      offer = productOffer || categoryOffer;
+    }
+    if (!offer) {
+      return { offer: null, salePrice: variantPrice };
+    }
+    const salePrice = variantPrice * (1 - offer.Discount / 100);
+    return { offer, salePrice };
+  } catch (err) {
+    console.error(`Error fetching offer for productId: ${product?._id || 'unknown'}`, err);
+    return { offer: null, salePrice: 0 };
+  }
+};
 
 const loadHomePage = async (req, res) => {
   try {
@@ -200,8 +201,8 @@ const loadHomePage = async (req, res) => {
           offer: null
         };
       }
-      
-      const { offer, salePrice } = await getProductOffer(product);
+
+      const { offer, salePrice } = await getProductOffer(product, 0);
       const variant = product.Variants[0];
       return {
         ...product,
@@ -313,7 +314,7 @@ async function sendVerification(email, otp) {
 const signup = async (req, res) => {
   try {
 
-    const { name, email, password, referralCode } = req.body; 
+    const { name, email, password, referralCode } = req.body;
     const findUser = await User.findOne({ email });
 
     if (findUser) {
@@ -326,7 +327,7 @@ const signup = async (req, res) => {
       return res.json({ 'error': 'email-error' });
     }
     req.session.otp = otp;
-    req.session.userData = { name, email, password, referralCode }; 
+    req.session.userData = { name, email, password, referralCode };
     res.render('verify-otp');
     console.log('OTP sent:', otp);
   } catch (error) {
@@ -345,15 +346,15 @@ const verifyOtp = async (req, res) => {
     if (!req.session.userData || !req.session.otp) {
       return res.json({ error: 'Session expired. Please sign up again.' });
     }
-    
+
     if (req.session.otp !== req.body.otp) {
       return res.json({ error: 'Invalid OTP. Please try again.' });
     }
-    
+
     if (userOtp === req.session.otp) {
       const user = req.session.userData;
       const passwordhash = await securePassword(user.password);
-      
+
       let referralCode = generateReferralCode();
       let existingUser = await User.findOne({ referalCode: referralCode });
       while (existingUser) {
@@ -365,14 +366,14 @@ const verifyOtp = async (req, res) => {
         name: user.name,
         email: user.email,
         password: passwordhash,
-        referalCode: referralCode 
+        referalCode: referralCode
       });
 
 
       if (user.referralCode) {
-        const referrer = await User.findOne({ 
+        const referrer = await User.findOne({
           referalCode: user.referralCode.toUpperCase(),
-          isBlocked: false 
+          isBlocked: false
         });
         if (referrer) {
           saveUserData.referedBy = referrer._id;
@@ -507,7 +508,7 @@ const changePassword = async (req, res) => {
     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
     const { currentPassword, newPassword, confirmPassword } = req.body;
 
-    
+
     console.log('Raw req.body:', { currentPassword, newPassword, confirmPassword });
 
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -522,7 +523,7 @@ const changePassword = async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-     console.log('bcrypt.compare result:', isMatch);
+    console.log('bcrypt.compare result:', isMatch);
 
     if (!isMatch) {
       return res.json({ success: false, message: 'Current password is incorrect' });
@@ -533,7 +534,7 @@ const changePassword = async (req, res) => {
     user.password = hashedPassword;
     await user.save();
 
-    
+
     const updatedUser = await User.findById(userId);
     console.log('After save, stored password:', updatedUser.password);
 
@@ -585,8 +586,8 @@ const sendForgotOtp = async (req, res) => {
 
     const otp = generateOtp();
     const sent = await sendVerification(email, otp);
-    console.log('otp sent:',otp);
-    
+    console.log('otp sent:', otp);
+
 
     if (!sent) {
       return res.render('forgot-password', { error: "Failed to send OTP. Try again." });
@@ -649,8 +650,8 @@ const resendForgotOtp = async (req, res) => {
 
   const otp = generateOtp();
   const sent = await sendVerification(req.session.forgotEmail, otp);
-  console.log('new otp:',otp);
-  
+  console.log('new otp:', otp);
+
 
   if (sent) {
     req.session.forgotOtp = otp;

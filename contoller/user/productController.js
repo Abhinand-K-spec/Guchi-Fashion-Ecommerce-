@@ -12,43 +12,44 @@ const Wishlist = require('../../model/wishlistSchema');
 const Wallet = require('../../model/walletSchema');
 const mongoose = require('mongoose');
 
-const getProductOffer = async (product) => {
-    try {
-      if (!product || !product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
-        return { offer: null, salePrice: 0 };
-      }
-      const now = new Date();
-      const variantPrice = product.Variants[0].Price || 0;
-      const [productOffer, categoryOffer] = await Promise.all([
-        Offers.findOne({
-          Product: product._id,
-          Category: null,
-          StartDate: { $lte: now },
-          EndDate: { $gte: now },
-        }).lean(),
-        Offers.findOne({
-          Category: product.Category,
-          Product: null,
-          StartDate: { $lte: now },
-          EndDate: { $gte: now },
-        }).lean()
-      ]);
-      let offer = null;
-      if (productOffer && categoryOffer) {
-        offer = productOffer.Discount >= categoryOffer.Discount ? productOffer : categoryOffer;
-      } else {
-        offer = productOffer || categoryOffer;
-      }
-      if (!offer) {
-        return { offer: null, salePrice: variantPrice };
-      }
-      const salePrice = variantPrice * (1 - offer.Discount / 100);
-      return { offer, salePrice };
-    } catch (err) {
-      console.error(`Error fetching offer for productId: ${product?._id || 'unknown'}`, err);
+const getProductOffer = async (product, variantIndex = 0) => {
+  try {
+    if (!product || !product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
       return { offer: null, salePrice: 0 };
     }
-  };
+    const now = new Date();
+    const validVariantIndex = Math.max(0, Math.min(variantIndex, product.Variants.length - 1));
+    const variantPrice = product.Variants[validVariantIndex].Price || 0;
+    const [productOffer, categoryOffer] = await Promise.all([
+      Offers.findOne({
+        Product: product._id,
+        Category: null,
+        StartDate: { $lte: now },
+        EndDate: { $gte: now },
+      }).lean(),
+      Offers.findOne({
+        Category: product.Category,
+        Product: null,
+        StartDate: { $lte: now },
+        EndDate: { $gte: now },
+      }).lean()
+    ]);
+    let offer = null;
+    if (productOffer && categoryOffer) {
+      offer = productOffer.Discount >= categoryOffer.Discount ? productOffer : categoryOffer;
+    } else {
+      offer = productOffer || categoryOffer;
+    }
+    if (!offer) {
+      return { offer: null, salePrice: variantPrice };
+    }
+    const salePrice = variantPrice * (1 - offer.Discount / 100);
+    return { offer, salePrice };
+  } catch (err) {
+    console.error(`Error fetching offer for productId: ${product?._id || 'unknown'}`, err);
+    return { offer: null, salePrice: 0 };
+  }
+};
 
 const getProductDetails = async (req, res) => {
   try {
@@ -64,19 +65,26 @@ const getProductDetails = async (req, res) => {
           ...product,
           Variants: [{ Price: 0, salePrice: 0, Stock: 0, Size: '' }],
           offer: null,
-          activePage:'shopnow'
+          activePage: 'shopnow'
         },
         recommendedProducts: []
       });
     }
-    const { offer, salePrice } = await getProductOffer(product);
+    const { offer } = await getProductOffer(product, 0);
 
     const formattedProduct = {
       ...product,
-      Variants: product.Variants.map(variant => ({
-        ...variant,
-        salePrice: salePrice || variant.Price || 0
-      })),
+      Variants: product.Variants.map(variant => {
+        const variantPrice = variant.Price || 0;
+        let salePrice = variantPrice;
+        if (offer) {
+          salePrice = variantPrice * (1 - offer.Discount / 100);
+        }
+        return {
+          ...variant,
+          salePrice: salePrice
+        };
+      }),
       offer
     };
     const recommendedProducts = await Products.find({
@@ -85,7 +93,7 @@ const getProductDetails = async (req, res) => {
       IsListed: true
     }).limit(4).lean();
     res.render('product-details', {
-      activePage:'shopnow',
+      activePage: 'shopnow',
       product: formattedProduct,
       recommendedProducts
     });
@@ -129,7 +137,7 @@ const getShopPage = async (req, res) => {
 
       {
         $lookup: {
-          from: 'categories',        
+          from: 'categories',
           localField: 'Category',
           foreignField: '_id',
           as: 'categoryData'
@@ -140,8 +148,8 @@ const getShopPage = async (req, res) => {
       {
         $match: {
           $and: [
-            { 'categoryData.0': { $exists: true } }, 
-            { 'categoryData.0.isListed': true }              
+            { 'categoryData.0': { $exists: true } },
+            { 'categoryData.0.isListed': true }
           ]
         }
       },
@@ -177,7 +185,7 @@ const getShopPage = async (req, res) => {
           return { ...product, Variants: [{ Price: 0, salePrice: 0, Stock: 0 }], offer: null };
         }
 
-        const { offer, salePrice } = await getProductOffer(product);
+        const { offer, salePrice } = await getProductOffer(product, 0);
         const variant = product.Variants[0];
 
         return {
@@ -215,11 +223,11 @@ const getShopPage = async (req, res) => {
 
 function getSortOption(sort) {
   switch (sort) {
-    case 'name-asc':   return { productName: 1 };
-    case 'name-desc':  return { productName: -1 };
-    case 'price-asc':  return { 'Variants.0.Price': 1 };
+    case 'name-asc': return { productName: 1 };
+    case 'name-desc': return { productName: -1 };
+    case 'price-asc': return { 'Variants.0.Price': 1 };
     case 'price-desc': return { 'Variants.0.Price': -1 };
-    default:           return { CreatedDate: -1 }; 
+    default: return { CreatedDate: -1 };
   }
 }
 
@@ -227,9 +235,9 @@ function getSortOption(sort) {
 
 
 
-module.exports ={
-    getProductDetails,
-    getShopPage,
-    getProductOffer
+module.exports = {
+  getProductDetails,
+  getShopPage,
+  getProductOffer
 
 };
