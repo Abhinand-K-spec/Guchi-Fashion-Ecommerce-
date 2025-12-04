@@ -10,7 +10,7 @@ const mongoose = require('mongoose');
 
 
 
-const getProductOffer = async (product) => {
+const getProductOffer = async (product, variantIndex = 0) => {
   try {
     if (!product || !product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
       console.error(`Invalid product data: ${JSON.stringify(product)}`);
@@ -18,7 +18,8 @@ const getProductOffer = async (product) => {
     }
 
     const now = new Date();
-    const variantPrice = product.Variants[0].Price || 0;
+    const validVariantIndex = Math.max(0, Math.min(variantIndex, product.Variants.length - 1));
+    const variantPrice = product.Variants[validVariantIndex].Price || 0;
 
     const [productOffer, categoryOffer] = await Promise.all([
       Offers.findOne({
@@ -92,14 +93,18 @@ const cart = async (req, res) => {
         continue;
       }
 
-      const variant = product.Variants?.[0];
-      const { offer, salePrice } = await getProductOffer(product); 
+      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      const variant = product.Variants?.[variantIndex];
+      const { offer, salePrice } = await getProductOffer(product, variantIndex); 
       const price = salePrice || variant?.Price || 0; 
       const quantity = item.quantity;
       const itemTotal = price * quantity;
 
       let imagePath = 'images/default.jpg';
-      if (product.Image?.length) {
+      if (variant?.Image?.length) {
+        const raw = variant.Image[0];
+        imagePath = raw.startsWith('http') ? raw : `${raw}`;
+      } else if (product.Image?.length) {
         const raw = product.Image[0];
         imagePath = raw.startsWith('http') ? raw : `${raw}`;
       }
@@ -112,7 +117,8 @@ const cart = async (req, res) => {
         quantity,
         stock: variant?.Stock || 0,
         itemTotal,
-        offer: offer ? offer.Discount : null 
+        offer: offer ? offer.Discount : null,
+        variantIndex: variantIndex
       });
 
       if (variant?.Stock >= item.quantity) {
@@ -154,7 +160,8 @@ const getCartData = async (req, res) => {
     let totalPrice = 0;
     const cartItems = cartData.Items.map(item => {
       const product = item.product;
-      const variant = product?.Variants?.[0];
+      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      const variant = product?.Variants?.[variantIndex];
       const price = variant?.Price || 0;
       const quantity = item.quantity;
       const itemTotal = price * quantity;
@@ -162,7 +169,10 @@ const getCartData = async (req, res) => {
         totalPrice += itemTotal;
       }
       let imagePath = 'images/default.jpg';
-      if (product.Image?.length) {
+      if (variant?.Image?.length) {
+        const raw = variant.Image[0];
+        imagePath = raw.startsWith('http') ? raw : `${raw}`;
+      } else if (product.Image?.length) {
         const raw = product.Image[0];
         imagePath = raw.startsWith('http') ? raw : `${raw}`;
       }
@@ -173,7 +183,8 @@ const getCartData = async (req, res) => {
         price,
         quantity,
         stock: variant?.Stock || 0,
-        itemTotal
+        itemTotal,
+        variantIndex: variantIndex
       };
     });
 
@@ -189,13 +200,19 @@ const addToCart = async (req, res) => {
 
     const userId = req.session.user;
     const productId = req.params.productId;
+    const { variantIndex = 0 } = req.body;
 
     if (!userId) return res.redirect('/login');
 
     const product = await Products.findById(productId);
     if (!product) return res.redirect('/shop');
-    if (product.Variants[0]?.Stock <= 0) {
-      return res.status(400).json({ error: 'This product is currently out of stock' });
+    
+    // Validate variant index
+    const validVariantIndex = Math.max(0, Math.min(variantIndex, (product.Variants?.length || 1) - 1));
+    const selectedVariant = product.Variants[validVariantIndex];
+    
+    if (!selectedVariant || selectedVariant.Stock <= 0) {
+      return res.status(400).json({ error: 'This product variant is currently out of stock' });
     }
 
     let cart = await Cart.findOne({ user: userId });
@@ -204,16 +221,19 @@ const addToCart = async (req, res) => {
       cart = new Cart({ user: userId, Items: [] });
     }
 
-    const index = cart.Items.findIndex(item => item.product.toString() === productId);
+    // Check if same product with same variant already exists in cart
+    const index = cart.Items.findIndex(item => 
+      item.product.toString() === productId && item.variantIndex === validVariantIndex
+    );
 
     if (index >= 0) {
-      if (cart.Items[index].quantity < product.Variants[0].Stock && cart.Items[index].quantity < 5) {
+      if (cart.Items[index].quantity < selectedVariant.Stock && cart.Items[index].quantity < 5) {
         cart.Items[index].quantity += 1;
       } else {
         return res.status(400).json({ error: 'Not enough stock available' });
       }
     } else {
-      cart.Items.push({ product: productId, quantity: 1 });
+      cart.Items.push({ product: productId, quantity: 1, variantIndex: validVariantIndex });
     }
 
     await cart.save();
@@ -247,7 +267,8 @@ const updateCartQuantity = async (req, res) => {
 
     if (action === 'increment') {
       item.quantity += 1;
-      const stock = item.product?.Variants?.[0]?.Stock || 0;
+      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      const stock = item.product?.Variants?.[variantIndex]?.Stock || 0;
       if (item.quantity > 5) {
         item.quantity -= 1; 
         item.quantity = 5;
@@ -272,7 +293,8 @@ const updateCartQuantity = async (req, res) => {
     let totalPrice = 0;
     const cartItems = cart.Items.map(item => {
       const product = item.product;
-      const variant = product?.Variants?.[0];
+      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      const variant = product?.Variants?.[variantIndex];
       const price = variant?.Price || 0;
       const quantity = item.quantity;
       const itemTotal = price * quantity;
@@ -280,7 +302,10 @@ const updateCartQuantity = async (req, res) => {
         totalPrice += itemTotal;
       }
       let imagePath = 'images/default.jpg';
-      if (product.Image?.length) {
+      if (variant?.Image?.length) {
+        const raw = variant.Image[0];
+        imagePath = raw.startsWith('http') ? raw : `${raw}`;
+      } else if (product.Image?.length) {
         const raw = product.Image[0];
         imagePath = raw.startsWith('http') ? raw : `${raw}`;
       }
@@ -291,7 +316,8 @@ const updateCartQuantity = async (req, res) => {
         price,
         quantity,
         stock: variant?.Stock || 0,
-        itemTotal
+        itemTotal,
+        variantIndex: variantIndex
       };
     });
 
@@ -357,28 +383,38 @@ const checkout = async (req, res) => {
     const validCartItems = [];
     for (const item of cartData.Items) {
       const product = item.product;
-      const variant = product?.Variants?.[0];
+      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      const variant = product?.Variants?.[variantIndex];
       if (!product || !variant || !product._id || !product.Category) {
         console.error(`Invalid cart item: productId=${item.product?._id || 'missing'}`);
         continue;
       }
-      const { offer, salePrice } = await getProductOffer(product);
+      const { offer, salePrice } = await getProductOffer(product, variantIndex);
       const price = salePrice || variant.Price || 0;
       const originalPrice = variant.Price || 0;
       const quantity = item.quantity;
       const itemTotal = price * quantity;
       const itemDiscount = (originalPrice - price) * quantity;
+      
+      let imagePath = 'public/uploads/product-images/default.jpg';
+      if (variant.Image?.length) {
+        imagePath = variant.Image[0];
+      } else if (product.Image?.[0]) {
+        imagePath = product.Image[0];
+      }
+      
       cartItems.push({
         _id: product._id,
         name: product.productName,
-        image: product.Image[0] ? `${product.Image[0]}` : 'public/uploads/product-images/default.jpg',
+        image: imagePath,
         price,
         originalPrice,
         itemDiscount,
         offer,
         quantity,
         itemTotal,
-        stock: variant.Stock || 0
+        stock: variant.Stock || 0,
+        variantIndex: variantIndex
       });
       if (variant.Stock >= item.quantity) {
         subtotal += itemTotal;

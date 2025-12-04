@@ -76,6 +76,10 @@ const OrdersSchema = new Schema({
       },
       itemDiscount:{
         type:Number
+      },
+      variantIndex: {
+        type: Number,
+        default: 0
       }
     }
   ],

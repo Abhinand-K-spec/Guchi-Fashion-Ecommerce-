@@ -88,7 +88,7 @@ const getOrderDetails = async (req, res) => {
       .populate('Items.product')
       .lean();
     if (!order) return res.status(404).render('page-404');
-    
+
     res.render('order-details-manage', { order, activePage: 'order' });
   } catch (err) {
     console.error('Error loading order details:', err);
@@ -116,10 +116,10 @@ const approveReturn = async (req, res) => {
     item.returnStatus = 'Request Approved';
     item.status = 'Returned';
     const tax = (((item.price * item.quantity) * 0.05)) / 100;
-    
+
     const delivery = 40;
-    let refundAmount = item.price * item.quantity + tax + delivery - item.itemDiscount; 
-    
+    let refundAmount = item.price * item.quantity + tax + delivery - item.itemDiscount;
+
 
     if (order.PaymentMethod === 'Online' || order.PaymentMethod === 'COD') {
       let wallet = await Wallet.findOne({ UserId: order.UserId });
@@ -197,8 +197,9 @@ const cancelSingleItem = async (req, res) => {
     item.cancelReason = reason || 'No reason provided';
 
     const product = item.product;
-    if (product && product.Variants?.[0]) {
-      product.Variants[0].Stock += item.quantity;
+    const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+    if (product && product.Variants?.[variantIndex]) {
+      product.Variants[variantIndex].Stock += item.quantity;
       await product.save();
     }
 
@@ -307,8 +308,9 @@ const updateItemStatus = async (req, res) => {
 
     if (status === 'Cancelled') {
       const product = item.product;
-      if (product && product.Variants?.[0]) {
-        product.Variants[0].Stock += item.quantity;
+      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      if (product && product.Variants?.[variantIndex]) {
+        product.Variants[variantIndex].Stock += item.quantity;
         await product.save();
       }
       let refundAmount = item.price * item.quantity;

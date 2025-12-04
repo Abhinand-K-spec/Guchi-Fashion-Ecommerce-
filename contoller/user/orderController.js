@@ -106,7 +106,8 @@ const cancelOrder = async (req, res) => {
     for (const item of order.Items) {
       if (item.status !== 'Cancelled' && item.returnStatus === 'NotRequested') {
         const product = item.product;
-        const variant = product?.Variants?.[0];
+        const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+        const variant = product?.Variants?.[variantIndex];
         if (variant) {
           variant.Stock += item.quantity;
           await product.save();
@@ -184,8 +185,9 @@ const cancelItem = async (req, res) => {
     item.cancelReason = reason;
 
     const product = item.product;
-    if (product && product.Variants?.[0]) {
-      product.Variants[0].Stock += item.quantity;
+    const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+    if (product && product.Variants?.[variantIndex]) {
+      product.Variants[variantIndex].Stock += item.quantity;
       await product.save();
     }
 
@@ -347,7 +349,8 @@ const downloadInvoice = async (req, res) => {
     const tableRows = order.Items.map((item, index) => {
       const product = item.product || {};
       const name = product.productName || 'Unnamed';
-      const price = product.Variants?.[0]?.Price || item.price || 0;
+      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      const price = product.Variants?.[variantIndex]?.Price || item.price || 0;
       const qty = item.quantity || 1;
       const subtotal = price * qty;
       total += subtotal;
@@ -389,13 +392,14 @@ const downloadInvoice = async (req, res) => {
   }
 };
 
-const getProductOffer = async (product) => {
+const getProductOffer = async (product, variantIndex = 0) => {
   try {
     if (!product || !product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
       return { offer: null, salePrice: 0 };
     }
     const now = new Date();
-    const variantPrice = product.Variants[0].Price || 0;
+    const validVariantIndex = Math.max(0, Math.min(variantIndex, product.Variants.length - 1));
+    const variantPrice = product.Variants[validVariantIndex].Price || 0;
     const [productOffer, categoryOffer] = await Promise.all([
       Offers.findOne({
         Product: product._id,
@@ -448,7 +452,8 @@ const placeOrder = async (req, res) => {
     }
 
     const hasOutOfStock = cart.Items.some(item => {
-      const variant = item.product?.Variants?.[0];
+      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      const variant = item.product?.Variants?.[variantIndex];
       return !variant || variant.Stock === 0 || variant.Stock < item.quantity;
     });
     if (hasOutOfStock) {
@@ -461,13 +466,14 @@ const placeOrder = async (req, res) => {
 
     for (const item of cart.Items) {
       const product = item.product;
-      const variant = product?.Variants?.[0];
+      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      const variant = product?.Variants?.[variantIndex];
       if (!product || !variant || !product.IsListed) {
         console.error(`Invalid order item: productId=${item.product?._id || 'missing'}`);
         continue;
       }
 
-      const { offer, salePrice } = await getProductOffer(product);
+      const { offer, salePrice } = await getProductOffer(product, variantIndex);
       const originalPrice = variant.Price || 0;
       const price = salePrice || variant.Price || 0;
       const quantity = item.quantity || 0;
@@ -485,7 +491,8 @@ const placeOrder = async (req, res) => {
         price,
         originalPrice,
         status: 'Pending',
-        itemDiscount
+        itemDiscount,
+        variantIndex: variantIndex
       });
 
       subtotal += itemTotal;
@@ -621,8 +628,9 @@ const placeOrder = async (req, res) => {
 
 
 for (const item of order.Items) {
+  const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
   await Products.findByIdAndUpdate(item.product, {
-    $inc: { "Variants.0.Stock": -item.quantity }
+    $inc: { [`Variants.${variantIndex}.Stock`]: -item.quantity }
   });
 }
 

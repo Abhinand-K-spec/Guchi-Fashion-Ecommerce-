@@ -110,10 +110,12 @@
 
     <% order.Items.forEach(item => {
       const product = item.product || {};
-      const image = product.Image?.[0] ? `${product.Image[0]}` : '/images/default.jpg';
+      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      const variant = product.Variants?.[variantIndex] || {};
+      const image = variant.Image?.[0] ? `${variant.Image[0]}` : (product.Image?.[0] ? `${product.Image[0]}` : '/images/default.jpg');
       const price = item.price || 0; 
       const itemDiscount = item.itemDiscount || 0;
-      const originalPrice = product.Variants?.[0]?.Price || price; %>
+      const originalPrice = variant.Price || item.originalPrice || price; %>
       <div class="product-card row g-3 align-items-center" id="item-<%= item._id %>">
         <div class="col-md-2 text-center">
           <img src="<%= image %>" alt="Product Image" class="img-fluid" />

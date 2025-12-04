@@ -369,6 +369,13 @@
       addToCartBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         const productId = addToCartBtn.dataset.productId;
+        const sizeSelector = document.getElementById('sizeSelector');
+        const selectedSize = sizeSelector ? sizeSelector.value : '';
+        
+        // Find variant index based on selected size
+        const variants = <%- JSON.stringify(product.Variants) %>;
+        const variantIndex = variants.findIndex(v => v.Size && v.Size.trim() === selectedSize.trim());
+        const finalVariantIndex = variantIndex >= 0 ? variantIndex : 0;
 
         // Disable button while request runs
         addToCartBtn.disabled = true;
@@ -377,7 +384,8 @@
         try {
           const response = await fetch(`/addToCart/${productId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ variantIndex: finalVariantIndex })
           });
 
           const result = await response.json();
