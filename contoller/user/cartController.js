@@ -27,7 +27,7 @@ const getProductOffer = async (product, variantIndex = 0) => {
         Category: null,
         StartDate: { $lte: now },
         EndDate: { $gte: now },
-       
+
       }).lean(),
       Offers.findOne({
         Category: product.Category,
@@ -63,7 +63,10 @@ const cart = async (req, res) => {
     const user = await User.findById(userId).lean();
 
     const cartData = await Cart.findOne({ user: userId })
-      .populate('Items.product')
+      .populate({
+        path: 'Items.product',
+        populate: { path: 'Category' }
+      })
       .lean();
 
     if (!cartData || !cartData.Items.length) {
@@ -95,8 +98,8 @@ const cart = async (req, res) => {
 
       const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
       const variant = product.Variants?.[variantIndex];
-      const { offer, salePrice } = await getProductOffer(product, variantIndex); 
-      const price = salePrice || variant?.Price || 0; 
+      const { offer, salePrice } = await getProductOffer(product, variantIndex);
+      const price = salePrice || variant?.Price || 0;
       const quantity = item.quantity;
       const itemTotal = price * quantity;
 
@@ -109,6 +112,9 @@ const cart = async (req, res) => {
         imagePath = raw.startsWith('http') ? raw : `${raw}`;
       }
 
+      const isProductListed = product.IsListed;
+      const isCategoryListed = product.Category && product.Category.isListed;
+
       cartItems.push({
         _id: product._id,
         name: product.productName,
@@ -118,10 +124,11 @@ const cart = async (req, res) => {
         stock: variant?.Stock || 0,
         itemTotal,
         offer: offer ? offer.Discount : null,
-        variantIndex: variantIndex
+        variantIndex: variantIndex,
+        isListed: isProductListed && isCategoryListed
       });
 
-      if (variant?.Stock >= item.quantity) {
+      if (variant?.Stock >= item.quantity && isProductListed && isCategoryListed) {
         totalPrice += itemTotal;
         validItems.push(item);
       }
@@ -202,15 +209,17 @@ const addToCart = async (req, res) => {
     const productId = req.params.productId;
     const { variantIndex = 0 } = req.body;
 
-    if (!userId) return res.redirect('/login');
-
+    if (!req.session.user) {
+        return res.status(401).json({ error: "LOGIN_REQUIRED" });
+    }
+    
     const product = await Products.findById(productId);
     if (!product) return res.redirect('/shop');
-    
+
     // Validate variant index
     const validVariantIndex = Math.max(0, Math.min(variantIndex, (product.Variants?.length || 1) - 1));
     const selectedVariant = product.Variants[validVariantIndex];
-    
+
     if (!selectedVariant || selectedVariant.Stock <= 0) {
       return res.status(400).json({ error: 'This product variant is currently out of stock' });
     }
@@ -222,7 +231,7 @@ const addToCart = async (req, res) => {
     }
 
     // Check if same product with same variant already exists in cart
-    const index = cart.Items.findIndex(item => 
+    const index = cart.Items.findIndex(item =>
       item.product.toString() === productId && item.variantIndex === validVariantIndex
     );
 
@@ -237,7 +246,7 @@ const addToCart = async (req, res) => {
     }
 
     await cart.save();
-    return res.json({success:'Successfully added to cart'})
+    return res.json({ success: 'Successfully added to cart' })
   } catch (err) {
     console.error('Add to cart error:', err);
     res.redirect('/shop');
@@ -255,7 +264,7 @@ const updateCartQuantity = async (req, res) => {
     }
 
     const cart = await Cart.findOne({ user: userId }).populate('Items.product');
-    
+
     if (!cart) {
       return res.json({ success: false, message: 'Cart not found.' });
     }
@@ -270,7 +279,7 @@ const updateCartQuantity = async (req, res) => {
       const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
       const stock = item.product?.Variants?.[variantIndex]?.Stock || 0;
       if (item.quantity > 5) {
-        item.quantity -= 1; 
+        item.quantity -= 1;
         item.quantity = 5;
         return res.json({ success: false, message: 'You cannot add more than 5 items.' });
       }
@@ -364,15 +373,20 @@ const removeFromCart = async (req, res) => {
 
 const checkout = async (req, res) => {
   try {
-    
+
     const userId = req.session.user;
     const user = await User.findById(userId).lean();
     const addresses = await Address.find({ userId }).lean();
-    const cartData = await Cart.findOne({ user: userId }).populate('Items.product').lean();
+    const cartData = await Cart.findOne({ user: userId })
+      .populate({
+        path: 'Items.product',
+        populate: { path: 'Category' }
+      })
+      .lean();
     if (!cartData || !cartData.Items.length) {
       return res.redirect('/cart');
     }
-    
+
 
     const coupons = await Coupon.find({
       StartDate: { $lte: new Date() },
@@ -382,7 +396,7 @@ const checkout = async (req, res) => {
     }).lean();
 
 
-    const wallet = await Wallet.findOne({ UserId:userId }).lean() || { Balance: 0 };
+    const wallet = await Wallet.findOne({ UserId: userId }).lean() || { Balance: 0 };
 
     let subtotal = 0;
     let totalItemDiscount = 0;
@@ -402,14 +416,22 @@ const checkout = async (req, res) => {
       const quantity = item.quantity;
       const itemTotal = price * quantity;
       const itemDiscount = (originalPrice - price) * quantity;
-      
+
       let imagePath = 'public/uploads/product-images/default.jpg';
       if (variant.Image?.length) {
         imagePath = variant.Image[0];
       } else if (product.Image?.[0]) {
         imagePath = product.Image[0];
       }
-      
+
+      const isProductListed = product.IsListed;
+      const isCategoryListed = product.Category && product.Category.isListed;
+
+      if (!isProductListed || !isCategoryListed) {
+        // Skip unlisted products/categories from checkout calculation
+        continue;
+      }
+
       cartItems.push({
         _id: product._id,
         name: product.productName,
@@ -436,8 +458,8 @@ const checkout = async (req, res) => {
       { user: userId },
       { $set: { Items: validCartItems } }
     );
-    const tax = (subtotal * 0.05)/100;
-    const discount = 0; 
+    const tax = (subtotal * 0.05) / 100;
+    const discount = 0;
     const deliveryCharge = 40;
     const finalTotal = subtotal - discount + tax + deliveryCharge;
 
@@ -469,7 +491,7 @@ const checkout = async (req, res) => {
 
 
 
-module.exports = { 
+module.exports = {
   cart,
   getCartData,
   addToCart,

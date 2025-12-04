@@ -96,7 +96,7 @@ const orderDetails = async (req, res) => {
 const cancelOrder = async (req, res) => {
   try {
     const order = await Orders.findById(req.params.id).populate('Items.product');
-    const { reason } = req.body; 
+    const { reason } = req.body;
 
     if (!reason) {
       return res.status(400).json({ success: false, message: 'Cancellation reason is required' });
@@ -112,17 +112,17 @@ const cancelOrder = async (req, res) => {
           variant.Stock += item.quantity;
           await product.save();
           item.status = 'Cancelled';
-          item.cancelReason = reason; 
+          item.cancelReason = reason;
         }
       }
     }
 
 
-      const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
-      const overallDiscount = order.Items.reduce((sum,item)=> sum+=item.itemDiscount,0);
-      const tax = ((totalOrderAmountBeforeDiscount-overallDiscount)*0.5)/100 ;
-      refundAmount = totalOrderAmountBeforeDiscount - overallDiscount + tax + 40 ;
-    
+    const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
+    const overallDiscount = order.Items.reduce((sum, item) => sum += item.itemDiscount, 0);
+    const tax = ((totalOrderAmountBeforeDiscount - overallDiscount) * 0.5) / 100;
+    refundAmount = totalOrderAmountBeforeDiscount - overallDiscount + tax + 40;
+
 
     const allCancelled = order.Items.every(i => i.status === 'Cancelled');
     if (allCancelled) {
@@ -196,7 +196,7 @@ const cancelItem = async (req, res) => {
 
     let refundAmount = item.originalPrice * item.quantity + delivery + tax - item.itemDiscount;
 
-    if (order.PaymentMethod === 'Wallet' || order.PaymentMethod === 'Online' && order.PaymentStatus!== 'Pending') {
+    if (order.PaymentMethod === 'Wallet' || order.PaymentMethod === 'Online' && order.PaymentStatus !== 'Pending') {
       let wallet = await Wallet.findOne({ UserId: order.UserId });
       if (!wallet) {
         wallet = new Wallet({ UserId: order.UserId, Balance: 0, Transaction: [] });
@@ -434,12 +434,17 @@ const getProductOffer = async (product, variantIndex = 0) => {
 const placeOrder = async (req, res) => {
 
   try {
-    
+
     const { selectedAddressId, coupon, paymentMethod } = req.body;
     const userId = req.session.user;
 
 
-    const cart = await Cart.findOne({ user: userId }).populate('Items.product').lean();
+    const cart = await Cart.findOne({ user: userId })
+      .populate({
+        path: 'Items.product',
+        populate: { path: 'Category' }
+      })
+      .lean();
     if (!cart || !cart.Items.length) {
       console.log('Cart empty or not found for user:', userId);
       return res.status(400).json({ success: false, message: 'Cart is empty.' });
@@ -468,9 +473,13 @@ const placeOrder = async (req, res) => {
       const product = item.product;
       const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
       const variant = product?.Variants?.[variantIndex];
-      if (!product || !variant || !product.IsListed) {
-        console.error(`Invalid order item: productId=${item.product?._id || 'missing'}`);
-        continue;
+
+      const isProductListed = product.IsListed;
+      const isCategoryListed = product.Category && product.Category.isListed;
+
+      if (!product || !variant || !isProductListed || !isCategoryListed) {
+        console.error(`Invalid order item: productId=${item.product?._id || 'missing'} - Listed: ${isProductListed}, CategoryListed: ${isCategoryListed}`);
+        return res.status(400).json({ success: false, message: `Product ${product?.productName || 'Unknown'} is currently unavailable.` });
       }
 
       const { offer, salePrice } = await getProductOffer(product, variantIndex);
@@ -539,7 +548,7 @@ const placeOrder = async (req, res) => {
       }
     }
 
-    const discountAmount =  couponDiscount;
+    const discountAmount = couponDiscount;
 
     if (isNaN(discountAmount)) {
       console.error('Invalid discountAmount calculated:', discountAmount);
@@ -548,8 +557,8 @@ const placeOrder = async (req, res) => {
 
 
 
-      console.log("datas are:", subtotal , discountAmount , tax , deliveryCharge)
-    const finalTotal = (subtotal -discountAmount) + tax + deliveryCharge;
+    console.log("datas are:", subtotal, discountAmount, tax, deliveryCharge)
+    const finalTotal = (subtotal - discountAmount) + tax + deliveryCharge;
 
     if (finalTotal < 1) {
 
@@ -588,7 +597,7 @@ const placeOrder = async (req, res) => {
 
 
     if (paymentMethod === 'Wallet') {
-      let wallet = await Wallet.findOne({ UserId:userId });
+      let wallet = await Wallet.findOne({ UserId: userId });
       if (!wallet) {
         wallet = new Wallet({ userId, Balance: 0, Transaction: [] });
         await wallet.save();
@@ -601,7 +610,7 @@ const placeOrder = async (req, res) => {
       wallet.Balance -= finalTotal;
       wallet.Transaction.push({
         TransactionAmount: -finalTotal,
-        TransactionType:'debit',
+        TransactionType: 'debit',
         description: `Order payment for order ID: ${order.OrderId}`,
         date: new Date()
       });
@@ -627,21 +636,21 @@ const placeOrder = async (req, res) => {
     }
 
 
-for (const item of order.Items) {
-  const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
-  await Products.findByIdAndUpdate(item.product, {
-    $inc: { [`Variants.${variantIndex}.Stock`]: -item.quantity }
-  });
-}
+    for (const item of order.Items) {
+      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      await Products.findByIdAndUpdate(item.product, {
+        $inc: { [`Variants.${variantIndex}.Stock`]: -item.quantity }
+      });
+    }
 
 
-await Cart.findOneAndUpdate({ user: userId }, { Items: [] });
+    await Cart.findOneAndUpdate({ user: userId }, { Items: [] });
 
-return res.status(200).json({
-  success: true,
-  orderId: order._id,
-  message: "Order placed successfully."
-});
+    return res.status(200).json({
+      success: true,
+      orderId: order._id,
+      message: "Order placed successfully."
+    });
 
   } catch (err) {
     console.error('Place order error:', err);

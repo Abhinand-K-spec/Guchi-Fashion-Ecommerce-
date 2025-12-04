@@ -392,7 +392,12 @@
 
           if (response.ok && result.success) {
             showNotification('success', result.success || result.message || 'Product added to cart successfully!');
-          } else {
+          }if (result.error === "LOGIN_REQUIRED") {
+            window.location.href = '/login';
+            return;
+          }
+
+           else {
             showNotification('error', result.message || result.error  || 'Failed to add product to cart.');
           }
         } catch (err) {

@@ -76,7 +76,7 @@ router.get(
 
 router.get('/product-details/:id', productController.getProductDetails);
 
-router.post('/addToCart/:productId', userAuth, cartController.addToCart);
+router.post('/addToCart/:productId', cartController.addToCart);
 router.patch('/cart/update-quantity/:id', userAuth, cartController.updateCartQuantity);
 router.delete('/cart/remove/:id', userAuth, cartController.removeFromCart);
 router.get('/cart/data', cartController.getCartData);
