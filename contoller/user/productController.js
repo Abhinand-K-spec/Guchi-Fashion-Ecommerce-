@@ -113,6 +113,8 @@ const getShopPage = async (req, res) => {
     const search = req.query.search?.trim() || '';
     const sort = req.query.sort || '';
     const categoryId = req.query.category;
+    const minPrice = req.query.minPrice;
+    const maxPrice = req.query.maxPrice;
     const userId = req.session.user;
 
     const user = userId ? await User.findById(userId).lean() : null;
@@ -128,6 +130,14 @@ const getShopPage = async (req, res) => {
 
     if (categoryId) {
       matchStage.Category = new mongoose.Types.ObjectId(categoryId);
+    }
+
+    if (minPrice || maxPrice) {
+      matchStage['Variants.0.Price'] = {};
+      const min = parseFloat(minPrice);
+      const max = parseFloat(maxPrice);
+      if (!isNaN(min)) matchStage['Variants.0.Price'].$gte = min;
+      if (!isNaN(max)) matchStage['Variants.0.Price'].$lte = max;
     }
 
 
@@ -210,6 +220,8 @@ const getShopPage = async (req, res) => {
       categoryId,
       search,
       sort,
+      minPrice,
+      maxPrice,
       user,
       activePage: 'shopnow'
     });
