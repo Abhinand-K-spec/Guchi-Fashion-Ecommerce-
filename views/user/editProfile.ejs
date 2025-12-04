@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,9 +14,11 @@
       margin: 0;
       padding: 0;
     }
+
     a {
       text-decoration: none;
     }
+
     .container-wrapper {
       padding-top: 100px;
       padding-bottom: 60px;
@@ -23,6 +26,7 @@
       justify-content: center;
       align-items: center;
     }
+
     .profile-details {
       background-color: rgba(255, 255, 255, 0.95);
       border-radius: 15px;
@@ -32,9 +36,11 @@
       width: 100%;
       max-width: 1000px;
     }
+
     .left-box {
       text-align: center;
     }
+
     .profile-pic-wrapper {
       margin: 0 auto;
       width: 140px;
@@ -43,463 +49,492 @@
       border: 5px solid #fff;
       overflow: hidden;
       background-color: #fff;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
+
     .profile-pic {
       width: 100%;
       height: 100%;
       object-fit: cover;
       border-radius: 50%;
     }
+
     .edit-icon {
       cursor: pointer;
       font-size: 0.9rem;
       color: #007bff;
     }
+
     .edit-form {
       display: none;
       margin-top: 10px;
     }
+
     .right-panel {
       background: #fff;
       padding: 25px;
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
+
     @media (max-width: 576px) {
       .profile-details {
         padding: 70px 15px 30px;
       }
+
       .right-panel {
         padding: 10px;
       }
     }
+
     .address-card {
       border-radius: 12px;
       transition: 0.2s;
     }
+
     .address-card:hover {
       transform: translateY(-3px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
   </style>
 </head>
+
 <body>
   <%- include('../partials/user/header') %>
 
-  <div class="container container-wrapper">
-    <div class="profile-details">
-      <div class="row">
-        <!-- Left Side -->
-        <div class="col-md-4 left-box mb-4">
-          <div class="profile-pic-wrapper mb-2">
-            <img src="<%= user.profileImage || '/default-profile.jpeg' %>" alt="Profile" class="profile-pic" />
-          </div>
-          <button class="btn btn-sm btn-outline-primary mb-3" data-bs-toggle="modal" data-bs-target="#profileImageModal">Edit Profile Picture</button>
-
-          <!-- Username -->
-          <h5 id="usernameDisplay">
-            <%= user.name %> <i class="fas fa-pen edit-icon ms-2" id="editUsernameIcon"></i>
-          </h5>
-          <form id="editUsernameForm" class="edit-form">
-            <input type="text" class="form-control form-control-sm mt-2" name="username" value="<%= user.name %>" />
-            <div class="d-flex justify-content-center gap-2 mt-2">
-              <button type="submit" class="btn btn-sm btn-primary">Save</button>
-              <button type="button" class="btn btn-sm btn-secondary" id="cancelUsernameEdit">Cancel</button>
+    <div class="container container-wrapper">
+      <div class="profile-details">
+        <div class="row">
+          <!-- Left Side -->
+          <div class="col-md-4 left-box mb-4">
+            <div class="profile-pic-wrapper mb-2">
+              <img src="<%= user.profileImage || '/default-profile.jpeg' %>" alt="Profile" class="profile-pic" />
             </div>
-          </form>
+            <button class="btn btn-sm btn-outline-primary mb-3" data-bs-toggle="modal"
+              data-bs-target="#profileImageModal">Edit Profile Picture</button>
 
-          <!-- Email -->
-          <p class="text-muted mt-3 mb-0">
-            <%= user.email %> 
-            <i class="fas fa-pen edit-icon ms-2" data-bs-toggle="modal" data-bs-target="#editEmailModal"></i>
-          </p>
-          <!-- Change Password Button -->
-          <a href="/change-password" class="btn btn-sm btn-outline-primary mt-3">Change Password</a>
-        </div>
+            <!-- Username -->
+            <h5 id="usernameDisplay">
+              <%= user.name %> <i class="fas fa-pen edit-icon ms-2" id="editUsernameIcon"></i>
+            </h5>
+            <form id="editUsernameForm" class="edit-form">
+              <input type="text" class="form-control form-control-sm mt-2" name="username" value="<%= user.name %>" />
+              <div class="d-flex justify-content-center gap-2 mt-2">
+                <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                <button type="button" class="btn btn-sm btn-secondary" id="cancelUsernameEdit">Cancel</button>
+              </div>
+            </form>
 
-        <!-- Right Side -->
-        <div class="col-md-8">
-          <div class="right-panel">
-            <h5 class="mb-4 text-center">Addresses</h5>
+            <!-- Email -->
+            <p class="text-muted mt-3 mb-0">
+              <%= user.email %>
+                <i class="fas fa-pen edit-icon ms-2" data-bs-toggle="modal" data-bs-target="#editEmailModal"></i>
+            </p>
+            <!-- Change Password Button -->
+            <a href="/change-password" class="btn btn-sm btn-outline-primary mt-3">Change Password</a>
+          </div>
 
-            <div class="row g-3" style="max-height: 450px; overflow-y: auto; padding-right: 5px;">
-            
-              <% if (user.addresses && user.addresses.length > 0) { %>
-                <% user.addresses.forEach(address => { %>
-                  <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card shadow-sm border-0 address-card">
-                      <div class="card-body">
+          <!-- Right Side -->
+          <div class="col-md-8">
+            <div class="right-panel">
+              <h5 class="mb-4 text-center">Addresses</h5>
 
-                        <% if (address.isDefault) { %>
-                          <span class="badge bg-success mb-2">Default</span>
-                        <% } %>
+              <div class="row g-3" style="max-height: 450px; overflow-y: auto; padding-right: 5px;">
 
-                        <h6 class="fw-bold mb-1"><%= address.name %></h6>
-                        <p class="mb-1">
-                          <i class="fa fa-phone me-1"></i> <%= address.phone %>
-                        </p>
-                        <p class="mb-3 text-muted small">
-                          <%= address.town %>, 
-                          <%= address.city %>, 
-                          <%= address.state %> - <%= address.postCode %>
-                        </p>
+                <% if (user.addresses && user.addresses.length> 0) { %>
+                  <% user.addresses.forEach(address=> { %>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <div class="card shadow-sm border-0 address-card">
+                        <div class="card-body">
 
-                        <div class="d-flex justify-content-between mt-3">
-                          <a href="/edit-address/<%= address._id %>" class="btn btn-sm btn-outline-primary w-50 me-2">
-                            Edit
-                          </a>
-                          <button class="btn btn-sm btn-outline-danger w-50 deleteBtn" 
-                            data-id="<%= address._id %>">
-                            Delete
-                          </button>
+                          <% if (address.isDefault) { %>
+                            <span class="badge bg-success mb-2">Default</span>
+                            <% } %>
+
+                              <h6 class="fw-bold mb-1">
+                                <%= address.name %>
+                              </h6>
+                              <p class="mb-1">
+                                <i class="fa fa-phone me-1"></i>
+                                <%= address.phone %>
+                              </p>
+                              <p class="mb-3 text-muted small">
+                                <%= address.town %>,
+                                  <%= address.city %>,
+                                    <%= address.state %> - <%= address.postCode %>
+                              </p>
+
+                              <div class="d-flex justify-content-between mt-3">
+                                <a href="/edit-address/<%= address._id %>"
+                                  class="btn btn-sm btn-outline-primary w-50 me-2">
+                                  Edit
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger w-50 deleteBtn"
+                                  data-id="<%= address._id %>">
+                                  Delete
+                                </button>
+                              </div>
+
+                              <% if (!address.isDefault) { %>
+                                <button class="btn btn-sm btn-warning w-100 mt-2 set-default-btn"
+                                  data-id="<%= address._id %>">
+                                  Set as Default
+                                </button>
+                                <% } %>
+
                         </div>
-
-                        <% if (!address.isDefault) { %>
-                          <button class="btn btn-sm btn-warning w-100 mt-2 set-default-btn"
-                            data-id="<%= address._id %>">
-                            Set as Default
-                          </button>
-                        <% } %>
-
                       </div>
                     </div>
-                  </div>
-                <% }) %>
-              <% } else { %>
-                <p class="text-muted text-center">No address added.</p>
-              <% } %>
+                    <% }) %>
+                      <% } else { %>
+                        <p class="text-muted text-center">No address added.</p>
+                        <% } %>
+
+              </div>
+
+              <div class="text-end mt-3">
+                <a href="/add-address" class="btn btn-primary">Add Address</a>
+              </div>
 
             </div>
-
-            <div class="text-end mt-3">
-              <a href="/add-address" class="btn btn-primary">Add Address</a>
+            <div class="text-end fluid">
+              <form action="/saveProfile" method="get">
+                <button class="btn btn-success">Update Profile</button>
+              </form>
             </div>
-
-          </div>
-          <div class="text-end fluid">
-            <form action="/saveProfile" method="get">
-              <button class="btn btn-success">Update Profile</button>
-            </form>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-<!-- Delete Confirmation MODAL -->
-<div class="modal fade" id="deleteAddressModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Delete Address</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        Are you sure you want to delete this address?
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <a id="deleteAddressConfirmBtn" href="#" class="btn btn-danger">Delete</a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Toast Container -->
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
-  <div id="toastBox" class="toast text-bg-primary border-0">
-    <div class="d-flex">
-      <div id="toastMessage" class="toast-body"></div>
-      <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-    </div>
-  </div>
-</div>
-
-  <!-- Edit Profile Picture Modal -->
-  <div class="modal fade" id="profileImageModal" tabindex="-1" aria-labelledby="profileImageModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <form action="/upload-profile-image" method="POST" enctype="multipart/form-data">
+    <!-- Delete Confirmation MODAL -->
+    <div class="modal fade" id="deleteAddressModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Upload Profile Picture</h5>
+            <h5 class="modal-title">Delete Address</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to delete this address?
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <a id="deleteAddressConfirmBtn" href="#" class="btn btn-danger">Delete</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+      <div id="toastBox" class="toast text-bg-primary border-0">
+        <div class="d-flex">
+          <div id="toastMessage" class="toast-body"></div>
+          <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Profile Picture Modal -->
+    <div class="modal fade" id="profileImageModal" tabindex="-1" aria-labelledby="profileImageModalLabel"
+      aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form action="/upload-profile-image" method="POST" enctype="multipart/form-data">
+            <div class="modal-header">
+              <h5 class="modal-title">Upload Profile Picture</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <input type="file" name="profileImage" class="form-control" accept="image/*" required>
+            </div>
+            <div class="modal-footer">
+              <button id="uploadButton" type="submit" class="btn btn-primary">Upload</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Email Modal -->
+    <div class="modal fade" id="editEmailModal" tabindex="-1" aria-labelledby="editEmailModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <form action="/update-email-request-otp" method="POST" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Email</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
-            <input type="file" name="profileImage" class="form-control" accept="image/*" required>
+            <div class="mb-3">
+              <label for="email">New Email</label>
+              <input type="email" class="form-control" name="email" value="<%= user.email %>" />
+            </div>
           </div>
           <div class="modal-footer">
-            <button id="uploadButton" type="submit" class="btn btn-primary">Upload</button>
+            <button type="submit" class="btn btn-primary">Send OTP</button>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           </div>
         </form>
       </div>
     </div>
-  </div>
 
-  <!-- Edit Email Modal -->
-  <div class="modal fade" id="editEmailModal" tabindex="-1" aria-labelledby="editEmailModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <form action="/update-email-request-otp" method="POST" class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Edit Email</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label for="email">New Email</label>
-            <input type="email" class="form-control" name="email" value="<%= user.email %>" />
-          </div> 
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Send OTP</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
+    <%- include('../partials/user/footer') %>
 
-  <%- include('../partials/user/footer') %>
+      <script>
+        // DOM refs
+        const editBtn = document.getElementById('editUsernameIcon');
+        const cancelBtn = document.getElementById('cancelUsernameEdit');
+        const form = document.getElementById('editUsernameForm');
+        const display = document.getElementById('usernameDisplay');
+        const uploadbtn = document.getElementById('uploadButton');
 
-  <script>
-    // DOM refs
-    const editBtn = document.getElementById('editUsernameIcon');
-    const cancelBtn = document.getElementById('cancelUsernameEdit');
-    const form = document.getElementById('editUsernameForm');
-    const display = document.getElementById('usernameDisplay');
-    const uploadbtn = document.getElementById('uploadButton');
-  
-    // Modal references
-    const deleteModalEl = document.getElementById('deleteAddressModal');
-    const deleteModal = new bootstrap.Modal(deleteModalEl);
-    const deleteConfirmBtn = document.getElementById('deleteAddressConfirmBtn');
-    const toastEl = document.getElementById("toastBox");
-  
-    // Utility: show toast (message, type) - type not used for style here but kept for extension
-    function showToast(msg) {
-      document.getElementById("toastMessage").innerText = msg;
-      new bootstrap.Toast(toastEl).show();
-    }
+        // Modal references
+        const deleteModalEl = document.getElementById('deleteAddressModal');
+        const deleteModal = new bootstrap.Modal(deleteModalEl);
+        const deleteConfirmBtn = document.getElementById('deleteAddressConfirmBtn');
+        const toastEl = document.getElementById("toastBox");
 
-    uploadbtn.addEventListener('click', (e) => {
-  e.preventDefault();      
-  uploadbtn.classList.add('d-none');
+        // Utility: show toast (message, type) - type not used for style here but kept for extension
+        function showToast(msg) {
+          document.getElementById("toastMessage").innerText = msg;
+          new bootstrap.Toast(toastEl).show();
+        }
 
+        uploadbtn.addEventListener('click', (e) => {
+          e.preventDefault();
 
-  setTimeout(() => {
-    uploadbtn.closest('form').submit();
-  }, 50);
-});
+          // Show loading state
+          uploadbtn.disabled = true;
+          uploadbtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';
 
-  
-
-    editBtn?.addEventListener('click', () => {
-      form.style.display = 'block';
-      display.style.display = 'none';
-    });
-  
-    cancelBtn?.addEventListener('click', () => {
-      form.style.display = 'none';
-      display.style.display = 'block';
-    });
-  
-    // Save username
-    form?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const input = form.querySelector('input[name="username"]');
-      const username = (input?.value || '').trim();
-      if (!username) {
-        showToast('Please enter a username');
-        return;
-      }
-  
-      try {
-        const res = await fetch('/profile/update-username', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username })
+          setTimeout(() => {
+            uploadbtn.closest('form').submit();
+          }, 50);
         });
-        const data = await res.json();
-  
-        if (data.message) {
-          showToast(data.message);
-          // update display, reattach listener
-          display.innerHTML = `${username} <i class="fas fa-pen edit-icon ms-2" id="editUsernameIcon"></i>`;
+
+
+
+        editBtn?.addEventListener('click', () => {
+          form.style.display = 'block';
+          display.style.display = 'none';
+        });
+
+        cancelBtn?.addEventListener('click', () => {
           form.style.display = 'none';
           display.style.display = 'block';
-          setTimeout(() => {
-            const newEditBtn = document.getElementById("editUsernameIcon");
-            newEditBtn?.addEventListener("click", () => {
-              form.style.display = "block";
-              display.style.display = "none";
+        });
+
+        // Save username
+        form?.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const input = form.querySelector('input[name="username"]');
+          const username = (input?.value || '').trim();
+          const saveBtn = form.querySelector('button[type="submit"]');
+
+          if (!username) {
+            showToast('Please enter a username');
+            return;
+          }
+
+          // Show loading state
+          const originalText = saveBtn.textContent;
+          saveBtn.disabled = true;
+          saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+
+          try {
+            const res = await fetch('/profile/update-username', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username })
             });
-          }, 50);
-        } else {
-          showToast(data.error || 'Something went wrong');
-        }
-      } catch (err) {
-        console.error('Username update error', err);
-        showToast('Error updating username');
-      }
-    });
-  
-    // ============================
-    // DELETE ADDRESS (modal)
-    // ============================
-    let deleteId = null;
-  
-    // open modal from each delete button
-    document.querySelectorAll('.deleteBtn').forEach(btn => {
-      btn.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        deleteId = btn.dataset.id;
-        // set confirm button href as fallback (keeps compatibility)
-        deleteConfirmBtn.href = `/delete-address/${deleteId}`;
-        // show modal
-        deleteModal.show();
-      });
-    });
-  
-    // Cancel inside modal (explicit)
-    // Add a specific cancel button reference to be safe (close modal)
-    const modalCancelBtn = deleteModalEl.querySelector('.modal-footer .btn-secondary');
-    modalCancelBtn?.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      deleteId = null;
-      deleteModal.hide();
-    });
-  
-    // Confirm delete: try fetch DELETE, on success remove card, otherwise fallback to href navigation
-    deleteConfirmBtn?.addEventListener('click', async function (ev) {
-      ev.preventDefault();
-      if (!deleteId) {
-        deleteModal.hide();
-        return;
-      }
-  
-      const confirmBtn = this;
-      confirmBtn.classList.add('disabled');
-      confirmBtn.innerText = 'Deleting...';
-  
-      try {
-        // Try to call DELETE endpoint. If your server expects POST/GET, the fallback below will handle it.
-        const res = await fetch(`/delete-address/${deleteId}`, { method: 'DELETE' });
-  
-        if (res.ok) {
-          // Remove the card from DOM
-          const card = document.querySelector(`.deleteBtn[data-id="${deleteId}"]`)?.closest('.col-12, .col-md-6, .col-lg-4');
-          if (card) card.remove();
-          showToast('Address deleted');
+            const data = await res.json();
+
+            if (data.message) {
+              showToast(data.message);
+              // update display, reattach listener
+              display.innerHTML = `${username} <i class="fas fa-pen edit-icon ms-2" id="editUsernameIcon"></i>`;
+              form.style.display = 'none';
+              display.style.display = 'block';
+              setTimeout(() => {
+                const newEditBtn = document.getElementById("editUsernameIcon");
+                newEditBtn?.addEventListener("click", () => {
+                  form.style.display = "block";
+                  display.style.display = "none";
+                });
+              }, 50);
+            } else {
+              showToast(data.error || 'Something went wrong');
+            }
+          } catch (err) {
+            console.error('Username update error', err);
+            showToast('Error updating username');
+          } finally {
+            // Reset button state
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalText;
+          }
+        });
+
+        // ============================
+        // DELETE ADDRESS (modal)
+        // ============================
+        let deleteId = null;
+
+        // open modal from each delete button
+        document.querySelectorAll('.deleteBtn').forEach(btn => {
+          btn.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            deleteId = btn.dataset.id;
+            // set confirm button href as fallback (keeps compatibility)
+            deleteConfirmBtn.href = `/delete-address/${deleteId}`;
+            // show modal
+            deleteModal.show();
+          });
+        });
+
+        // Cancel inside modal (explicit)
+        // Add a specific cancel button reference to be safe (close modal)
+        const modalCancelBtn = deleteModalEl.querySelector('.modal-footer .btn-secondary');
+        modalCancelBtn?.addEventListener('click', (ev) => {
+          ev.preventDefault();
           deleteId = null;
           deleteModal.hide();
-        } else {
-          // fallback to server navigation (some servers use GET for delete)
-          window.location.href = `/delete-address/${deleteId}`;
-        }
-      } catch (err) {
-        console.error('Delete address error:', err);
-        // fallback to navigation
-        window.location.href = `/delete-address/${deleteId}`;
-      } finally {
-        confirmBtn.classList.remove('disabled');
-        confirmBtn.innerText = 'Delete';
-      }
-    });
-  
-    // ============================
-    // SET DEFAULT ADDRESS (instant UI feedback)
-    // ============================
-    // helper to remove any existing default badges/buttons and badges in DOM
-    function clearDefaultBadges() {
-      document.querySelectorAll('.address-card').forEach(card => {
-        // remove badge element if exists
-        const badge = card.querySelector('.badge.bg-success');
-        if (badge) badge.remove();
-  
-        // restore set-default buttons (if a button was hidden)
-        const setBtn = card.querySelector('.set-default-btn');
-        if (setBtn) {
-          setBtn.disabled = false;
-          setBtn.innerText = 'Set as Default';
-          setBtn.style.display = '';
-        }
-        // remove highlight class
-        card.classList.remove('default-highlight');
-      });
-    }
-  
-    document.querySelectorAll('.set-default-btn').forEach(btn => {
-      btn.addEventListener('click', async (ev) => {
-        ev.preventDefault();
-        const addressId = btn.dataset.id;
-        if (!addressId) return;
-  
-        // immediate UI feedback
-        btn.innerText = 'Setting...';
-        btn.disabled = true;
-  
-        try {
-          const res = await fetch('/set-default-address', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ addressId })
-          });
-  
-          const data = await res.json();
-  
-          if (data.success) {
-            showToast('Default address updated');
-  
-            // Update DOM instantly:
-            clearDefaultBadges();
-  
-            // add badge to the card
-            const card = btn.closest('.card');
-            if (card) {
-              // add badge to top-left of card body
-              const badge = document.createElement('span');
-              badge.className = 'badge bg-success mb-2';
-              badge.innerText = 'Default';
-  
-              const cardBody = card.querySelector('.card-body');
-              if (cardBody) {
-                // insert at beginning
-                cardBody.insertBefore(badge, cardBody.firstChild);
-              }
-  
-              // highlight card and hide this button
-              card.classList.add('default-highlight');
-              btn.style.display = 'none';
-            }
-  
-            // small delay then reload so server-state matches UI
-            setTimeout(() => location.reload(), 800);
-          } else {
-            showToast(data.message || 'Failed to set default address');
-            btn.innerText = 'Set as Default';
-            btn.disabled = false;
+        });
+
+        // Confirm delete: try fetch DELETE, on success remove card, otherwise fallback to href navigation
+        deleteConfirmBtn?.addEventListener('click', async function (ev) {
+          ev.preventDefault();
+          if (!deleteId) {
+            deleteModal.hide();
+            return;
           }
-        } catch (err) {
-          console.error('Set default address error', err);
-          showToast('Error setting default address');
-          btn.innerText = 'Set as Default';
-          btn.disabled = false;
+
+          const confirmBtn = this;
+          confirmBtn.classList.add('disabled');
+          confirmBtn.innerText = 'Deleting...';
+
+          try {
+            // Try to call DELETE endpoint. If your server expects POST/GET, the fallback below will handle it.
+            const res = await fetch(`/delete-address/${deleteId}`, { method: 'DELETE' });
+
+            if (res.ok) {
+              // Remove the card from DOM
+              const card = document.querySelector(`.deleteBtn[data-id="${deleteId}"]`)?.closest('.col-12, .col-md-6, .col-lg-4');
+              if (card) card.remove();
+              showToast('Address deleted');
+              deleteId = null;
+              deleteModal.hide();
+            } else {
+              // fallback to server navigation (some servers use GET for delete)
+              window.location.href = `/delete-address/${deleteId}`;
+            }
+          } catch (err) {
+            console.error('Delete address error:', err);
+            // fallback to navigation
+            window.location.href = `/delete-address/${deleteId}`;
+          } finally {
+            confirmBtn.classList.remove('disabled');
+            confirmBtn.innerText = 'Delete';
+          }
+        });
+
+        // ============================
+        // SET DEFAULT ADDRESS (instant UI feedback)
+        // ============================
+        // helper to remove any existing default badges/buttons and badges in DOM
+        function clearDefaultBadges() {
+          document.querySelectorAll('.address-card').forEach(card => {
+            // remove badge element if exists
+            const badge = card.querySelector('.badge.bg-success');
+            if (badge) badge.remove();
+
+            // restore set-default buttons (if a button was hidden)
+            const setBtn = card.querySelector('.set-default-btn');
+            if (setBtn) {
+              setBtn.disabled = false;
+              setBtn.innerText = 'Set as Default';
+              setBtn.style.display = '';
+            }
+            // remove highlight class
+            card.classList.remove('default-highlight');
+          });
         }
-      });
-    });
-  
-    // Optional: add quick keyboard escape to close delete modal (keeps UX consistent)
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        deleteId = null;
-        if (deleteModalEl) {
-          const inst = bootstrap.Modal.getInstance(deleteModalEl);
-          if (inst) inst.hide();
-        }
-      }
-    });
-  </script>
-  
+
+        document.querySelectorAll('.set-default-btn').forEach(btn => {
+          btn.addEventListener('click', async (ev) => {
+            ev.preventDefault();
+            const addressId = btn.dataset.id;
+            if (!addressId) return;
+
+            // immediate UI feedback
+            btn.innerText = 'Setting...';
+            btn.disabled = true;
+
+            try {
+              const res = await fetch('/set-default-address', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ addressId })
+              });
+
+              const data = await res.json();
+
+              if (data.success) {
+                showToast('Default address updated');
+
+                // Update DOM instantly:
+                clearDefaultBadges();
+
+                // add badge to the card
+                const card = btn.closest('.card');
+                if (card) {
+                  // add badge to top-left of card body
+                  const badge = document.createElement('span');
+                  badge.className = 'badge bg-success mb-2';
+                  badge.innerText = 'Default';
+
+                  const cardBody = card.querySelector('.card-body');
+                  if (cardBody) {
+                    // insert at beginning
+                    cardBody.insertBefore(badge, cardBody.firstChild);
+                  }
+
+                  // highlight card and hide this button
+                  card.classList.add('default-highlight');
+                  btn.style.display = 'none';
+                }
+
+                // small delay then reload so server-state matches UI
+                setTimeout(() => location.reload(), 800);
+              } else {
+                showToast(data.message || 'Failed to set default address');
+                btn.innerText = 'Set as Default';
+                btn.disabled = false;
+              }
+            } catch (err) {
+              console.error('Set default address error', err);
+              showToast('Error setting default address');
+              btn.innerText = 'Set as Default';
+              btn.disabled = false;
+            }
+          });
+        });
+
+        // Optional: add quick keyboard escape to close delete modal (keeps UX consistent)
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            deleteId = null;
+            if (deleteModalEl) {
+              const inst = bootstrap.Modal.getInstance(deleteModalEl);
+              if (inst) inst.hide();
+            }
+          }
+        });
+      </script>
+
 
 </body>
+
 </html>

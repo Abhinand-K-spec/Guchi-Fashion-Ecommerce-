@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Edit Product</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
   <style>
@@ -14,8 +15,7 @@
     .container {
       max-width: 1000px;
       background: #000;
-      padding: 30prgb(105, 102, 102)
-      border-radius: 8px;
+      padding: 30prgb(105, 102, 102) border-radius: 8px;
       box-shadow: 0 14px 12px rgba(0, 0, 0, 0.1);
     }
 
@@ -42,7 +42,9 @@
       font-weight: 600;
     }
 
-    input, select, textarea {
+    input,
+    select,
+    textarea {
       width: 100%;
       padding: 10px;
       border-radius: 5px;
@@ -96,7 +98,7 @@
       width: 100%;
       height: 100%;
       overflow: auto;
-      background-color: rgba(0,0,0,0.6);
+      background-color: rgba(0, 0, 0, 0.6);
     }
 
     .modal-content {
@@ -127,170 +129,191 @@
       max-width: 100%;
       max-height: 400px;
     }
-    .form-container-pd{
+
+    .form-container-pd {
       padding-top: 10vh;
     }
   </style>
 </head>
 <%- include("../partials/admin/header") %>
-<body>
+
+  <body>
 
 
-<div class="container">
-  <div class="form-container-pd">
-  <form method="POST" action="/admin/updateProduct/<%= product._id %>" enctype="multipart/form-data">
-    <div class="form-grid">
-      <div class="form-group">
-        <label class="text-white">Product Name</label>
-        <input class="form-control bg-dark text-white border-secondary" type="text" name="productName" value="<%= product.productName %>">
-      </div>
+    <div class="container">
+      <div class="form-container-pd">
+        <form method="POST" action="/admin/updateProduct/<%= product._id %>" enctype="multipart/form-data">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="text-white">Product Name</label>
+              <input class="form-control bg-dark text-white border-secondary" type="text" name="productName"
+                value="<%= product.productName %>">
+            </div>
 
-      <div class="form-group">
-        <label class="text-white">Category</label>
-        <select class="form-select bg-dark text-white border-secondary rounded-3 shadow-sm" name="category">
-          <% categories.forEach(cat => { %>
-            <option value="<%= cat.categoryName %>" <%= cat._id.toString() === product.Category._id.toString() ? 'selected' : '' %>><%= cat.categoryName %></option>
-          <% }) %>
-        </select>
-      </div>
+            <div class="form-group">
+              <label class="text-white">Category</label>
+              <select class="form-select bg-dark text-white border-secondary rounded-3 shadow-sm" name="category">
+                <% categories.forEach(cat=> { %>
+                  <option value="<%= cat.categoryName %>" <%=cat._id.toString()===product.Category._id.toString()
+                    ? 'selected' : '' %>><%= cat.categoryName %>
+                  </option>
+                  <% }) %>
+              </select>
+            </div>
 
-      <!-- Size Dropdown -->
-      <div class="form-group">
-        <label class="text-white">Size</label>
-        <select name="size" class="form-select bg-dark text-white border-secondary" id="sizeSelect" class="form-control" onchange="updateVariantFields()">
-          <% if (product.Variants && product.Variants.length > 0) { %>
-            <% product.Variants.forEach(variant => { %>
-              <option 
-                value="<%= variant.Size %>" 
-                <%= variant.Size === (product.selectedVariant?.Size || product.Variants[0].Size) ? 'selected' : '' %>>
-                <%= variant.Size %>
-              </option>
-            <% }) %>
-          <% } else { %>
-            <option disabled>No sizes available</option>
-          <% } %>
-        </select>
-      </div>
+            <!-- Size Dropdown -->
+            <div class="form-group">
+              <label class="text-white">Size</label>
+              <select name="size" class="form-select bg-dark text-white border-secondary" id="sizeSelect"
+                class="form-control" onchange="updateVariantFields()">
+                <% if (product.Variants && product.Variants.length> 0) { %>
+                  <% product.Variants.forEach(variant=> { %>
+                    <option value="<%= variant.Size %>" <%=variant.Size===(product.selectedVariant?.Size ||
+                      product.Variants[0].Size) ? 'selected' : '' %>>
+                      <%= variant.Size %>
+                    </option>
+                    <% }) %>
+                      <% } else { %>
+                        <option disabled>No sizes available</option>
+                        <% } %>
+              </select>
+            </div>
 
-      <!-- Price -->
-      <div class="form-group">
-        <label class="text-white">Price</label>
-        <input class="form-control bg-dark text-white border-secondary" type="number" id="priceInput" name="price" value="<%= product.selectedVariant?.Price || product.Variants[0]?.Price %>">
-      </div>
+            <!-- Price -->
+            <div class="form-group">
+              <label class="text-white">Price</label>
+              <input class="form-control bg-dark text-white border-secondary" type="number" id="priceInput" name="price"
+                value="<%= product.selectedVariant?.Price || product.Variants[0]?.Price %>">
+            </div>
 
-      <!-- Stock -->
-      <div class="form-group">
-        <label class="text-white">Quantity</label>
-        <input class="form-control bg-dark text-white border-secondary" type="number" id="stockInput" name="stock" value="<%= product.selectedVariant?.Stock || product.Variants[0]?.Stock %>" min="0">
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label class="text-white" >Description</label>
-      <textarea name="description" rows="4" class="form-control bg-dark text-white border-secondary" required><%= product.Description %></textarea>
-    </div>
-
-    <div class="form-group">
-      <label class="text-white">Edit Product Images</label>
-      <div class="image-group">
-        <% for (let i = 0; i < product.Image.length; i++) { %>
-          <div class="image-box">
-            <img id="preview<%= i %>" src="<%= product.Image[i] %>" />
-            <input type="file" id="newImage<%- i %>" name="newImage<%- i %>" accept="image/*" onchange="handleFileChange(event, <%- i %>)" />
-            <input type="hidden" name="croppedImage<%= i + 1 %>" id="croppedImage<%= i + 1 %>">
+            <!-- Stock -->
+            <div class="form-group">
+              <label class="text-white">Quantity</label>
+              <input class="form-control bg-dark text-white border-secondary" type="number" id="stockInput" name="stock"
+                value="<%= product.selectedVariant?.Stock || product.Variants[0]?.Stock %>" min="0">
+            </div>
           </div>
-        <% } %>
+
+          <div class="form-group">
+            <label class="text-white">Description</label>
+            <textarea name="description" rows="4" class="form-control bg-dark text-white border-secondary"
+              required><%= product.Description %></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="text-white">Edit Product Images</label>
+            <div class="image-group">
+              <% for (let i=0; i < product.Image.length; i++) { %>
+                <div class="image-box">
+                  <img id="preview<%= i %>" src="<%= product.Image[i] %>" />
+                  <input type="file" id="newImage<%- i %>" name="newImage<%- i %>" accept="image/*"
+                    onchange="handleFileChange(event, <%- i %>)" />
+                  <input type="hidden" name="croppedImage<%= i + 1 %>" id="croppedImage<%= i + 1 %>">
+                </div>
+                <% } %>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn">Update Product</button>
+        </form>
       </div>
     </div>
 
-    <button type="submit" class="submit-btn">Update Product</button>
-  </form>
-</div>
-</div>
+    <!-- Modal -->
+    <div id="cropperModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img id="modalImage">
+        <button onclick="applyCrop()" class="submit-btn" style="margin-top: 15px;">Crop & Save</button>
+      </div>
+    </div>
 
-<!-- Modal -->
-<div id="cropperModal" class="modal">
-  <div class="modal-content">
-    <span class="close" onclick="closeModal()">&times;</span>
-    <img id="modalImage">
-    <button onclick="applyCrop()" class="submit-btn" style="margin-top: 15px;">Crop & Save</button>
-  </div>
-</div>
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
+      let currentIndex = null;
+      let cropper = null;
 
-<!-- Scripts -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-<script>
-  let currentIndex = null;
-  let cropper = null;
+      // --- Cropper ---
+      function handleFileChange(event, index) {
+        const file = event.target.files[0];
+        if (!file) return;
 
-  // --- Cropper ---
-  function handleFileChange(event, index) {
-    const file = event.target.files[0];
-    if (!file) return;
+        currentIndex = index;
 
-    currentIndex = index;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const modalImage = document.getElementById('modalImage');
+          modalImage.src = e.target.result;
+          document.getElementById('cropperModal').style.display = 'block';
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const modalImage = document.getElementById('modalImage');
-      modalImage.src = e.target.result;
-      document.getElementById('cropperModal').style.display = 'block';
+          if (cropper) cropper.destroy();
+          cropper = new Cropper(modalImage, {
+            aspectRatio: NaN,
+            viewMode: 1,
+            autoCropArea: 1
+          });
+        };
+        reader.readAsDataURL(file);
+      }
 
-      if (cropper) cropper.destroy();
-      cropper = new Cropper(modalImage, {
-        aspectRatio: NaN,
-        viewMode: 1,
-        autoCropArea: 1
+      function applyCrop() {
+        const canvas = cropper.getCroppedCanvas({ width: 800, height: 800 });
+        if (!canvas) return;
+
+        const base64 = canvas.toDataURL('image/jpeg');
+        document.getElementById(`preview${currentIndex}`).src = base64;
+        document.getElementById(`croppedImage${currentIndex + 1}`).value = base64;
+
+        closeModal();
+      }
+
+      function closeModal() {
+        document.getElementById('cropperModal').style.display = 'none';
+        if (cropper) {
+          cropper.destroy();
+          cropper = null;
+        }
+      }
+
+
+      const variants = <% - JSON.stringify(product.Variants) %>;
+      const sizeSelect = document.getElementById('sizeSelect');
+      const priceInput = document.getElementById('priceInput');
+      const stockInput = document.getElementById('stockInput');
+
+
+      const lastSize = localStorage.getItem('selectedSize');
+      if (lastSize && variants.find(v => v.Size === lastSize)) {
+        sizeSelect.value = lastSize;
+        updateVariantFields();
+      }
+
+      function updateVariantFields() {
+        const selectedSize = sizeSelect.value;
+        const selectedVariant = variants.find(v => v.Size === selectedSize);
+
+        if (selectedVariant) {
+          priceInput.value = selectedVariant.Price;
+          stockInput.value = selectedVariant.Stock;
+        }
+
+
+        localStorage.setItem('selectedSize', selectedSize);
+      }
+
+      // Add loading indicator to form submission
+      const form = document.querySelector('form');
+      const submitBtn = document.querySelector('.submit-btn[type="submit"]');
+
+      form.addEventListener('submit', function (e) {
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
+        }
       });
-    };
-    reader.readAsDataURL(file);
-  }
+    </script>
 
-  function applyCrop() {
-    const canvas = cropper.getCroppedCanvas({ width: 800, height: 800 });
-    if (!canvas) return;
+  </body>
 
-    const base64 = canvas.toDataURL('image/jpeg');
-    document.getElementById(`preview${currentIndex}`).src = base64;
-    document.getElementById(`croppedImage${currentIndex + 1}`).value = base64;
-
-    closeModal();
-  }
-
-  function closeModal() {
-    document.getElementById('cropperModal').style.display = 'none';
-    if (cropper) {
-      cropper.destroy();
-      cropper = null;
-    }
-  }
-
-
-  const variants = <%- JSON.stringify(product.Variants) %>;
-  const sizeSelect = document.getElementById('sizeSelect');
-  const priceInput = document.getElementById('priceInput');
-  const stockInput = document.getElementById('stockInput');
-
-
-  const lastSize = localStorage.getItem('selectedSize');
-  if (lastSize && variants.find(v => v.Size === lastSize)) {
-    sizeSelect.value = lastSize;
-    updateVariantFields();
-  }
-
-  function updateVariantFields() {
-    const selectedSize = sizeSelect.value;
-    const selectedVariant = variants.find(v => v.Size === selectedSize);
-
-    if (selectedVariant) {
-      priceInput.value = selectedVariant.Price;
-      stockInput.value = selectedVariant.Stock;
-    }
-
-
-    localStorage.setItem('selectedSize', selectedSize);
-  }
-</script>
-
-</body>
 </html>
