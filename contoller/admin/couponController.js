@@ -5,18 +5,18 @@ const Order = require('../../model/ordersSchema');
 
 const coupon = async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1; 
-        const limit = 4; 
+        const page = parseInt(req.query.page) || 1;
+        const limit = 4;
         const skip = (page - 1) * limit;
 
-        const coupons = await Coupon.find().sort({CreatedAt:-1})
+        const coupons = await Coupon.find().sort({ CreatedAt: -1 })
             .skip(skip)
             .limit(limit);
 
         const totalCoupons = await Coupon.countDocuments();
         const totalPages = Math.ceil(totalCoupons / limit);
 
-        res.render('addCoupon', { 
+        res.render('addCoupon', {
             coupons,
             currentPage: page,
             totalPages,
@@ -45,28 +45,38 @@ const addCoupon = async (req, res) => {
         } = req.body;
 
 
-        
+
         const existingCoupon = await Coupon.findOne({ CouponCode });
         if (existingCoupon) {
             return res.status(400).json({
                 error: "Coupon code already exists"
             });
-            
+
         }
 
         const start = new Date(StartDate);
         const end = new Date(EndDate);
-        if (start > end) {
-            return res.status(400).json({ 
-              success: false, 
-              error: 'Start Date cannot be later than End Date' 
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (start < today) {
+            return res.status(400).json({
+                success: false,
+                error: 'Start Date cannot be in the past'
             });
-          }
+        }
+
+        if (start > end) {
+            return res.status(400).json({
+                success: false,
+                error: 'Start Date cannot be later than End Date'
+            });
+        }
 
 
         const discountValue = parseFloat(Discount);
-        if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
-            return res.status(400).json({ success: false, error: 'Discount must be between 0 and 100' });
+        if (isNaN(discountValue) || discountValue < 0 || discountValue >= 90) {
+            return res.status(400).json({ success: false, error: 'Discount must be between 0 and 90' });
         }
 
 
@@ -86,7 +96,7 @@ const addCoupon = async (req, res) => {
 
 
         const savedCoupon = await newCoupon.save();
-        
+
 
         res.status(201).json({ success: true, coupon: savedCoupon });
     } catch (error) {

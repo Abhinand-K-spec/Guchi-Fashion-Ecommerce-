@@ -403,8 +403,6 @@
         <input type="date" class="offer-input" id="startDate-${productId}" />
         <input type="date" class="offer-input" id="endDate-${productId}" />
         <input type="number" class="offer-input" id="discount-${productId}" placeholder="Discount %" min="0" max="100" />
-        <input type="number" class="offer-input" id="minPrice-${productId}" placeholder="Min Price (optional)" min="0" />
-        <input type="number" class="offer-input" id="maxPrice-${productId}" placeholder="Max Price (optional)" min="0" />
       `;
     }
 
@@ -448,8 +446,6 @@
       const startDate = document.getElementById(`startDate-${productId}`)?.value;
       const endDate = document.getElementById(`endDate-${productId}`)?.value;
       const discount = document.getElementById(`discount-${productId}`)?.value.trim();
-      const minPrice = document.getElementById(`minPrice-${productId}`)?.value.trim();
-      const maxPrice = document.getElementById(`maxPrice-${productId}`)?.value.trim();
 
       if (!offerName || !startDate || !endDate || !discount) {
         displayErrorMessage('offer-error', 'Offer name, start date, end date, and discount are required.');
@@ -466,20 +462,6 @@
         return;
       }
 
-      if (minPrice && (isNaN(minPrice) || minPrice < 0)) {
-        displayErrorMessage('offer-error', 'Minimum price must be a non-negative number.');
-        return;
-      }
-
-      if (maxPrice && (isNaN(maxPrice) || maxPrice < 0)) {
-        displayErrorMessage('offer-error', 'Maximum price must be a non-negative number.');
-        return;
-      }
-
-      if (minPrice && maxPrice && parseFloat(minPrice) > parseFloat(maxPrice)) {
-        displayErrorMessage('offer-error', 'Minimum price cannot be greater than maximum price.');
-        return;
-      }
 
       try {
         const response = await axios.post(`/admin/addProductOffer/${productId}?page=${page}`, {
@@ -487,8 +469,6 @@
           StartDate: startDate,
           EndDate: endDate,
           Discount: discount,
-          MinPrice: minPrice || null,
-          MaxPrice: maxPrice || null
         });
         console.log('Axios response:', response.status);
         const modal = bootstrap.Modal.getInstance(document.getElementById('offerModal'));

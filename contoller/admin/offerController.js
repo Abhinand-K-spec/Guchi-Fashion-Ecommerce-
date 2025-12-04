@@ -6,7 +6,7 @@ const Product = require('../../model/productSchema');
 const addCategoryOffer = async (req, res) => {
   try {
     const { id } = req.params;
-    const { OfferName, StartDate, EndDate, Discount, MinPrice, MaxPrice } = req.body;
+    const { OfferName, StartDate, EndDate, Discount } = req.body;
 
     if (!OfferName || !StartDate || !EndDate || !Discount) {
       return res.status(400).json({ error: 'Offer name, start date, end date, and discount are required.' });
@@ -14,25 +14,21 @@ const addCategoryOffer = async (req, res) => {
 
     const start = new Date(StartDate);
     const end = new Date(EndDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     if (isNaN(start) || isNaN(end)) {
       return res.status(400).json({ error: 'Invalid date format.' });
+    }
+    if (start < today) {
+      return res.status(400).json({ error: 'Start date cannot be in the past.' });
     }
     if (start > end) {
       return res.status(400).json({ error: 'Start date cannot be later than end date.' });
     }
 
-    if (isNaN(Discount) || Discount < 0 || Discount > 100) {
-      return res.status(400).json({ error: 'Discount must be between 0 and 100.' });
-    }
-
-    if (MinPrice && (isNaN(MinPrice) || MinPrice < 0)) {
-      return res.status(400).json({ error: 'Minimum price must be a non-negative number.' });
-    }
-    if (MaxPrice && (isNaN(MaxPrice) || MaxPrice < 0)) {
-      return res.status(400).json({ error: 'Maximum price must be a non-negative number.' });
-    }
-    if (MinPrice && MaxPrice && parseFloat(MinPrice) > parseFloat(MaxPrice)) {
-      return res.status(400).json({ error: 'Minimum price cannot be greater than maximum price.' });
+    if (isNaN(Discount) || Discount < 0 || Discount >= 90) {
+      return res.status(400).json({ error: 'Discount must be between 0 and 90.' });
     }
 
     const category = await Category.findById(id);
@@ -57,9 +53,7 @@ const addCategoryOffer = async (req, res) => {
       OfferName,
       StartDate: start,
       EndDate: end,
-      Discount,
-      MinPrice: MinPrice || null,
-      MaxPrice: MaxPrice || null
+      Discount
     });
 
     await newOffer.save();
@@ -98,7 +92,7 @@ const removeCategoryOffer = async (req, res) => {
 const addProductOffer = async (req, res) => {
   try {
     const { id } = req.params;
-    const { OfferName, StartDate, EndDate, Discount, MinPrice, MaxPrice } = req.body;
+    const { OfferName, StartDate, EndDate, Discount } = req.body;
 
     if (!OfferName || !StartDate || !EndDate || !Discount) {
       return res.status(400).json({ error: 'Offer name, start date, end date, and discount are required.' });
@@ -106,25 +100,21 @@ const addProductOffer = async (req, res) => {
 
     const start = new Date(StartDate);
     const end = new Date(EndDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     if (isNaN(start) || isNaN(end)) {
       return res.status(400).json({ error: 'Invalid date format.' });
+    }
+    if (start < today) {
+      return res.status(400).json({ error: 'Start date cannot be in the past.' });
     }
     if (start > end) {
       return res.status(400).json({ error: 'Start date cannot be later than end date.' });
     }
 
-    if (isNaN(Discount) || Discount < 0 || Discount > 100) {
-      return res.status(400).json({ error: 'Discount must be between 0 and 100.' });
-    }
-
-    if (MinPrice && (isNaN(MinPrice) || MinPrice < 0)) {
-      return res.status(400).json({ error: 'Minimum price must be a non-negative number.' });
-    }
-    if (MaxPrice && (isNaN(MaxPrice) || MaxPrice < 0)) {
-      return res.status(400).json({ error: 'Maximum price must be a non-negative number.' });
-    }
-    if (MinPrice && MaxPrice && parseFloat(MinPrice) > parseFloat(MaxPrice)) {
-      return res.status(400).json({ error: 'Minimum price cannot be greater than maximum price.' });
+    if (isNaN(Discount) || Discount < 0 || Discount >= 90) {
+      return res.status(400).json({ error: 'Discount must be between 0 and 90.' });
     }
 
     const product = await Product.findById(id);
@@ -149,9 +139,7 @@ const addProductOffer = async (req, res) => {
       OfferName,
       StartDate: start,
       EndDate: end,
-      Discount,
-      MinPrice: MinPrice || null,
-      MaxPrice: MaxPrice || null
+      Discount
     });
 
     await newOffer.save();
