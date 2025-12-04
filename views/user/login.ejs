@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,9 +15,10 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
-    a{
+    a {
       text-decoration: none;
     }
+
     .g_id_signin {
       margin-top: 15px;
     }
@@ -26,18 +28,22 @@
       font-size: 0.9rem;
       margin-top: 5px;
     }
-    #password{
-      width : 60vh;
-    }
-    #email{
+
+    #password {
       width: 60vh;
     }
-    #togglePassword{
+
+    #email {
+      width: 60vh;
+    }
+
+    #togglePassword {
       padding-left: 2vh;
       padding-top: 2vh;
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="left">
@@ -46,38 +52,39 @@
       <form method="post" action="/login" id="loginForm" novalidate>
 
         <label for="email">Email address</label>
-        <input type="email" name="email" id="email" placeholder="Enter your email"  />
+        <input type="email" name="email" id="email" placeholder="Enter your email" />
         <div id="emailError" class="error-text"></div>
 
         <label for="password">Password</label>
         <div class="d-flex">
-        <input type="password" name="password" id="password" placeholder="Enter your password"  />
-        <span id="togglePassword" class="eye-icon">
-          <i class="fa fa-eye"></i>
-        </span>
+          <input type="password" name="password" id="password" placeholder="Enter your password" />
+          <span id="togglePassword" class="eye-icon">
+            <i class="fa fa-eye"></i>
+          </span>
         </div>
         <div id="passwordError" class="error-text"></div>
-        
+
 
         <!-- Forgot Password link -->
         <div class="text-end mb-3">
           <a href="/forgot-password" class="text-decoration-none">Forgot password?</a>
         </div>
 
-        <% if (locals.msg && msg.length > 0) { %>
+        <% if (locals.msg && msg.length> 0) { %>
           <div id="message" class="alert alert-danger text-center">
             <%= msg %>
           </div>
-        <% } %>
+          <% } %>
 
-        <button type="submit">Login</button>
+            <button type="submit">Login</button>
       </form>
       <div class="divider"><span>or</span></div>
 
       <!-- Google Sign-In -->
       <div class="google-btn">
         <a href="/auth/google" class="btn-btn-primary">
-          <img src="https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" alt="Google" width="24" height="24" />
+          <img src="https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" alt="Google"
+            width="24" height="24" />
           Sign in with Google
         </a>
       </div>
@@ -97,6 +104,24 @@
   </div>
 
   <script>
+    // Check for error message in URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorMsg = urlParams.get('error');
+    if (errorMsg) {
+      const emailError = document.getElementById('emailError');
+      if (emailError) {
+        emailError.textContent = decodeURIComponent(errorMsg);
+        emailError.style.color = 'red';
+        emailError.style.fontSize = '1rem';
+        emailError.style.fontWeight = 'bold';
+        emailError.style.marginBottom = '10px';
+        // Clear URL parameter after displaying
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  </script>
+
+  <script>
     const form = document.getElementById('loginForm');
     const email = document.getElementById('email');
     const password = document.getElementById('password');
@@ -108,10 +133,10 @@
       const type = password.type === "password" ? "text" : "password";
       password.type = type;
       togglePassword.innerHTML =
-      type === "password"
-        ? `<i class="fa fa-eye"></i>`
-        : `<i class="fa fa-eye-slash"></i>`;
-  });
+        type === "password"
+          ? `<i class="fa fa-eye"></i>`
+          : `<i class="fa fa-eye-slash"></i>`;
+    });
 
     form.addEventListener('submit', function (e) {
       let valid = true;
@@ -124,18 +149,18 @@
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailValue) {
         emailError.textContent = 'Email is required.';
-        setInterval(()=>{emailError.textContent = ''},2000)
+        setInterval(() => { emailError.textContent = '' }, 2000)
         valid = false;
       } else if (!emailPattern.test(emailValue)) {
         emailError.textContent = 'Enter a valid email address.';
-        setInterval(()=>{emailError.textContent = ''},2000)
+        setInterval(() => { emailError.textContent = '' }, 2000)
         valid = false;
       }
 
 
       if (!password.value.trim()) {
         passwordError.textContent = 'Password is required.';
-        setInterval(()=>{passwordError.textContent = ''},2000)
+        setInterval(() => { passwordError.textContent = '' }, 2000)
         valid = false;
       }
 
@@ -143,4 +168,5 @@
     });
   </script>
 </body>
+
 </html>
