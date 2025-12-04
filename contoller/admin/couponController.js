@@ -132,71 +132,11 @@ const list = async (req, res) => {
     }
 };
 
-// const editCoupon = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const coupon = await Coupon.findById(id);
-//         if (!coupon) {
-//             return res.status(404).json({ error: 'Coupon not found' });
-//         }
-//         res.render('editCoupon', { coupon, currentPage: req.query.page || 1 });
-//     } catch (error) {
-//         console.error('Error in editCoupon:', error);
-//         res.render('page-404');
-//     }
-// };
 
-// const updateCoupon = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const {
-//             CouponName,
-//             CouponCode,
-//             Discount,
-//             UsageLimit,
-//             StartDate,
-//             EndDate,
-//             MinCartValue,
-//             MaxCartValue,
-//         } = req.body;
-
-//         const start = new Date(StartDate);
-//         const end = new Date(EndDate);
-//         if (start > end) {
-//             return res.status(400).json({ error: 'Start Date cannot be later than End Date' });
-//         }
-
-//         const discountValue = parseFloat(Discount);
-//         if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
-//             return res.status(400).json({ error: 'Discount must be between 0 and 100' });
-//         }
-
-//         const updatedCoupon = await Coupon.findByIdAndUpdate(id, {
-//             CouponName,
-//             CouponCode: CouponCode.toUpperCase(),
-//             Discount: discountValue,
-//             UsageLimit,
-//             StartDate: start,
-//             ExpiryDate: end,
-//             MinCartValue: MinCartValue || 0,
-//             MaxCartValue: MaxCartValue || null,
-//         }, { new: true, runValidators: true });
-
-//         if (!updatedCoupon) {
-//             return res.status(404).json({ error: 'Coupon not found' });
-//         }
-//         res.redirect(`/admin/coupons?page=${req.query.page || 1}`);
-//     } catch (error) {
-//         console.error('Error in updateCoupon:', error);
-//         res.render('page-404');
-//     }
-// };
 
 module.exports = {
     coupon,
     addCoupon,
-    // editCoupon,
-    // updateCoupon,
     unlist,
     list
 };
