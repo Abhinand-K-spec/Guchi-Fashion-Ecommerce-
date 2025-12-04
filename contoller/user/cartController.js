@@ -330,29 +330,36 @@ const updateCartQuantity = async (req, res) => {
 
 const removeFromCart = async (req, res) => {
   try {
-  const userId = req.session.user;
-  const productId = req.params.id;
+    const userId = req.session.user;
+    const productId = req.params.id;
+    const { variantIndex } = req.body;  // receive variantIndex
 
-  if (!userId) {
+    if (!userId) {
       return res.json({ success: false, message: 'User not logged in' });
-  }
-      const result = await Cart.findOneAndUpdate(
-          { user: userId },
-          { $pull: { Items: { product: productId } } }, 
-          { new: true } 
-      ).lean();
+    }
 
-      if (!result) {
-          return res.json({ success: false, message: 'Cart not found or item already removed.' });
-      }
+    if (variantIndex === undefined) {
+      return res.json({ success: false, message: 'Variant index missing.' });
+    }
 
-      return res.json({ success: true, message: 'Item successfully removed from cart.' });
+    const result = await Cart.findOneAndUpdate(
+      { user: userId },
+      { $pull: { Items: { product: productId, variantIndex: Number(variantIndex) } } },
+      { new: true }
+    ).lean();
+
+    if (!result) {
+      return res.json({ success: false, message: 'Cart not found or item already removed.' });
+    }
+
+    return res.json({ success: true, message: 'Variant successfully removed from cart.' });
 
   } catch (err) {
-      console.error('Remove cart error:', err);
-      return res.json({ success: false, message: 'Error removing item from cart' });
+    console.error('Remove cart error:', err);
+    return res.json({ success: false, message: 'Error removing item from cart' });
   }
 };
+
 
 
 const checkout = async (req, res) => {

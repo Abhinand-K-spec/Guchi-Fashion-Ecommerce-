@@ -108,7 +108,7 @@
 
         <h6 class="text-success"><strong>Payment method: <%=order.PaymentMethod%></strong></h6>
         <h5 class="mb-3">Ordered Items:</h5>
-        <% order.Items.forEach(item => { %>
+        <% order.Items.forEach(item => {const product = item.product || {}; const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0; const variant = product.Variants?.[variantIndex] || {}; %>
           <div class="row border rounded p-2 mb-3" style="background-color:#3a3a3a;" id="item-<%= item._id %>">
             <div class="col-md-2 d-flex align-items-center justify-content-center">
               <img src="<%= item.product?.Image?.[0] || 'default.jpg' %>" class="img-fluid" alt="Product Image">
@@ -116,6 +116,7 @@
             <div class="col-md-7">
               <h6><strong><%= item.product?.productName || 'Unknown Product' %></strong></h6>
               <p>Quantity: <%= item.quantity %></p>
+              <p>Size: <%=variant.Size%></p>
               <p>Discount: ₹<%= (item.itemDiscount ).toFixed(2)%></p>
               <p>taxes: <%=((((item.originalPrice-item.itemDiscount)*item.quantity)*0.05)/100).toFixed(2)%></p>
               <p>Delivary: 40</p>

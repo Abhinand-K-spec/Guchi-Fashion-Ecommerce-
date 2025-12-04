@@ -123,6 +123,7 @@
         <div class="col-md-7">
           <h5 class="mb-2"><%= product.productName %></h5>
           <p class="mb-1"><strong>Quantity:</strong> <%= item.quantity %></p>
+          <p>Size: <%=variant.Size%></p>
           <% if (itemDiscount >= 0) { %>
             <p class="mb-1 text-success"><strong>Item Discount:</strong> -₹<%= itemDiscount.toFixed(2) %></p>
             <p class="mb-1 text-muted"><del>Sales Price: ₹<%= originalPrice %></del></p>
