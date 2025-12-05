@@ -6,7 +6,9 @@
   <title>OTP Verification</title>
   <!-- Google Fonts: Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <!-- Google Material Icons -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <!-- jQuery and SweetAlert2 -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -120,7 +122,22 @@
       box-shadow: 0 6px 12px rgba(15,76,117,0.5);
       outline: none;
     }
-
+    .wrong-email {
+      margin-top: 20px;
+      font-size: 0.95rem;
+      color: #374151;
+    }
+    .wrong-email a {
+      color: #4bafaf;
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+    .wrong-email a:hover,
+    .wrong-email a:focus {
+      text-decoration: underline;
+    }
     @media (max-width: 767px) {
       header, footer {
         flex-direction: column;
@@ -174,7 +191,8 @@
         </p>
         <button type="submit" class="submit-btn" aria-label="Submit OTP">Submit</button>
       </form>
-      <p class="resend" id="resendBox" style="display:none;">
+      <p class="wrong-email">
+        Wrong Email?
         <a href="/resend-otp" role="button" tabindex="0">Resend</a>
       </p>
     </section>
@@ -182,25 +200,20 @@
 
   <script>
     let timeLeft = 40;
-const countdownSpan = document.getElementById('countdown');
-const timeoutText = document.querySelector('.timeout-text');
-const resendBox = document.getElementById('resendBox');
+    const countdownSpan = document.getElementById('countdown');
+    const timeoutText = document.querySelector('.timeout-text');
 
-function startCountdown() {
-  const countdownInterval = setInterval(() => {
-    timeLeft--;
-    if (timeLeft > 0) {
-      countdownSpan.textContent = timeLeft;
-    } else {
-      clearInterval(countdownInterval);
-      timeoutText.textContent = "You can now request a new code.";
-      resendBox.style.display = 'block';   
+    function startCountdown() {
+      const countdownInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft > 0) {
+          countdownSpan.textContent = timeLeft;
+        } else {
+          clearInterval(countdownInterval);
+          timeoutText.textContent = "You can now request a new code.";
+        }
+      }, 1000);
     }
-  }, 1000);
-}
-
-window.onload = startCountdown;
-
 
     window.onload = startCountdown;
 
@@ -211,7 +224,7 @@ window.onload = startCountdown;
       const otp = otpInput.value.trim();
       const invalidFeedback = otpInput.nextElementSibling;
 
-
+      // Client-side validation
       if (!otp || !/^\d{6}$/.test(otp)) {
         otpInput.classList.add('is-invalid');
         invalidFeedback.style.display = 'block';
@@ -245,11 +258,11 @@ window.onload = startCountdown;
           }).then(() => {
             window.location.href = response.redirect || '/login';
           });
-        } else if(response.error){
+        } else {
           Swal.fire({
             icon: 'error',
             title: 'Verification Failed',
-            text: response.message|| response.error.message || response.error || 'An error occurred during verification.',
+            text: response.message || 'An error occurred during verification.',
           });
         }
       } catch (error) {
@@ -261,7 +274,7 @@ window.onload = startCountdown;
       }
     });
 
-
+    // Real-time validation for OTP input
     document.getElementById('input-otp').addEventListener('input', function () {
       const otp = this.value.trim();
       const invalidFeedback = this.nextElementSibling;

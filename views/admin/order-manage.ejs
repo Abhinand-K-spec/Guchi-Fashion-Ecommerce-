@@ -20,9 +20,9 @@
   }
 
   .table {
-    color: black;
-    border-color: #555;
-    background-color: #2a2a2a;
+    color: #fff;
+    background-color: #1c1c1c;
+    border: 1px solid #333;
   }
 
   .table th {
@@ -33,9 +33,6 @@
 
   .table td {
     vertical-align: middle;
-    background-color: black;
-    color: white;
-    border-color: #555;
     text-align: center;
     background-color: #1c1c1c;
     color: #e0e0e0;
@@ -132,19 +129,12 @@
     <input type="text" class="searchinput" name="search" placeholder="Search Order ID" value="<%= search %>">
     <select name="status" class="form-control">
       <option value="">All Status</option>
-    
       <option value="Pending" <%= status === 'Pending' ? 'selected' : '' %>>Pending</option>
-      <option value="Partially Delivered" <%= status === 'Partially Delivered' ? 'selected' : '' %>>Partially Delivered</option>
+      <option value="Shipped" <%= status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+      <option value="Out for Delivery" <%= status === 'Out for Delivery' ? 'selected' : '' %>>Out for Delivery</option>
       <option value="Delivered" <%= status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
-    
       <option value="Cancelled" <%= status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
-    
-      <option value="Returned" <%= status === 'Returned' ? 'selected' : '' %>>Returned</option>
-      <option value="Partially Returned" <%= status === 'Partially Returned' ? 'selected' : '' %>>Partially Returned</option>
-    
-      <option value="Payment Failed" <%= status === 'Payment Failed' ? 'selected' : '' %>>Payment Failed</option>
     </select>
-    
     <button type="submit" class="btn btn-primary">Search</button>
     <a href="/admin/orders" class="btn btn-secondary">Clear</a>
   </form>
@@ -172,56 +162,18 @@
             <td><%= order.UserId?.name || 'Unknown' %></td>
             <td><%= new Date(order.OrderDate).toLocaleDateString() %></td>
             <td>
-              <% 
-                const statuses = order.Items.map(i => i.status);
-            
-                let computedStatus = "";
-            
-                if (order.PaymentStatus === "Pending" && order.PaymentMethod== 'Online') {
-                  computedStatus = "Payment Failed";
-                } else if (statuses.every(s => s === "Delivered")) {
-                  computedStatus = "Delivered";
-                } else if (statuses.every(s => s === "Cancelled")) {
-                  computedStatus = "Cancelled";
-                } else if (statuses.every(s => s === "Returned")) {
-                  computedStatus = "Returned";
-                } else if (statuses.includes("Delivered") && statuses.includes("Pending")) {
-                  computedStatus = "Partially Delivered";
-                } else if (statuses.includes("Returned") && statuses.includes("Delivered")) {
-                  computedStatus = "Partially Returned";
-                } else if (statuses.includes("Pending")) {
-                  computedStatus = "Pending";
-                } else {
-                  computedStatus = statuses[0] || "Pending";
-                }
-              %>
-            
-              <% if (computedStatus === 'Delivered') { %>
+              <% if (order.Status === 'Delivered') { %>
                 <span class="badge bg-success">Delivered</span>
-            
-              <% } else if (computedStatus === 'Cancelled') { %>
+              <% } else if (order.Status === 'Cancelled') { %>
                 <span class="badge bg-danger">Cancelled</span>
-            
-              <% } else if (computedStatus === 'Returned') { %>
-                <span class="badge bg-warning text-dark">Returned</span>
-            
-              <% } else if (computedStatus === 'Partially Delivered') { %>
-                <span class="badge bg-info text-dark">Partially Delivered</span>
-            
-              <% } else if (computedStatus === 'Partially Returned') { %>
-                <span class="badge bg-secondary">Partially Returned</span>
-            
-              <% } else if (computedStatus === 'Payment Failed') { %>
-                <span class="badge bg-danger">Payment Failed</span>
-            
-              <% } else if (computedStatus === 'Pending') { %>
-                <span class="badge bg-warning text-dark">Pending</span>
-            
+              <% } else if (order.Status === 'Out for Delivery') { %>
+                <span class="badge bg-info text-dark">Out for Delivery</span>
+              <% } else if (order.Status === 'Shipped') { %>
+                <span class="badge bg-primary">Shipped</span>
               <% } else { %>
-                <span class="badge bg-primary"><%= computedStatus %></span>
+                <span class="badge bg-warning text-dark">Pending</span>
               <% } %>
             </td>
-            
             <td>
               <a href="/admin/order-details/<%= order._id %>" class="btn btn-sm btn-info">View</a>
             </td>

@@ -1,10 +1,9 @@
 const Product = require('../../model/productSchema');
 const Category = require('../../model/categorySchema');
-const Offers = require('../../model/offersSchema');
 const fs = require('fs');
 const path = require('path');
 const { array } = require('../../middlewares/multer');
-const cloudinary = require('../../config/cloudinary');
+const cloudinary = require('../../config/cloudinary')
 
 const productsinfo = async (req, res) => {
   try {
@@ -41,17 +40,8 @@ const addProducts = async (req, res) => {
 
     const Colour = 'Default';
 
-    if(/[^A-Za-z]g/.test(productName)){
-      req.flash('msg', 'Product name should not contain special characters or numbers');
-      return  res.redirect('/admin/addProducts');
-    }
 
-    if(productName.trim() == '' ){
-      req.flash('msg', 'Product name cannot be empty');
-      return  res.redirect('/admin/addProducts');
-    }
-
-    if (!productName || !size || !price || !stock || !description || !category ) {
+    if (!productName || !size || !price || !stock || !description || !category) {
       req.flash('msg', 'All fields are required');
       return res.redirect('/admin/addProducts');
     }
@@ -126,11 +116,13 @@ const addProducts = async (req, res) => {
 
     await newProduct.save();
     res.redirect('/admin/products');
+
   } catch (error) {
     console.error('Error in addProducts:', error);
     res.status(500).render('page-404');
   }
 };
+
 
 const getAllProducts = async (req, res) => {
   try {
@@ -140,46 +132,41 @@ const getAllProducts = async (req, res) => {
 
     const regex = new RegExp(search, 'i');
     const filter = search
-      ? { $or: [{ productName: regex }, { 'Category.categoryName': regex }] }
+      ? { $or: [{ productName: regex }, { Brand: regex }] }
       : {};
 
+    const total = await Product.countDocuments(filter);
     const products = await Product.find(filter)
       .populate('Category')
-      .sort({UpdatedAt:-1})
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();
 
-    const now = new Date();
-    const productsWithOffers = await Promise.all(products.map(async (product) => {
-      const offer = await Offers.findOne({
-        Product: product._id,
-        Category: null,
-        StartDate: { $lte: now },
-        EndDate: { $gte: now }
-      }).lean();
-      const variant = product.Variants[0] || {};
+    
+
+    const formattedProducts = products.map(p => {
+      const variant = p.Variants[0] || {};
       return {
-        _id: product._id,
-        name: product.productName,
-        images: product.Image,
-        category: product.Category?.categoryName || 'N/A',
+        _id: p._id,
+        name: p.productName,
+        images: p.Image,
+        category: p.Category?.categoryName || 'N/A',
         regularPrice: variant.Price || 0,
         salePrice: variant.OfferPrice || variant.Price || 0,
         stock: variant.Stock ?? 0,
-        isAvailable: product.IsListed,
-        offer: offer || null
+        isAvailable: p.IsListed
       };
-    }));
+    });
 
-    const total = await Product.countDocuments(filter);
-    const totalPages = Math.ceil(total / limit);
+
 
     res.render('products', {
-      products: productsWithOffers,
+      products: formattedProducts,
       currentPage: page,
-      totalPages,
-      search
+      totalPages: Math.ceil(total / limit),
+      search,
+      
+      
     });
   } catch (error) {
     console.error('Error in getAllProducts:', error);
@@ -212,16 +199,15 @@ const list = async (req, res) => {
 const getEditProductPage = async (req, res) => {
   try {
     const productId = req.params.productId;
-    const products = await Product.find({isListed:true}).lean();
     const product = await Product.findById(productId).populate('Category').lean();
     const categories = await Category.find({ isListed: true }).lean();
 
     if (!product) return res.status(404).render('page-404');
 
-    res.render('edit-product', { product, categories ,products });
+    res.render('edit-product', { product, categories,query:req.query });
   } catch (error) {
     console.error('Error in getEditProductPage:', error);
-    res.redirect('/pageNotFound');
+    res.redirect('/page-404');
   }
 };
 
@@ -301,6 +287,9 @@ const postEditProduct = async (req, res) => {
     res.status(500).render('page-404');
   }
 };
+
+
+
 
 
 module.exports = {

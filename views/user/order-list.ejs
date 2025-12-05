@@ -16,7 +16,6 @@
       height: 100%;
     }
     body {
-
       display: flex;
       flex-direction: column;
       min-height: 100vh;
@@ -66,34 +65,7 @@
                 <tr>
                   <td><%= order.OrderId || order._id.toString().slice(-6) %></td>
                   <td><%= new Date(order.OrderDate).toLocaleDateString() %></td>
-                  <td class="<%= order.PaymentStatus === "Pending" && order.PaymentMethod == 'Online' ? 'text-danger fw-bold' : '' %>">
-                    <% 
-                      const statuses = order.Items.map(i => i.status);
-                  
-                      let displayStatus = "";
-                  
-                      if (order.PaymentStatus === "Pending" && order.PaymentMethod == 'Online') {
-                        displayStatus = "Payment Failed";
-                      } else if (statuses.every(s => s === "Cancelled")) {
-                        displayStatus = "Cancelled";
-                      } else if (statuses.every(s => s === "Delivered")) {
-                        displayStatus = "Delivered";
-                      } else if (statuses.every(s => s === "Returned")) {
-                        displayStatus = "Returned";
-                      } else if (statuses.includes("Returned") && statuses.includes("Delivered")) {
-                        displayStatus = "Partially Returned";
-                      } else if (statuses.includes("Delivered") && statuses.includes("Pending")) {
-                        displayStatus = "Partially Delivered";
-                      } else if (statuses.includes("Pending")) {
-                        displayStatus = "Processing";
-                      } else {
-                        displayStatus = statuses[0]; 
-                      }
-                    %>
-                  
-                    <%= displayStatus %>
-                  </td>
-                  
+                  <td><%= order.Status %></td>
                   <td>
                     <a href="/order/<%= order._id %>" class="btn btn-sm btn-info mb-1">Details</a>
 

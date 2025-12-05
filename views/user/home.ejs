@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="description" content="Male_Fashion Template">
-  <meta name="keywords" content="Male_Fashion, personally, creative, html">
+  <meta name="keywords" content="Male_Fashion, unica, creative, html">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Home | Guchi</title>
@@ -27,31 +27,18 @@
       font-weight: bold;
       text-align: center;
     }
-  
+
     .product-img-action-wrap {
       position: relative;
     }
-  
+
     .product-img img {
       width: 100%;
       height: 250px;
       object-fit: cover;
       border-radius: 6px;
     }
-  
-    .offer-badge {
-      position: absolute;
-      top: 1px;
-      left: 1px;
-      background-color: #e11d59;
-      color: #fff;
-      padding: 5px 10px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 600;
-      z-index: 11;
-    }
-  
+
     .wishlist-btn {
       position: absolute;
       top: 10px;
@@ -59,20 +46,12 @@
       background-color: rgba(255, 255, 255, 0.9);
       padding: 10px;
       border-radius: 50%;
-      color: #999; /* Default color (grey for non-added state) */
+      color: #ff6b6b;
       font-size: 18px;
       z-index: 10;
       transition: 0.3s ease;
     }
-  
-    .wishlist-btn:hover {
-      color: #ff6b6b; /* Hover color */
-    }
-  
-    .wishlist-btn.added {
-      color: #ff0000; /* Red color when added to wishlist */
-    }
-  
+
     .product-cart-wrap {
       border: 1px solid #eee;
       padding: 15px;
@@ -80,38 +59,19 @@
       box-shadow: 0 0 6px rgba(0,0,0,0.05);
       margin-bottom: 30px;
     }
-  
-    .product-content-wrap {
-      text-align: center;
-    }
-  
+
     .product-content-wrap h6 {
       font-size: 18px;
       color: #333;
       margin: 12px 0 5px;
     }
-  
+
     .product-content-wrap h5 {
       font-size: 16px;
       color: #ff6b6b;
-      margin-bottom: 5px;
-      font-weight: 600;
+      margin-bottom: 10px;
     }
-  
-    .price-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 8px;
-    }
-  
-    .regular-price {
-      font-size: 12px;
-      color: #999;
-      text-decoration: line-through;
-      margin-left: 8px;
-    }
-  
+
     .product-content-wrap a {
       display: inline-block;
       padding: 6px 12px;
@@ -122,54 +82,13 @@
       border-radius: 4px;
       text-decoration: none;
     }
-  
+
     .product-content-wrap a:hover {
       background-color: #1e40af;
-    }
-  
-
-    .toast-container {
-      z-index: 1056; 
-    }
-  
-    .toast {
-      min-width: 300px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-  
-    .toast-body {
-      font-size: 16px;
-      padding: 15px;
-      line-height: 1.5;
-    }
-  
-    .bg-success {
-      background-color: #28a745 !important;
-      color: #fff !important;
-    }
-  
-    .bg-danger {
-      background-color: #dc3545 !important;
-      color: #fff !important;
-    }
-  
-    .bg-warning {
-      background-color: #ffc107 !important;
-      color: #333 !important;
     }
   </style>
 </head>
 <body>
-  <!-- Toast Container -->
-  <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1055;">
-    <div id="notificationToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="6000">
-      <div class="d-flex">
-        <div class="toast-body"></div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-      </div>
-    </div>
-  </div>
 
   <!-- Header -->
   <%- include("../partials/user/header") %>
@@ -182,6 +101,7 @@
           <div class="row">
             <div class="col-xl-5 col-lg-7 col-md-8">
               <div class="hero__text">
+                <!-- <h6>Summer Collection</h6> -->
                 <h2>Fall - Winter Collections 2025</h2>
                 <p>A specialist label creating luxury outfits. Ethically created.</p>
                 <a href="/shopnow" class="primary-btn">Shop now <span class="arrow_right"></span></a>
@@ -208,26 +128,16 @@
               <div class="product-img-action-wrap">
                 <div class="product-img">
                   <a href="/product-details/<%= product._id %>">
-                    <img src="<%= product.Image[0] || '/img/default-product.jpg' %>" alt="<%= product.productName %>">
+                    <img src="<%= product.Image[0] %>" alt="<%= product.productName %>">
                   </a>
                 </div>
-                <% if (product.offer) { %>
-                  <span class="offer-badge"><%= product.offer.Discount %>% OFF</span>
-                <% } %>
-                <a href="/add-to-wishlist/<%= product._id %>" class="wishlist-btn" data-product-id="<%= product._id %>">
+                <!-- <a href="/add-to-wishlist/<%= product._id %>" class="wishlist-btn">
                   <i class="fas fa-heart"></i>
-                </a>
+                </a> -->
               </div>
               <div class="product-content-wrap">
                 <h6><%= product.productName %></h6>
-                <% if (product.offer) { %>
-                  <div class="price-container">
-                    <h5>₹<%= product.Variants[0].salePrice.toFixed(2) %></h5>
-                    <span class="regular-price">₹<%= product.Variants[0].Price.toFixed(2) %></span>
-                  </div>
-                <% } else { %>
-                  <h5>₹<%= product.Variants[0].Price.toFixed(2) %></h5>
-                <% } %>
+                <h5>₹<%= product.Variants[0]?.Price %></h5>
                 <a href="/product-details/<%= product._id %>">View Details</a>
               </div>
             </div>
@@ -240,68 +150,9 @@
   <!-- Footer -->
   <%- include("../partials/user/footer") %>
 
-  <!-- JavaScript Libraries -->
-  <script src="/js/jquery-3.3.1.min.js"></script>
-  <script src="/js/bootstrap.min.js"></script>
-  <script src="/js/jquery.nice-select.min.js"></script>
-  <script src="/js/jquery.nicescroll.min.js"></script>
-  <script src="/js/jquery.magnific-popup.min.js"></script>
-  <script src="/js/jquery.countdown.min.js"></script>
-  <script src="/js/jquery.slicknav.js"></script>
-  <script src="/js/mixitup.min.js"></script>
-  <script src="/js/owl.carousel.min.js"></script>
-  <script src="/js/main.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Add to Wishlist
-      document.querySelectorAll('.wishlist-btn').forEach(button => {
-        button.addEventListener('click', async (e) => {
-          e.preventDefault(); 
-          const productId = e.currentTarget.getAttribute('data-product-id');
-          console.log('Adding to wishlist:', { productId });
-
-          try {
-            const response = await fetch(`/add-to-wishlist/${productId}`, {
-              method: 'GET', // Match the route
-              headers: { 'Content-Type': 'application/json' }
-            });
-
-            const result = await response.json();
-            const toastEl = document.getElementById('notificationToast');
-            const toastBody = toastEl.querySelector('.toast-body');
-            toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white', 'text-dark');
-            if (result.success) {
-              toastEl.classList.add('bg-success', 'text-white');
-              toastBody.textContent = 'Product successfully added to wishlist.';
-              const toast = new bootstrap.Toast(toastEl);
-              toast.show();
-              // Add 'added' class to the clicked button
-              button.classList.add('added');
-            } else if (response.status === 400) {
-              toastEl.classList.add('bg-danger', 'text-white');
-              toastBody.textContent = 'Failed to add product to wishlist: ' + (result.message || 'Product already added.');
-              const toast = new bootstrap.Toast(toastEl);
-              toast.show();
-            } else if (response.status === 302 || response.status === 401) {
-              toastEl.classList.add('bg-warning', 'text-dark');
-              toastBody.textContent = 'Please log in to add to wishlist.';
-              const toast = new bootstrap.Toast(toastEl);
-              toast.show();
-              setTimeout(() => { window.location.href = '/login'; }, 8000);
-            }
-          } catch (err) {
-            console.error('Add to wishlist error:', err);
-            const toastEl = document.getElementById('notificationToast');
-            const toastBody = toastEl.querySelector('.toast-body');
-            toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white', 'text-dark');
-            toastEl.classList.add('bg-danger', 'text-white');
-            toastBody.textContent = 'Error adding product to wishlist.';
-            const toast = new bootstrap.Toast(toastEl);
-            toast.show();
-          }
-        });
-      });
-    });
-  </script>
 </body>
 </html>
+
+
+
+

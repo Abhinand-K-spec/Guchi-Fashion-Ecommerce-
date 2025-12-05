@@ -462,7 +462,7 @@
 
             if (settings.animations === 'jquery') {
                 el.stop(true,true).slideUp(duration, this.settings.easingClose, function() {
-                    afterClose(trigger, parent);
+                    afterClose(trigger, parent)
                 });
             } else if (settings.animations === 'velocity') {
                 

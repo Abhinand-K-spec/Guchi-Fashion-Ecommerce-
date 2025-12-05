@@ -1,21 +1,41 @@
 const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-const offersSchema = new mongoose.Schema({
-  Category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: false, default: null },
-  Product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: false, default: null },
-  OfferName: { type: String, required: true },
-  StartDate: { type: Date, required: true },
-  EndDate: { type: Date, required: true },
-  Discount: { type: Number, required: true },
-  MinPrice: { type: Number, default: null },
-  MaxPrice: { type: Number, default: null }
-}, {
-  validate: {
-    validator: function (v) {
-      return (this.Category || this.Product) && !(this.Category && this.Product);
-    },
-    message: 'An offer must be associated with either a Category or a Product, but not both.'
-  }
+const OffersSchema = new Schema({
+  Category: {
+    type: Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true,
+  },
+  OfferName: {
+    type: String,
+    required: true,
+  },
+  StartDate: {
+    type: Date,
+    required: true,
+  },
+  EndDate: {
+    type: Date,
+    required: true,
+  },
+  Discount: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+  MinPrice: {
+    type: Number,
+    required: false,
+    min: 0,
+  },
+  MaxPrice: {
+    type: Number,
+    required: false,
+    min: 0,
+  },
 });
 
-module.exports = mongoose.model('Offers', offersSchema);
+const Offers = mongoose.model('Offers', OffersSchema);
+
+module.exports = Offers;
