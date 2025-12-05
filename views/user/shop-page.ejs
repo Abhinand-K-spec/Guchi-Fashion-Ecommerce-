@@ -5,7 +5,7 @@
 
   <!-- Fonts & CSS -->
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/font-awesome.min.css">
   <link rel="stylesheet" href="/css/style.css">
 
@@ -72,26 +72,32 @@
     .product-name {
       font-size: 1.1rem;
       font-weight: 600;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .product-price {
       color: #e74c3c;
       font-weight: bold;
+      font-size: 1.1rem;
     }
 
     .price-container {
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 8px;
       margin-top: 8px;
       margin-bottom: 10px;
+      min-height: 30px;
     }
 
     .regular-price {
-      font-size: 12px;
+      font-size: 14px;
       color: #999;
       text-decoration: line-through;
-      margin-left: 8px;
     }
 
     .btn-view {
@@ -136,6 +142,150 @@
       align-items: center;
       gap: 10px;
     }
+
+    /* Responsive Styles */
+    @media only screen and (max-width: 991px) {
+
+      /* Categories sidebar becomes collapsible */
+      .categories-sidebar {
+        margin-bottom: 20px;
+      }
+
+      .filter-toggle {
+        display: block;
+        width: 100%;
+        margin-bottom: 15px;
+      }
+
+      /* Product grid - 3 columns on tablets */
+      .product-card {
+        margin-bottom: 20px;
+      }
+
+      .product-image {
+        height: 220px;
+      }
+    }
+
+    @media only screen and (max-width: 767px) {
+
+      /* Stack filters vertically */
+      .filter-form {
+        padding: 12px;
+      }
+
+      .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-bar>div {
+        width: 100%;
+      }
+
+      .filter-bar .d-flex {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .filter-bar .form-control,
+      .filter-bar .form-select {
+        width: 100%;
+        min-width: 100%;
+        margin-bottom: 10px;
+        font-size: 16px;
+        /* Prevent iOS zoom */
+        min-height: 44px;
+      }
+
+      .filter-bar .btn {
+        width: 100%;
+        min-height: 44px;
+        margin-bottom: 10px;
+      }
+
+      /* Product grid - 2 columns on phones */
+      .product-image {
+        height: 180px;
+      }
+
+      .product-name {
+        font-size: 0.95rem;
+      }
+
+      .product-price {
+        font-size: 0.95rem;
+      }
+
+      .btn-view {
+        width: 100%;
+        min-height: 44px;
+        font-size: 14px;
+      }
+
+      /* Categories list */
+      .category-list li {
+        padding: 10px 0;
+      }
+
+      .category-list a {
+        font-size: 14px;
+      }
+
+      /* Pagination */
+      .pagination {
+        flex-wrap: wrap;
+      }
+
+      .page-item {
+        margin: 2px;
+      }
+
+      .page-link {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+    }
+
+    @media only screen and (max-width: 575px) {
+
+      /* Product grid adjustments for small phones */
+      .product-image {
+        height: 150px;
+      }
+
+      .product-name {
+        font-size: 0.85rem;
+      }
+
+      .product-price {
+        font-size: 0.85rem;
+      }
+
+      .regular-price {
+        font-size: 10px;
+      }
+
+      .offer-badge {
+        font-size: 10px;
+        padding: 4px 6px;
+      }
+    }
+
+    @media only screen and (max-width: 479px) {
+      .container {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .product-card {
+        padding: 10px;
+      }
+
+      .product-image {
+        height: 140px;
+      }
+    }
   </style>
 </head>
 
@@ -147,21 +297,30 @@
     <!-- Shop Section -->
     <div class="container mt-4 mb-5">
       <div class="row">
-        <div class="col-md-3">
-          <h5 class="mb-3">Categories</h5>
-          <ul class="category-list">
-            <li><a
-                href="/shop<%= search ? '?search=' + encodeURIComponent(search) : '' %><%= sort ? (search ? '&' : '?') + 'sort=' + sort : '' %>">All
-                Products</a></li>
-            <% categories.forEach(category=> { %>
-              <li>
-                <a
-                  href="/shop?category=<%= category._id %><%= search ? '&search=' + encodeURIComponent(search) : '' %><%= sort ? '&sort=' + sort : '' %>">
-                  <%= category.categoryName %>
-                </a>
-              </li>
-              <% }) %>
-          </ul>
+        <div class="col-md-3 categories-sidebar">
+          <!-- Collapse button for mobile -->
+          <button class="btn btn-outline-dark filter-toggle d-md-none" type="button" data-bs-toggle="collapse"
+            data-bs-target="#categoriesCollapse" aria-expanded="false" aria-controls="categoriesCollapse">
+            <i class="fa fa-filter"></i> Filter by Category
+          </button>
+
+          <!-- Categories list (collapsible on mobile) -->
+          <div class="collapse d-md-block" id="categoriesCollapse">
+            <h5 class="mb-3 d-none d-md-block">Categories</h5>
+            <ul class="category-list">
+              <li><a
+                  href="/shop<%= search ? '?search=' + encodeURIComponent(search) : '' %><%= sort ? (search ? '&' : '?') + 'sort=' + sort : '' %>">All
+                  Products</a></li>
+              <% categories.forEach(category=> { %>
+                <li>
+                  <a
+                    href="/shop?category=<%= category._id %><%= search ? '&search=' + encodeURIComponent(search) : '' %><%= sort ? '&sort=' + sort : '' %>">
+                    <%= category.categoryName %>
+                  </a>
+                </li>
+                <% }) %>
+            </ul>
+          </div>
         </div>
 
         <div class="col-md-9">
@@ -197,7 +356,7 @@
           <div class="row mt-4">
             <% if (products && products.length> 0) { %>
               <% products.forEach(product=> { %>
-                <div class="col-lg-4 col-md-6">
+                <div class="col-lg-4 col-md-6 col-sm-4 col-6">
                   <div class="product-card">
                     <div class="product-image-container">
                       <img src="<%= product.Image[0] || '/img/default-product.jpg' %>" alt="<%= product.productName %>"
@@ -314,7 +473,7 @@
 
     <!-- JS Plugins -->
     <script src="/js/jquery-3.3.1.min.js"></script>
-    <script src="/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/main.js"></script>
 </body>
 

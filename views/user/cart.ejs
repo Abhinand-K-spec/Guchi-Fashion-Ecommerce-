@@ -49,6 +49,8 @@
       background: #f5f5f5;
       padding: 5px 10px;
       cursor: pointer;
+      min-width: 30px;
+      min-height: 30px;
     }
 
     .cart__btn a {
@@ -209,6 +211,120 @@
       right: 15%;
       animation-delay: 0.3s;
     }
+
+    /* Responsive Styles for Mobile */
+    @media only screen and (max-width: 767px) {
+
+      /* Convert table to card layout on mobile */
+      .cart__table {
+        overflow-x: visible;
+      }
+
+      .cart__table table,
+      .cart__table thead,
+      .cart__table tbody,
+      .cart__table tr {
+        display: block;
+        width: 100%;
+      }
+
+      .cart__table thead {
+        display: none;
+      }
+
+      .cart__table tr {
+        margin-bottom: 20px;
+        border: 1px solid #ebebeb;
+        border-radius: 8px;
+        padding: 15px;
+        background: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .cart__table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: none;
+        padding: 10px 0;
+        text-align: left !important;
+      }
+
+      .cart__table td:before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #111;
+        flex: 0 0 40%;
+      }
+
+      .cart__table td.cart__product__item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .cart__table td.cart__product__item:before {
+        margin-bottom: 10px;
+      }
+
+      .cart__product__item img {
+        width: 100%;
+        max-width: 150px;
+        margin-bottom: 10px;
+      }
+
+      .cart__quantity .pro-qty {
+        justify-content: flex-start;
+      }
+
+      .cart__btn {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .cart__btn a {
+        display: block;
+        width: 100%;
+        text-align: center;
+      }
+
+      .cart__total {
+        text-align: center;
+        margin-top: 20px;
+      }
+
+      .cart__total .primary-btn {
+        width: 100%;
+        display: block;
+      }
+
+      /* Touch-friendly buttons */
+      .pro-qty button.qtybtn {
+        min-width: 44px;
+        min-height: 44px;
+        font-size: 18px;
+      }
+
+      .remove-from-cart {
+        min-width: 44px;
+        min-height: 44px;
+      }
+    }
+
+    @media only screen and (max-width: 479px) {
+      .cart__table td:before {
+        flex: 0 0 100%;
+        margin-bottom: 5px;
+      }
+
+      .cart__table td {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .pro-qty input {
+        width: 50px;
+      }
+    }
   </style>
 </head>
 
@@ -250,15 +366,13 @@
 
                     <% cartItems.forEach(item=> { %>
                       <tr data-product-id="<%= item._id %>" data-variant-index="<%= item.variantIndex %>">
-                        <td class="cart__product__item">
+                        <td class="cart__product__item" data-label="Product">
                           <img src="<%= item.image %>" alt="Product Image" />
-                        </td>
-                        <td class="cart__product__item__title">
                           <h6>
                             <%= item.name %>
                           </h6>
                         </td>
-                        <td class="cart__price">
+                        <td class="cart__price" data-label="Price">
                           <% if (item.offer) { %>
                             <div class="price-container">
                               <span class="product-price">₹<%= item.price.toFixed(2) %></span>
@@ -268,22 +382,24 @@
                               <span class="product-price">₹<%= item.price.toFixed(2) %></span>
                               <% } %>
                         </td>
-                        <td class="cart__quantity">
+                        <td class="cart__quantity" data-label="Quantity">
                           <% if (!item.isListed) { %>
                             <span class="text-danger">Unavailable</span>
                             <% } else if (item.stock> 0) { %>
                               <div class="pro-qty" data-stock="<%= item.stock %>">
-                                <button class="dec qtybtn" data-id="<%= item._id %>">-</button>
+                                <button class="dec qtybtn" data-id="<%= item._id %>"
+                                  data-variant="<%= item.variantIndex %>">-</button>
                                 <input type="text" value="<%= item.quantity %>" readonly />
-                                <button class="inc qtybtn" data-id="<%= item._id %>">+</button>
+                                <button class="inc qtybtn" data-id="<%= item._id %>"
+                                  data-variant="<%= item.variantIndex %>">+</button>
                               </div>
                               <% } else { %>
                                 <span class="text-danger">Out of Stock</span>
                                 <% } %>
                         </td>
-                        <td class="cart__total">₹<%= item.itemTotal.toFixed(2) %>
+                        <td class="cart__total" data-label="Total">₹<%= item.itemTotal.toFixed(2) %>
                         </td>
-                        <td class="cart__close">
+                        <td class="cart__close" data-label="Remove">
                           <button class="remove-from-cart" data-id="<%= item._id %>"
                             data-variant="<%= item.variantIndex %>">
                             <i class="fa fa-close"></i>

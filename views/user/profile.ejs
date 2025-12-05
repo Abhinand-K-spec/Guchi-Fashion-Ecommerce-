@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
@@ -44,9 +45,11 @@
       z-index: 10;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
-    a{
-        text-decoration: none;
+
+    a {
+      text-decoration: none;
     }
+
     .profile-pic {
       width: 100%;
       height: 100%;
@@ -73,17 +76,85 @@
       margin-top: 10px;
     }
 
+    @media (max-width: 767px) {
+      .container-wrapper {
+        padding-top: 80px;
+        padding-bottom: 40px;
+      }
+
+      .profile-details {
+        padding: 70px 20px 30px;
+        margin: 0 15px;
+      }
+
+      .profile-pic-wrapper {
+        width: 120px;
+        height: 120px;
+        top: -60px;
+      }
+
+      .username-text {
+        margin-top: 30px;
+        font-size: 1.1rem;
+      }
+
+      .right-panel {
+        padding: 20px 15px;
+      }
+
+      .right-panel h5 {
+        font-size: 1.1rem;
+      }
+
+      .list-group-item {
+        font-size: 14px;
+        padding: 10px 12px;
+      }
+
+      .edit-btn-wrapper .btn {
+        width: 100%;
+        min-height: 44px;
+        font-size: 14px;
+      }
+
+      .referral-code-wrapper {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .referral-code-input {
+        max-width: 100%;
+        width: 100%;
+        font-size: 16px;
+        /* Prevent iOS zoom */
+        min-height: 44px;
+      }
+
+      .copy-btn {
+        width: 100%;
+        min-height: 44px;
+        font-size: 14px;
+      }
+    }
+
     @media (max-width: 576px) {
       .profile-details {
         padding: 70px 15px 30px;
       }
 
       .right-panel {
-        padding: 10px;
+        padding: 15px 10px;
       }
 
       .username-text {
-        margin-top: 85px;
+        margin-top: 25px;
+        font-size: 1rem;
+      }
+
+      .profile-pic-wrapper {
+        width: 100px;
+        height: 100px;
+        top: -50px;
       }
     }
 
@@ -106,78 +177,87 @@
     }
   </style>
 </head>
+
 <body>
   <%- include('../partials/user/header') %>
 
-  <div class="container container-wrapper">
-    <div class="profile-details">
-      <div class="profile-pic-wrapper">
-        <img src="<%= user.profileImage || '/default-profile.jpeg' %>" alt="Profile" class="profile-pic" />
-      </div>
-
-      <div class="username-text"><%= user.name.toUpperCase() %></div>
-      
-      <%if(user.referalCode){%>
-      <div class="referral-code-wrapper">
-        <input type="text" class="form-control referral-code-input" value="<%= user.referalCode || '' %>" readonly placeholder="No referral code">
-        <button class="btn btn-primary copy-btn" onclick="copyReferralCode(this)">
-          <i class="fas fa-copy"></i> Copy
-        </button>
-      </div>
-      <%}%>
-      
-      <div class="right-panel mt-3">
-        <h5 class="mb-4 text-center">Address</h5>
-        <% if (user.addresses && user.addresses.length > 0) {
-             const primary = user.addresses[0]; %>
-          <ul class="list-group mb-3">
-            <li class="list-group-item"><strong>Name:</strong> <%= primary.name %></li>
-            <li class="list-group-item"><strong>Phone:</strong> <%= primary.phone %></li>
-            <li class="list-group-item"><strong>Address:</strong>
-              <%= primary.town %>,
-              <%= primary.city %>,
-              <%= primary.state %> -
-              <%= primary.postCode %>
-            </li>
-          </ul>
-        <% } else { %>
-          <p class="text-muted text-center">No address added.</p>
-        <% } %>
-
-        <div class="edit-btn-wrapper">
-          <a href="/edit-profile" class="btn btn-warning btn-sm">
-            <i class="fas fa-user-edit"></i> Edit Profile
-          </a>
+    <div class="container container-wrapper">
+      <div class="profile-details">
+        <div class="profile-pic-wrapper">
+          <img src="<%= user.profileImage || '/default-profile.jpeg' %>" alt="Profile" class="profile-pic" />
         </div>
+
+        <div class="username-text">
+          <%= user.name.toUpperCase() %>
+        </div>
+
+        <%if(user.referalCode){%>
+          <div class="referral-code-wrapper">
+            <input type="text" class="form-control referral-code-input" value="<%= user.referalCode || '' %>" readonly
+              placeholder="No referral code">
+            <button class="btn btn-primary copy-btn" onclick="copyReferralCode(this)">
+              <i class="fas fa-copy"></i> Copy
+            </button>
+          </div>
+          <%}%>
+
+            <div class="right-panel mt-3">
+              <h5 class="mb-4 text-center">Address</h5>
+              <% if (user.addresses && user.addresses.length> 0) {
+                const primary = user.addresses[0]; %>
+                <ul class="list-group mb-3">
+                  <li class="list-group-item"><strong>Name:</strong>
+                    <%= primary.name %>
+                  </li>
+                  <li class="list-group-item"><strong>Phone:</strong>
+                    <%= primary.phone %>
+                  </li>
+                  <li class="list-group-item"><strong>Address:</strong>
+                    <%= primary.town %>,
+                      <%= primary.city %>,
+                        <%= primary.state %> -
+                          <%= primary.postCode %>
+                  </li>
+                </ul>
+                <% } else { %>
+                  <p class="text-muted text-center">No address added.</p>
+                  <% } %>
+
+                    <div class="edit-btn-wrapper">
+                      <a href="/edit-profile" class="btn btn-warning btn-sm">
+                        <i class="fas fa-user-edit"></i> Edit Profile
+                      </a>
+                    </div>
+            </div>
       </div>
     </div>
-  </div>
 
-  <%- include('../partials/user/footer') %>
+    <%- include('../partials/user/footer') %>
 
-  <!-- Added JavaScript for copy functionality -->
-  <script>
-    function copyReferralCode(button) {
-      const input = button.previousElementSibling;
-      const referralCode = input.value;
-      if (referralCode) {
-        navigator.clipboard.writeText(referralCode).then(() => {
-          button.innerHTML = '<i class="fas fa-check"></i> Copied!';
-          button.classList.remove('btn-primary');
-          button.classList.add('btn-success');
-          setTimeout(() => {
-            button.innerHTML = '<i class="fas fa-copy"></i> Copy';
-            button.classList.remove('btn-success');
-            button.classList.add('btn-primary');
-          }, 2000);
-        }).catch(err => {
-          console.error('Failed to copy referral code:', err);
-          alert('Failed to copy referral code.');
-        });
-      } else {
-        alert('No referral code available.');
-      }
-    }
-  </script>
+      <!-- Added JavaScript for copy functionality -->
+      <script>
+        function copyReferralCode(button) {
+          const input = button.previousElementSibling;
+          const referralCode = input.value;
+          if (referralCode) {
+            navigator.clipboard.writeText(referralCode).then(() => {
+              button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+              button.classList.remove('btn-primary');
+              button.classList.add('btn-success');
+              setTimeout(() => {
+                button.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                button.classList.remove('btn-success');
+                button.classList.add('btn-primary');
+              }, 2000);
+            }).catch(err => {
+              console.error('Failed to copy referral code:', err);
+              alert('Failed to copy referral code.');
+            });
+          } else {
+            alert('No referral code available.');
+          }
+        }
+      </script>
 </body>
+
 </html>

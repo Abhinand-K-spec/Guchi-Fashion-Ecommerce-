@@ -3610,18 +3610,28 @@ ol {
 	}
 	.offcanvas__top__hover ul li {
 		list-style: none;
-		font-size: 13px;
+		background: #111111;
 		color: #ffffff;
-		padding: 2px 15px;
-		cursor: pointer;
+	}
+	.slicknav_btn {
+		position: absolute;
+		right: 15px;
+		top: 26px;
+		background: transparent;
+	}
+	.slicknav_nav .slicknav_arrow {
+		float: right;
+	}
+	.header__nav__option {
+		display: none;
 	}
 	.offcanvas__nav__option {
 		text-align: center;
-		margin-bottom: 25px;
+		margin-bottom: 30px;
 	}
 	.offcanvas__nav__option a {
 		display: inline-block;
-		margin-right: 26px;
+		margin-right: 15px;
 		position: relative;
 	}
 	.offcanvas__nav__option a span {
@@ -3631,45 +3641,32 @@ ol {
 		left: 5px;
 		top: 8px;
 	}
-	.offcanvas__nav__option a:last-child {
-		margin-right: 0;
-	}
-	.offcanvas__nav__option .price {
-		font-size: 15px;
-		color: #111111;
-		font-weight: 700;
-		display: inline-block;
-		margin-left: -20px;
-		position: relative;
-		top: 3px;
+	.offcanvas__text {
+		text-align: center;
 	}
 	.offcanvas__text p {
 		color: #111111;
+		font-size: 14px;
 		margin-bottom: 0;
 	}
-	.header__top {
-		display: none;
-	}
-	.header .container {
-		position: relative;
-	}
-	.header__menu {
-		display: none;
-	}
-	.header__nav__option {
-		display: none;
-	}
-	.search-model-form input {
-		width: 100%;
-		font-size: 24px;
-	}
 	.hero__slider.owl-carousel .owl-nav button {
-		left: 15px;
-		top: 80%;
+		left: 20px;
 	}
 	.hero__slider.owl-carousel .owl-nav button.owl-next {
-		left: 75px;
-		right: 0;
+		right: 20px;
+	}
+	.hero__items {
+		padding-top: 130px;
+	}
+	.hero__text h2 {
+		font-size: 40px;
+		line-height: 50px;
+	}
+	.hero__social {
+		margin-top: 150px;
+	}
+	.banner__item {
+		margin-bottom: 20px;
 	}
 	.banner__item.banner__item--middle {
 		margin-top: 0;
@@ -3677,26 +3674,8 @@ ol {
 	.banner__item.banner__item--last {
 		margin-top: 0;
 	}
-	.banner__item {
-		margin-bottom: 40px;
-	}
-	.banner {
-		padding-bottom: 60px;
-	}
-	.banner__item__pic {
-		float: none;
-	}
-	.banner__item__pic img {
-		min-width: 100%;
-	}
-	.banner__item__text {
-		max-width: 100%;
-		position: relative;
-		top: 0;
-		padding-top: 22px;
-	}
-	.filter__controls li {
-		margin-right: 15px;
+	.categories {
+		padding-bottom: 50px;
 	}
 	.categories__text {
 		margin-bottom: 40px;
