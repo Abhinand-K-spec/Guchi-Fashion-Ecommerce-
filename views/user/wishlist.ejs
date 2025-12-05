@@ -380,7 +380,7 @@
               toastBody.textContent = 'Product successfully added to cart and removed from wishlist.';
               const toast = new bootstrap.Toast(toastEl);
               toast.show();
-              setTimeout(() => { window.location.reload(); }, 2000);
+              setTimeout(() => { window.location.reload(); }, 5000);
             } else {
               toastEl.classList.add('bg-danger', 'text-white');
               toastBody.textContent = 'Failed to add product to cart: ' + (result.message || 'Unknown error.');
@@ -422,7 +422,7 @@
               toastBody.textContent = 'Product successfully removed from wishlist.';
               const toast = new bootstrap.Toast(toastEl);
               toast.show();
-              setTimeout(() => { window.location.reload(); }, 2000);
+              setTimeout(() => { window.location.reload(); }, 5000);
             } else {
               toastEl.classList.add('bg-danger', 'text-white');
               toastBody.textContent = 'Failed to remove product from wishlist: ' + (result.message || 'Unknown error.');
