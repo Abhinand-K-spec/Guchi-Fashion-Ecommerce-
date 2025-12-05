@@ -1,297 +1,522 @@
 <%- include('../partials/user/header') %>
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Order Details - Guchi Fashion</title>
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <!-- Axios -->
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <!-- Razorpay Checkout -->
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Details - Guchi Fashion</title>
 
-  <style>
-    body {
-      background: url('/img/background.svg');
-      background-color: #f4f6f9;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    .order-header {
-      background-color: #fff;
-      padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      margin-bottom: 30px;
-    }
-    .order-header h3 {
-      font-weight: 600;
-      color: #343a40;
-    }
-    .badge-status {
-      font-size: 1rem;
-    }
-    .product-card {
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
-    }
-    .product-card img {
-      max-height: 120px;
-      object-fit: cover;
-      border-radius: 8px;
-    }
-    .btn-custom {
-      transition: all 0.3s ease;
-    }
-    .btn-custom:hover {
-      transform: scale(1.05);
-    }
-    .form-control:focus, .form-select:focus {
-      box-shadow: 0 0 5px rgba(100, 100, 255, 0.3);
-    }
-    a {
-      text-decoration: none;
-    }
-    .toast-container {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 1000;
-      max-width: 400px;
-    }
-    .form-select, .form-control {
-      background-color: #fff;
-      color: #343a40;
-      border: 1px solid #ced4da;
-    }
-    .is-invalid {
-      border-color: #dc3545;
-    }
-    .invalid-feedback {
-      color: #dc3545;
-      font-size: 0.875em;
-      display: none;
-    }
-    .is-invalid ~ .invalid-feedback {
-      display: block;
-    }
-  </style>
-</head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Razorpay Checkout -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-<body>
-  <div class="toast-container"></div>
+    <style>
+      body {
+        background: url('/img/background.svg');
+        background-color: #f4f6f9;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
 
-  <div class="container py-5">
-    <div class="order-header">
-      <div class="d-flex justify-content-between align-items-start flex-wrap">
-        <div>
-          <h3 class="mb-3">Order Details</h3>
-          <p><strong>Order ID:</strong> <%= order.OrderId %></p>
-          <p><strong>Date:</strong> <%= new Date(order.OrderDate).toLocaleString() %></p>
-          <p><strong>Return Policy:</strong> 7-day return policy</p>
-          <p><strong>Delivary charge: ₹40</strong></p>
-          <p><strong>Payment Method: <%=order.PaymentMethod%></strong></p>
+      .order-header {
+        background-color: #fff;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        margin-bottom: 30px;
+      }
 
-          <% if (order.PaymentMethod==='Online' && order.PaymentStatus!=='Completed' && order.Status==='Pending') { %>
-            <div>
-              <h3>Payment Failed</h3>
-              <!-- Retry button (no redirect) -->
-              <button class="btn btn-sm btn-danger btn-custom" id="retry-payment-btn" data-order-id="<%= order._id %>">
-                Retry Payment
-              </button>
-            </div>
-          <% } %>
+      .order-header h3 {
+        font-weight: 600;
+        color: #343a40;
+      }
+
+      .badge-status {
+        font-size: 1rem;
+      }
+
+      .product-card {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+      }
+
+      .product-card img {
+        max-height: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+      }
+
+      .btn-custom {
+        transition: all 0.3s ease;
+      }
+
+      .btn-custom:hover {
+        transform: scale(1.05);
+      }
+
+      .form-control:focus,
+      .form-select:focus {
+        box-shadow: 0 0 5px rgba(100, 100, 255, 0.3);
+      }
+
+      a {
+        text-decoration: none;
+      }
+
+      .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        max-width: 400px;
+      }
+
+      .form-select,
+      .form-control {
+        background-color: #fff;
+        color: #343a40;
+        border: 1px solid #ced4da;
+      }
+
+      .is-invalid {
+        border-color: #dc3545;
+      }
+
+      .invalid-feedback {
+        color: #dc3545;
+        font-size: 0.875em;
+        display: none;
+      }
+
+      .is-invalid~.invalid-feedback {
+        display: block;
+      }
+
+      .price-row {
+        margin-top: 0.5rem;
+      }
+
+      .price-row p {
+        margin-bottom: 0.5rem;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #495057;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px dashed #e9ecef;
+      }
+
+      .price-row p:last-child {
+        border-bottom: none;
+      }
+
+      .price-row strong {
+        font-weight: 500;
+        color: #212529;
+        margin-right: 0.2rem;
+      }
+
+      .price-row span {
+        font-weight: 400;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="toast-container"></div>
+
+    <div class="container py-5">
+      <div class="order-header">
+        <div class="d-flex justify-content-between align-items-start flex-wrap">
+          <div>
+            <h3 class="mb-3">Order Details</h3>
+            <p><strong>Order ID:</strong>
+              <%= order.OrderId %>
+            </p>
+            <p><strong>Date:</strong>
+              <%= new Date(order.OrderDate).toLocaleString() %>
+            </p>
+            <p><strong>Return Policy:</strong> 7-day return policy</p>
+            <p><strong>Payment Method: <%=order.PaymentMethod%></strong></p>
+
+            <% if (order.PaymentMethod==='Online' && order.PaymentStatus!=='Completed' && order.Status==='Pending' ) {
+              %>
+              <div>
+                <h3>Payment Failed</h3>
+                <!-- Retry button (no redirect) -->
+                <button class="btn btn-sm btn-danger btn-custom" id="retry-payment-btn"
+                  data-order-id="<%= order._id %>">
+                  Retry Payment
+                </button>
+              </div>
+              <% } %>
+          </div>
         </div>
       </div>
-    </div>
 
-    <% order.Items.forEach(item => {
-      const product = item.product || {};
-      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
-      const variant = product.Variants?.[variantIndex] || {};
-      const image = variant.Image?.[0] ? `${variant.Image[0]}` : (product.Image?.[0] ? `${product.Image[0]}` : '/images/default.jpg');
-      const price = item.price || 0; 
-      const itemDiscount = item.itemDiscount || 0;
-      const originalPrice = variant.Price || item.originalPrice || price; %>
-      <div class="product-card row g-3 align-items-center" id="item-<%= item._id %>">
-        <div class="col-md-2 text-center">
-          <img src="<%= image %>" alt="Product Image" class="img-fluid" />
-        </div>
-        <div class="col-md-7">
-          <h5 class="mb-2"><%= product.productName %></h5>
-          <p class="mb-1"><strong>Quantity:</strong> <%= item.quantity %></p>
-          <p>Size: <%=variant.Size%></p>
-          <% if (itemDiscount >= 0) { %>
-            <p class="mb-1 text-success"><strong>Item Discount:</strong> -₹<%= itemDiscount.toFixed(2) %></p>
-            <p class="mb-1 text-muted"><del>Sales Price: ₹<%= originalPrice %></del></p>
-            <% } %>
-            <p>Taxes: ₹<%=((((originalPrice*item.quantity)-itemDiscount)*0.05)/100).toFixed(2)%></p>
-            <p class="mb-1"><strong>Price:</strong> ₹<%= ((((originalPrice*item.quantity)-item.itemDiscount)+((((originalPrice*item.quantity)-itemDiscount)*0.05)/100))+40).toFixed(2) %></p>
-            
-          <p><strong>Status:</strong> 
-            <span class="badge 
+      <% order.Items.forEach(item=> {
+        const product = item.product || {};
+        const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+        const variant = product.Variants?.[variantIndex] || {};
+        const image = variant.Image?.[0] ? `${variant.Image[0]}` : (product.Image?.[0] ? `${product.Image[0]}` :
+        '/images/default.jpg');
+        const price = item.price || 0;
+        const itemDiscount = item.itemDiscount || 0;
+        const originalPrice = item.originalPrice || variant.Price || 0;
+        const offerDiscount = item.offerDiscountAmount || 0;
+        const couponDiscount = item.couponDiscountAmount || 0;
+        const taxAmount = item.taxAmount || 0;
+        const finalAmount = item.finalPayableAmount || (originalPrice * item.quantity); %>
+        <div class="product-card row g-3 align-items-center" id="item-<%= item._id %>">
+          <div class="col-md-2 text-center">
+            <img src="<%= image %>" alt="Product Image" class="img-fluid" />
+          </div>
+          <div class="col-md-7">
+            <h5 class="mb-2">
+              <%= product.productName %>
+            </h5>
+            <p class="mb-1"><strong>Quantity:</strong>
+              <%= item.quantity %>
+            </p>
+            <p>Size: <%=variant.Size%>
+            </p>
+            <div class="price-row">
+              <strong>Original Price:</strong>
+              <span>₹<%= originalPrice.toFixed(2) %> × <%= item.quantity %> = ₹<%= (originalPrice *
+                      item.quantity).toFixed(2) %></span>
+            </div>
+            <% if (offerDiscount> 0) { %>
+              <div class="price-row text-success">
+                <strong>Offer Discount:</strong>
+                <span>-₹<%= offerDiscount.toFixed(2) %></span>
+              </div>
+              <% } %>
+                <% if (couponDiscount> 0) { %>
+                  <div class="price-row text-success">
+                    <strong>Coupon Discount:</strong>
+                    <span>-₹<%= couponDiscount.toFixed(2) %></span>
+                  </div>
+                  <% } %>
+                    <div class="price-row">
+                      <strong>Tax (0.05%):</strong>
+                      <span>₹<%= taxAmount.toFixed(2) %></span>
+                    </div>
+                    <div class="price-row">
+                      <strong>Item Total:</strong>
+                      <span class="text-primary fw-bold">₹<%= finalAmount.toFixed(2) %></span>
+                    </div>
+
+                    <p><strong>Status:</strong>
+                      <span class="badge 
               <% if(item.status === 'Delivered') { %> bg-success
               <% } else if(item.status === 'Cancelled') { %> bg-danger
               <% } else if(item.status === 'Shipped') { %> bg-primary
               <% } else if(item.status === 'OutForDelivery') { %> bg-info text-dark
               <% } else if(item.status === 'Returned') { %> bg-warning text-dark
-              <% } else { %> bg-secondary <% } %>"
-              id="item-status-<%= item._id %>">
-              <%= item.status %>
-            </span>
-          </p>
-          <% if (item.cancelReason) { %>
-            <p class="text-muted"><strong>Cancel Reason:</strong> <%= item.cancelReason %></p>
-          <% } %>
-          <% if (item.returnReason) { %>
-            <p class="text-muted"><strong>Return Reason:</strong> <%= item.returnReason %></p>
-          <% } %>
-          <% if (item.returnRequestedAt) { %>
-            <p class="text-muted"><strong>Return Requested At:</strong> <%= new Date(item.returnRequestedAt).toLocaleString() %></p>
-          <% } %>
-        </div>
-        <div class="col-md-3 text-end">
-          <% if (item.status === 'Pending' && item.status !== 'Cancelled' && item.returnStatus === 'NotRequested' && order.PaymentStatus==='Completed') { %>
-            <form class="cancel-item-form mb-2" data-item-id="<%= item._id %>" data-action="/order/<%= order._id %>/cancel-item/<%= item._id %>">
-              <input type="text" name="reason" class="form-control mb-2 cancel-reason" placeholder="Reason for cancellation (required)" required />
-              <div class="invalid-feedback">Please provide a cancellation reason.</div>
-              <button type="submit" class="btn btn-sm btn-danger btn-custom">
-                Cancel This Product
-              </button>
-            </form>
-          <% } %>
-          <% if (item.status === 'Delivered' && item.status !== 'Cancelled' && item.returnStatus === 'NotRequested') { %>
-            <button class="btn btn-sm btn-warning btn-custom return-item-btn mb-2" data-item-id="<%= item._id %>" data-bs-toggle="modal" data-bs-target="#returnOrderModal">
-              Request Return
-            </button>
-          <% } %>
-          <% if (item.status === 'Delivered') { %>
-            <a href="/order/<%= order._id %>/invoice" class="btn btn-outline-secondary btn-sm btn-custom mb-2">
-              <i class="fas fa-download"></i> Download Invoice
-            </a>
-          <% } %>
-          <% if (item.returnStatus !== 'NotRequested') { %>
-            <p><strong>Return Status:</strong> 
-              <span class="badge 
+              <% } else { %> bg-secondary <% } %>" id="item-status-<%= item._id %>">
+                        <%= item.status %>
+                      </span>
+                    </p>
+                    <% if (item.cancelReason) { %>
+                      <p class="text-muted"><strong>Cancel Reason:</strong>
+                        <%= item.cancelReason %>
+                      </p>
+                      <% } %>
+                        <% if (item.returnReason) { %>
+                          <p class="text-muted"><strong>Return Reason:</strong>
+                            <%= item.returnReason %>
+                          </p>
+                          <% } %>
+                            <% if (item.returnRequestedAt) { %>
+                              <p class="text-muted"><strong>Return Requested At:</strong>
+                                <%= new Date(item.returnRequestedAt).toLocaleString() %>
+                              </p>
+                              <% } %>
+          </div>
+          <div class="col-md-3 text-end">
+            <% if (item.status==='Pending' && item.status !=='Cancelled' && item.returnStatus==='NotRequested' &&
+              order.PaymentStatus==='Completed' ) { %>
+              <form class="cancel-item-form mb-2" data-item-id="<%= item._id %>"
+                data-action="/order/<%= order._id %>/cancel-item/<%= item._id %>">
+                <input type="text" name="reason" class="form-control mb-2 cancel-reason"
+                  placeholder="Reason for cancellation (required)" required />
+                <div class="invalid-feedback">Please provide a cancellation reason.</div>
+                <button type="submit" class="btn btn-sm btn-danger btn-custom">
+                  Cancel This Product
+                </button>
+              </form>
+              <% } %>
+                <% if (item.status==='Delivered' && item.status !=='Cancelled' && item.returnStatus==='NotRequested' ) {
+                  %>
+                  <button class="btn btn-sm btn-warning btn-custom return-item-btn mb-2" data-item-id="<%= item._id %>"
+                    data-bs-toggle="modal" data-bs-target="#returnOrderModal">
+                    Request Return
+                  </button>
+                  <% } %>
+                    <% if (item.status==='Delivered' ) { %>
+                      <a href="/order/<%= order._id %>/invoice"
+                        class="btn btn-outline-secondary btn-sm btn-custom mb-2">
+                        <i class="fas fa-download"></i> Download Invoice
+                      </a>
+                      <% } %>
+                        <% if (item.returnStatus !=='NotRequested' ) { %>
+                          <p><strong>Return Status:</strong>
+                            <span class="badge 
                 <% if(item.returnStatus === 'Return Requested') { %> bg-warning text-dark
                 <% } else if(item.returnStatus === 'Request Approved') { %> bg-success
                 <% } else if(item.returnStatus === 'Request Denied') { %> bg-danger
                 <% } %>">
-                <%= item.returnStatus %>
-              </span>
-            </p>
-          <% } %>
+                              <%= item.returnStatus %>
+                            </span>
+                          </p>
+                          <% } %>
+          </div>
         </div>
-      </div>
-      <div>
+        <div>
         </div>
         <% }) %>
-         <% if (
-            order.Items.length > 1 &&
+
+          <!-- Order Summary Section -->
+          <div class="order-header mt-4">
+            <h4>Order Summary</h4>
+            <div class="row">
+              <div class="col-md-6">
+                <% const itemsTotal=order.Items.reduce((sum, item)=> sum + (item.finalPayableAmount || 0), 0);
+                  const totalOfferDiscount = order.totalOfferDiscount || 0;
+                  const totalCouponDiscount = order.totalCouponDiscount || 0;
+                  const totalSavings = totalOfferDiscount + totalCouponDiscount;
+                  const totalTax = order.totalTax || 0;
+                  const deliveryCharge = order.totalDeliveryCharge || 40;
+                  const orderTotal = order.orderAmount || (itemsTotal + deliveryCharge);
+                  %>
+                  <div class="price-row">
+                    <strong>Items Total:</strong>
+                    <span>₹<%= itemsTotal.toFixed(2) %></span>
+                  </div>
+                  <div class="price-row">
+                    <strong>Delivery Charge:</strong>
+                    <span>₹<%= deliveryCharge.toFixed(2) %></span>
+                  </div>
+                  <hr>
+                  <div class="price-row">
+                    <h5><strong>Order Total:</strong></h5>
+                    <h5>₹<%= orderTotal.toFixed(2) %>
+                    </h5>
+                  </div>
+                  <% if (totalSavings> 0) { %>
+                    <div class="price-row text-success mt-2">
+                      <strong>🎉 You Saved:</strong>
+                      <strong>₹<%= totalSavings.toFixed(2) %></strong>
+                    </div>
+                    <% } %>
+              </div>
+            </div>
+          </div>
+
+          <% if ( order.Items.length> 1 &&
             order.Items.every(
-              x => x.status === 'Pending' &&
-                  x.status !== 'Cancelled' &&
-                  x.returnStatus === 'NotRequested'
-                  && order.PaymentStatus==='Completed'
+            x => x.status === 'Pending' &&
+            x.status !== 'Cancelled' &&
+            x.returnStatus === 'NotRequested'
+            && order.PaymentStatus==='Completed'
             )
-          ) { %>
-            <button class="btn btn-danger btn-custom cancel-full-order-btn" data-bs-toggle="modal" data-bs-target="#cancelFullOrderModal">
+            ) { %>
+            <button class="btn btn-danger btn-custom cancel-full-order-btn" data-bs-toggle="modal"
+              data-bs-target="#cancelFullOrderModal">
               Cancel Full Order
             </button>
-          <% } %>
+            <% } %>
 
-    <!-- Return Modal (Single Item Only) -->
-    <div class="modal fade" id="returnOrderModal" tabindex="-1" aria-labelledby="returnOrderModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <form id="return-order-form" class="modal-content p-4">
-          <div class="modal-header border-0 pb-2">
-            <h5 class="modal-title" id="returnOrderModalLabel">Request Return for Item</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <label for="return-reason" class="form-label">Reason for return (required):</label>
-            <select name="reason" id="return-reason" class="form-select" required>
-              <option value="" disabled selected>Select a reason</option>
-              <option value="Changed my mind">Changed my mind</option>
-              <option value="Product damaged">Product damaged</option>
-              <option value="Wrong product received">Wrong product received</option>
-            </select>
-            <div class="invalid-feedback">Please select a return reason.</div>
-          </div>
-          <div class="modal-footer border-0 pt-2">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-warning">Confirm Return</button>
-          </div>
-        </form>
-      </div>
+              <!-- Return Modal (Single Item Only) -->
+              <div class="modal fade" id="returnOrderModal" tabindex="-1" aria-labelledby="returnOrderModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form id="return-order-form" class="modal-content p-4">
+                    <div class="modal-header border-0 pb-2">
+                      <h5 class="modal-title" id="returnOrderModalLabel">Request Return for Item</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <label for="return-reason" class="form-label">Reason for return (required):</label>
+                      <select name="reason" id="return-reason" class="form-select" required>
+                        <option value="" disabled selected>Select a reason</option>
+                        <option value="Changed my mind">Changed my mind</option>
+                        <option value="Product damaged">Product damaged</option>
+                        <option value="Wrong product received">Wrong product received</option>
+                      </select>
+                      <div class="invalid-feedback">Please select a return reason.</div>
+                    </div>
+                    <div class="modal-footer border-0 pt-2">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      <button type="submit" class="btn btn-warning">Confirm Return</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Cancel Full Order Modal -->
+              <div class="modal fade" id="cancelFullOrderModal" tabindex="-1"
+                aria-labelledby="cancelFullOrderModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form id="cancel-full-order-form" class="modal-content p-4"
+                    data-action="/order/<%= order._id %>/cancel">
+                    <div class="modal-header border-0 pb-2">
+                      <h5 class="modal-title" id="cancelFullOrderModalLabel">Cancel Full Order</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <p>Are you sure you want to cancel the entire order?</p>
+                      <label for="cancel-full-reason" class="form-label">Reason for cancellation (required):</label>
+                      <input type="text" name="reason" id="cancel-full-reason" class="form-control"
+                        placeholder="Reason for cancellation" required />
+                      <div class="invalid-feedback">Please provide a cancellation reason.</div>
+                    </div>
+                    <div class="modal-footer border-0 pt-2">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
     </div>
 
-    <!-- Cancel Full Order Modal -->
-    <div class="modal fade" id="cancelFullOrderModal" tabindex="-1" aria-labelledby="cancelFullOrderModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <form id="cancel-full-order-form" class="modal-content p-4" data-action="/order/<%= order._id %>/cancel">
-          <div class="modal-header border-0 pb-2">
-            <h5 class="modal-title" id="cancelFullOrderModalLabel">Cancel Full Order</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <p>Are you sure you want to cancel the entire order?</p>
-            <label for="cancel-full-reason" class="form-label">Reason for cancellation (required):</label>
-            <input type="text" name="reason" id="cancel-full-reason" class="form-control" placeholder="Reason for cancellation" required />
-            <div class="invalid-feedback">Please provide a cancellation reason.</div>
-          </div>
-          <div class="modal-footer border-0 pt-2">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const returnModal = new bootstrap.Modal(document.getElementById('returnOrderModal'));
+        const cancelFullOrderModal = new bootstrap.Modal(document.getElementById('cancelFullOrderModal'));
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const returnModal = new bootstrap.Modal(document.getElementById('returnOrderModal'));
-      const cancelFullOrderModal = new bootstrap.Modal(document.getElementById('cancelFullOrderModal'));
+        const modals = [document.getElementById('returnOrderModal'), document.getElementById('cancelFullOrderModal')];
+        modals.forEach(modal => {
+          if (modal) {
+            modal.addEventListener('click', e => {
+              if (e.target.closest('.modal-content')) {
+                e.stopPropagation();
+              }
+            });
+          }
+        });
 
-      const modals = [document.getElementById('returnOrderModal'), document.getElementById('cancelFullOrderModal')];
-      modals.forEach(modal => {
-        if (modal) {
-          modal.addEventListener('click', e => {
-            if (e.target.closest('.modal-content')) {
-              e.stopPropagation();
+        document.querySelectorAll('.form-select').forEach(select => {
+          select.addEventListener('click', e => e.stopPropagation());
+        });
+
+        document.querySelectorAll('.return-item-btn').forEach(button => {
+          button.addEventListener('click', () => {
+            const itemId = button.dataset.itemId;
+            document.getElementById('return-order-form').dataset.action = `/order/<%= order._id %>/return-item/${itemId}`;
+            document.getElementById('return-order-form').dataset.itemId = itemId;
+            document.getElementById('returnOrderModalLabel').textContent = 'Request Return for Item';
+            document.getElementById('return-reason').value = ''; // Reset reason
+            returnModal.show();
+          });
+        });
+
+        document.querySelectorAll('.cancel-item-form').forEach(form => {
+          form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const formElement = e.target;
+            const itemId = formElement.dataset.itemId;
+            const reasonInput = formElement.querySelector('.cancel-reason');
+            const reason = reasonInput.value.trim();
+
+            if (!reason) {
+              reasonInput.classList.add('is-invalid');
+              showToast('danger', 'Please provide a cancellation reason');
+              return;
+            }
+            reasonInput.classList.remove('is-invalid');
+            //cancel item router
+            try {
+              console.log(`Sending cancel request: itemId=${itemId}, reason=${reason}`);
+              const response = await axios.post(formElement.dataset.action, { reason }, {
+                headers: { 'Accept': 'application/json' }
+              });
+              console.log('Cancel Response:', response.data);
+
+              if (response.data.success) {
+                const itemCard = document.getElementById(`item-${itemId}`);
+                itemCard.querySelector('.cancel-item-form')?.remove();
+                itemCard.querySelector('.return-item-btn')?.remove();
+                const badge = itemCard.querySelector(`#item-status-${itemId}`);
+                badge.classList.remove('bg-success', 'bg-primary', 'bg-info', 'bg-warning', 'text-dark');
+                badge.classList.add('bg-danger');
+                badge.textContent = 'Cancelled';
+                if (reason) {
+                  itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Cancel Reason:</strong> ${reason}</p>`);
+                }
+                showToast('success', response.data.message);
+              } else {
+                showToast('danger', response.data.message || 'Cancellation failed');
+              }
+            } catch (error) {
+              console.error('Cancel Error:', error.response?.data || error);
+              showToast('danger', error.response?.data?.message || 'An error occurred while cancelling the item');
             }
           });
-        }
-      });
-
-      document.querySelectorAll('.form-select').forEach(select => {
-        select.addEventListener('click', e => e.stopPropagation());
-      });
-
-      document.querySelectorAll('.return-item-btn').forEach(button => {
-        button.addEventListener('click', () => {
-          const itemId = button.dataset.itemId;
-          document.getElementById('return-order-form').dataset.action = `/order/<%= order._id %>/return-item/${itemId}`;
-          document.getElementById('return-order-form').dataset.itemId = itemId;
-          document.getElementById('returnOrderModalLabel').textContent = 'Request Return for Item';
-          document.getElementById('return-reason').value = ''; // Reset reason
-          returnModal.show();
         });
-      });
 
-      document.querySelectorAll('.cancel-item-form').forEach(form => {
-        form.addEventListener('submit', async e => {
+        document.getElementById('return-order-form')?.addEventListener('submit', async e => {
           e.preventDefault();
-          const formElement = e.target;
-          const itemId = formElement.dataset.itemId;
-          const reasonInput = formElement.querySelector('.cancel-reason');
+          const form = e.target;
+          const url = form.dataset.action;
+          const itemId = form.dataset.itemId;
+          const reasonSelect = form.querySelector('#return-reason');
+          const reason = reasonSelect.value;
+
+          if (!reason || reason === '') {
+            reasonSelect.classList.add('is-invalid');
+            showToast('danger', 'Please select a valid return reason');
+            return;
+          }
+          reasonSelect.classList.remove('is-invalid');
+          //return url
+          try {
+            console.log(`Sending return request: url=${url}, itemId=${itemId}, reason=${reason}`);
+            const response = await axios.post(url, { reason }, {
+              headers: { 'Accept': 'application/json' }
+            });
+            console.log('Return Response:', response.data);
+
+            if (response.data.success) {
+              const itemCard = document.getElementById(`item-${itemId}`);
+              itemCard.querySelector('.return-item-btn')?.remove();
+              itemCard.querySelector('.btn-outline-secondary')?.remove();
+              const statusBadge = itemCard.querySelector(`#item-status-${itemId}`);
+              statusBadge.classList.remove('bg-success', 'bg-primary', 'bg-info');
+              statusBadge.classList.add('bg-warning', 'text-dark');
+              statusBadge.textContent = 'Return Requested';
+              if (reason) {
+                itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Return Reason:</strong> ${reason}</p>`);
+                itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Return Requested At:</strong> ${new Date().toLocaleString()}</p>`);
+              }
+              itemCard.querySelector('.col-md-3').insertAdjacentHTML('beforeend', `
+              <p><strong>Return Status:</strong> <span class="badge bg-warning text-dark">Return Requested</span></p>
+            `);
+              returnModal.hide();
+              showToast('success', response.data.message);
+            } else {
+              showToast('danger', response.data.message || 'Return request failed');
+            }
+          } catch (error) {
+            console.error('Return Error:', error.response?.data || error);
+            showToast('danger', error.response?.data?.message || 'An error occurred while requesting return');
+          }
+        });
+
+        document.getElementById('cancel-full-order-form')?.addEventListener('submit', async e => {
+          e.preventDefault();
+          const form = e.target;
+          const url = form.dataset.action;
+          const reasonInput = form.querySelector('#cancel-full-reason');
           const reason = reasonInput.value.trim();
 
           if (!reason) {
@@ -300,258 +525,167 @@
             return;
           }
           reasonInput.classList.remove('is-invalid');
-          //cancel item router
+          //full order cancel
           try {
-            console.log(`Sending cancel request: itemId=${itemId}, reason=${reason}`);
-            const response = await axios.post(formElement.dataset.action, { reason }, {
+            console.log(`Sending full order cancel request: url=${url}, reason=${reason}`);
+            const response = await axios.post(url, { reason }, {
               headers: { 'Accept': 'application/json' }
             });
-            console.log('Cancel Response:', response.data);
+            console.log('Full Order Cancel Response:', response.data);
 
             if (response.data.success) {
-              const itemCard = document.getElementById(`item-${itemId}`);
-              itemCard.querySelector('.cancel-item-form')?.remove();
-              itemCard.querySelector('.return-item-btn')?.remove();
-              const badge = itemCard.querySelector(`#item-status-${itemId}`);
-              badge.classList.remove('bg-success', 'bg-primary', 'bg-info', 'bg-warning', 'text-dark');
-              badge.classList.add('bg-danger');
-              badge.textContent = 'Cancelled';
-              if (reason) {
-                itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Cancel Reason:</strong> ${reason}</p>`);
-              }
+              document.querySelectorAll('.product-card').forEach(card => {
+                card.querySelector('.cancel-item-form')?.remove();
+                card.querySelector('.return-item-btn')?.remove();
+                card.querySelector('.cancel-full-order-btn')?.remove();
+                const itemId = card.id.replace('item-', '');
+                const badge = card.querySelector(`#item-status-${itemId}`);
+                badge.classList.remove('bg-success', 'bg-primary', 'bg-info', 'bg-warning', 'text-dark');
+                badge.classList.add('bg-danger');
+                badge.textContent = 'Cancelled';
+                if (reason) {
+                  card.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Cancel Reason:</strong> ${reason}</p>`);
+                }
+              });
+              cancelFullOrderModal.hide();
               showToast('success', response.data.message);
             } else {
-              showToast('danger', response.data.message || 'Cancellation failed');
+              showToast('danger', response.data.message || 'Full order cancellation failed');
             }
           } catch (error) {
-            console.error('Cancel Error:', error.response?.data || error);
-            showToast('danger', error.response?.data?.message || 'An error occurred while cancelling the item');
+            console.error('Full Order Cancel Error:', error.response?.data || error);
+            showToast('danger', error.response?.data?.message || 'An error occurred while cancelling the order');
           }
         });
-      });
 
-      document.getElementById('return-order-form')?.addEventListener('submit', async e => {
-        e.preventDefault();
-        const form = e.target;
-        const url = form.dataset.action;
-        const itemId = form.dataset.itemId;
-        const reasonSelect = form.querySelector('#return-reason');
-        const reason = reasonSelect.value;
+        //
+        // Retry Payment Logic (uses POST /place-order with { orderId, retry: true })
+        //
+        const retryBtn = document.getElementById('retry-payment-btn');
+        const razorpayKey = '<%= process.env.RAZORPAY_KEY_ID %>'; // server-side key
+        const userId = '<%= user?._id || "" %>'; // if you need to send userId, it's available
 
-        if (!reason || reason === '') {
-          reasonSelect.classList.add('is-invalid');
-          showToast('danger', 'Please select a valid return reason');
-          return;
-        }
-        reasonSelect.classList.remove('is-invalid');
-        //return url
-        try {
-          console.log(`Sending return request: url=${url}, itemId=${itemId}, reason=${reason}`);
-          const response = await axios.post(url, { reason }, {
-            headers: { 'Accept': 'application/json' }
-          });
-          console.log('Return Response:', response.data);
-
-          if (response.data.success) {
-            const itemCard = document.getElementById(`item-${itemId}`);
-            itemCard.querySelector('.return-item-btn')?.remove();
-            itemCard.querySelector('.btn-outline-secondary')?.remove();
-            const statusBadge = itemCard.querySelector(`#item-status-${itemId}`);
-            statusBadge.classList.remove('bg-success', 'bg-primary', 'bg-info');
-            statusBadge.classList.add('bg-warning', 'text-dark');
-            statusBadge.textContent = 'Return Requested';
-            if (reason) {
-              itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Return Reason:</strong> ${reason}</p>`);
-              itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Return Requested At:</strong> ${new Date().toLocaleString()}</p>`);
+        if (retryBtn) {
+          retryBtn.addEventListener('click', async () => {
+            const orderId = retryBtn.dataset.orderId;
+            if (!orderId) {
+              showToast('danger', 'Order id not found for retry');
+              return;
             }
-            itemCard.querySelector('.col-md-3').insertAdjacentHTML('beforeend', `
-              <p><strong>Return Status:</strong> <span class="badge bg-warning text-dark">Return Requested</span></p>
-            `);
-            returnModal.hide();
-            showToast('success', response.data.message);
-          } else {
-            showToast('danger', response.data.message || 'Return request failed');
-          }
-        } catch (error) {
-          console.error('Return Error:', error.response?.data || error);
-          showToast('danger', error.response?.data?.message || 'An error occurred while requesting return');
-        }
-      });
 
-      document.getElementById('cancel-full-order-form')?.addEventListener('submit', async e => {
-        e.preventDefault();
-        const form = e.target;
-        const url = form.dataset.action;
-        const reasonInput = form.querySelector('#cancel-full-reason');
-        const reason = reasonInput.value.trim();
+            retryBtn.disabled = true;
+            const originalText = retryBtn.innerHTML;
+            retryBtn.innerHTML = 'Initializing...';
 
-        if (!reason) {
-          reasonInput.classList.add('is-invalid');
-          showToast('danger', 'Please provide a cancellation reason');
-          return;
-        }
-        reasonInput.classList.remove('is-invalid');
-        //full order cancel
-        try {
-          console.log(`Sending full order cancel request: url=${url}, reason=${reason}`);
-          const response = await axios.post(url, { reason }, {
-            headers: { 'Accept': 'application/json' }
-          });
-          console.log('Full Order Cancel Response:', response.data);
+            try {
+              // Call your existing /place-order route to generate a new Razorpay order for retry.
+              // Sending { orderId, retry: true } — adjust or add more fields if your backend expects them.
+              const res = await axios.post('/retry-payment', {
+                orderId: orderId,
+                retry: true,
+                // If your backend needs userId or other fields, include them:
+                // userId: userId
+              }, {
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+              });
 
-          if (response.data.success) {
-            document.querySelectorAll('.product-card').forEach(card => {
-              card.querySelector('.cancel-item-form')?.remove();
-              card.querySelector('.return-item-btn')?.remove();
-              card.querySelector('.cancel-full-order-btn')?.remove();
-              const itemId = card.id.replace('item-', '');
-              const badge = card.querySelector(`#item-status-${itemId}`);
-              badge.classList.remove('bg-success', 'bg-primary', 'bg-info', 'bg-warning', 'text-dark');
-              badge.classList.add('bg-danger');
-              badge.textContent = 'Cancelled';
-              if (reason) {
-                card.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Cancel Reason:</strong> ${reason}</p>`);
+              if (!res || !res.data || !res.data.success) {
+                console.error('Retry place-order failed', res?.data);
+                showToast('danger', (res?.data?.message) || 'Failed to initialize retry payment');
+                retryBtn.disabled = false;
+                retryBtn.innerHTML = originalText;
+                return;
               }
-            });
-            cancelFullOrderModal.hide();
-            showToast('success', response.data.message);
-          } else {
-            showToast('danger', response.data.message || 'Full order cancellation failed');
-          }
-        } catch (error) {
-          console.error('Full Order Cancel Error:', error.response?.data || error);
-          showToast('danger', error.response?.data?.message || 'An error occurred while cancelling the order');
-        }
-      });
 
-      //
-      // Retry Payment Logic (uses POST /place-order with { orderId, retry: true })
-      //
-      const retryBtn = document.getElementById('retry-payment-btn');
-      const razorpayKey = '<%= process.env.RAZORPAY_KEY_ID %>'; // server-side key
-      const userId = '<%= user?._id || "" %>'; // if you need to send userId, it's available
+              // Expecting backend to return an object similar to checkout:
+              // res.data.order.id  -> Razorpay order id
+              // res.data.orderId   -> your DB order id
+              const razorOrder = res.data.order;
+              const razorAmount = res.data
+              const dbOrderId = res.data.orderId || orderId; // fallback
 
-      if (retryBtn) {
-        retryBtn.addEventListener('click', async () => {
-          const orderId = retryBtn.dataset.orderId;
-          if (!orderId) {
-            showToast('danger', 'Order id not found for retry');
-            return;
-          }
+              if (!razorOrder || !razorOrder.id) {
+                console.error('Razorpay order id missing in response', res.data);
+                showToast('danger', 'Payment initialization failed (missing order id).');
+                retryBtn.disabled = false;
+                retryBtn.innerHTML = originalText;
+                return;
+              }
 
-          retryBtn.disabled = true;
-          const originalText = retryBtn.innerHTML;
-          retryBtn.innerHTML = 'Initializing...';
+              const options = {
+                key: razorpayKey,
+                amount: razorOrder.amount || Math.round((res.data.amount || 0) * 100),
+                currency: razorOrder.currency || 'INR',
+                name: 'Guchi Fashion',
+                description: 'Retry Payment',
+                image: '/guchi-logo.png',
+                order_id: razorOrder.id,
+                handler: async function (paymentResponse) {
+                  // On successful payment — verify with backend
+                  try {
+                    const verifyRes = await axios.post('/verify-retry-payment', {
+                      razorpay_payment_id: paymentResponse.razorpay_payment_id || paymentResponse.razorpay_payment_id,
+                      razorpay_order_id: paymentResponse.razorpay_order_id || paymentResponse.razorpay_order_id,
+                      razorpay_signature: paymentResponse.razorpay_signature || paymentResponse.razorpay_signature,
+                      orderId: dbOrderId,
+                      // include any other helpful data your backend expects:
+                      // userId
+                    }, {
+                      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+                    });
 
-          try {
-            // Call your existing /place-order route to generate a new Razorpay order for retry.
-            // Sending { orderId, retry: true } — adjust or add more fields if your backend expects them.
-            const res = await axios.post('/retry-payment', {
-              orderId: orderId,
-              retry: true,
-              // If your backend needs userId or other fields, include them:
-              // userId: userId
-            }, {
-              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
-            });
-
-            if (!res || !res.data || !res.data.success) {
-              console.error('Retry place-order failed', res?.data);
-              showToast('danger', (res?.data?.message) || 'Failed to initialize retry payment');
-              retryBtn.disabled = false;
-              retryBtn.innerHTML = originalText;
-              return;
-            }
-
-            // Expecting backend to return an object similar to checkout:
-            // res.data.order.id  -> Razorpay order id
-            // res.data.orderId   -> your DB order id
-            const razorOrder = res.data.order;
-            const razorAmount = res.data
-            const dbOrderId = res.data.orderId || orderId; // fallback
-
-            if (!razorOrder || !razorOrder.id) {
-              console.error('Razorpay order id missing in response', res.data);
-              showToast('danger', 'Payment initialization failed (missing order id).');
-              retryBtn.disabled = false;
-              retryBtn.innerHTML = originalText;
-              return;
-            }
-
-            const options = {
-              key: razorpayKey,
-              amount: razorOrder.amount || Math.round((res.data.amount || 0) * 100),
-              currency: razorOrder.currency || 'INR',
-              name: 'Guchi Fashion',
-              description: 'Retry Payment',
-              image: '/guchi-logo.png',
-              order_id: razorOrder.id,
-              handler: async function (paymentResponse) {
-                // On successful payment — verify with backend
-                try {
-                  const verifyRes = await axios.post('/verify-retry-payment', {
-                    razorpay_payment_id: paymentResponse.razorpay_payment_id || paymentResponse.razorpay_payment_id,
-                    razorpay_order_id: paymentResponse.razorpay_order_id || paymentResponse.razorpay_order_id,
-                    razorpay_signature: paymentResponse.razorpay_signature || paymentResponse.razorpay_signature,
-                    orderId: dbOrderId,
-                    // include any other helpful data your backend expects:
-                    // userId
-                  }, {
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
-                  });
-
-                  if (verifyRes && verifyRes.data && verifyRes.data.success) {
-                    showToast('success', 'Payment successful!');
-                    // Update UI: reload to reflect payment status (or optionally redirect)
-                    setTimeout(() => {
-                      location.reload();
-                    }, 900);
-                  } else {
-                    console.error('Verify payment failed', verifyRes?.data);
-                    showToast('danger', verifyRes?.data?.message || 'Payment verification failed.');
+                    if (verifyRes && verifyRes.data && verifyRes.data.success) {
+                      showToast('success', 'Payment successful!');
+                      // Update UI: reload to reflect payment status (or optionally redirect)
+                      setTimeout(() => {
+                        location.reload();
+                      }, 900);
+                    } else {
+                      console.error('Verify payment failed', verifyRes?.data);
+                      showToast('danger', verifyRes?.data?.message || 'Payment verification failed.');
+                      retryBtn.disabled = false;
+                      retryBtn.innerHTML = originalText;
+                    }
+                  } catch (verifyErr) {
+                    console.error('Error verifying retry payment', verifyErr);
+                    showToast('danger', 'Error verifying payment. Please contact support.');
                     retryBtn.disabled = false;
                     retryBtn.innerHTML = originalText;
                   }
-                } catch (verifyErr) {
-                  console.error('Error verifying retry payment', verifyErr);
-                  showToast('danger', 'Error verifying payment. Please contact support.');
-                  retryBtn.disabled = false;
-                  retryBtn.innerHTML = originalText;
-                }
-              },
-              prefill: {
-                name: '<%= order.ShippingAddress?.name || "" %>',
-                contact: '',
-                email: '<%= user?.email || "" %>'
-              },
-              notes: {
-                orderId: '<%= order._id %>'
-              },
-              theme: { color: '#28a745' }
-            };
+                },
+                prefill: {
+                  name: '<%= order.ShippingAddress?.name || "" %>',
+                  contact: '',
+                  email: '<%= user?.email || "" %>'
+                },
+                notes: {
+                  orderId: '<%= order._id %>'
+                },
+                theme: { color: '#28a745' }
+              };
 
-            const rzp = new Razorpay(options);
+              const rzp = new Razorpay(options);
 
-            rzp.on('payment.failed', function (response) {
-              console.error('Retry payment failed', response);
-              showToast('danger', response.error?.description || 'Payment failed during retry');
+              rzp.on('payment.failed', function (response) {
+                console.error('Retry payment failed', response);
+                showToast('danger', response.error?.description || 'Payment failed during retry');
+                retryBtn.disabled = false;
+                retryBtn.innerHTML = originalText;
+              });
+
+              rzp.open();
+            } catch (err) {
+              console.error('Error initiating retry payment', err);
+              showToast('danger', (err?.response?.data?.message) || 'Error initiating retry payment. Try again later.');
               retryBtn.disabled = false;
               retryBtn.innerHTML = originalText;
-            });
+            }
+          });
+        }
 
-            rzp.open();
-          } catch (err) {
-            console.error('Error initiating retry payment', err);
-            showToast('danger', (err?.response?.data?.message) || 'Error initiating retry payment. Try again later.');
-            retryBtn.disabled = false;
-            retryBtn.innerHTML = originalText;
-          }
-        });
-      }
-
-      // toast helper
-      function showToast(type, message) {
-        const toastHtml = `
+        // toast helper
+        function showToast(type, message) {
+          const toastHtml = `
           <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
               <div class="toast-body">${message}</div>
@@ -559,22 +693,22 @@
             </div>
           </div>
         `;
-        const toastContainer = document.querySelector('.toast-container');
-        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-        const toastElement = toastContainer.querySelector('.toast:last-child');
-        const toast = new bootstrap.Toast(toastElement);
-        toast.show();
-        setTimeout(() => {
-          toast.hide();
-          setTimeout(() => toastElement.remove(), 500);
-        }, 3500);
-      }
+          const toastContainer = document.querySelector('.toast-container');
+          toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+          const toastElement = toastContainer.querySelector('.toast:last-child');
+          const toast = new bootstrap.Toast(toastElement);
+          toast.show();
+          setTimeout(() => {
+            toast.hide();
+            setTimeout(() => toastElement.remove(), 500);
+          }, 3500);
+        }
 
-      // existing return/cancel success handlers etc remain unchanged (already above)
-    });
-  </script>
+        // existing return/cancel success handlers etc remain unchanged (already above)
+      });
+    </script>
 
-  <footer class="text-center mt-5">
-    <%- include('../partials/user/footer') %>
-  </footer>
-</body>
+    <footer class="text-center mt-5">
+      <%- include('../partials/user/footer') %>
+    </footer>
+  </body>

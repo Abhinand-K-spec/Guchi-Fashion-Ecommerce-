@@ -210,11 +210,8 @@ const retryPayment = async (req, res) => {
       });
     }
 
-    // Calculate payable amount again
-    const totalOriginalPrice = existingOrder.Items.reduce((sum, item) => sum += (item.originalPrice * item.quantity), 0);
-    const delivary = 40;
-    const discountAmount = existingOrder.discountAmount;
-    const finalAmount = totalOriginalPrice - discountAmount + delivary
+    // Calculate payable amount from order
+    const finalAmount = existingOrder.orderAmount || 0;
 
 
     if (finalAmount < 1) {

@@ -115,11 +115,17 @@ const approveReturn = async (req, res) => {
 
     item.returnStatus = 'Request Approved';
     item.status = 'Returned';
-    const tax = (((item.price * item.quantity) * 0.05)) / 100;
 
-    const delivery = 40;
-    let refundAmount = item.price * item.quantity + tax + delivery - item.itemDiscount;
+    const delivery = order.totalDeliveryCharge || 40;
 
+    // Item return refund calculation
+    let refundAmount = item.finalPayableAmount || ((item.originalPrice || item.price || 0) * item.quantity);
+
+    // Check if ALL items are now returned - if so, add delivery charge
+    const allReturned = order.Items.every(i => i.status === 'Returned' || (i.product?._id.toString() === productId && i.returnStatus === 'Return Requested'));
+    if (allReturned) {
+      refundAmount += delivery;
+    }
 
     if (order.PaymentMethod === 'Online' || order.PaymentMethod === 'COD') {
       let wallet = await Wallet.findOne({ UserId: order.UserId });
@@ -203,12 +209,15 @@ const cancelSingleItem = async (req, res) => {
       await product.save();
     }
 
-    let refundAmount = item.price * item.quantity;
-    if (order.discountAmount > 0) {
-      const itemTotalBeforeDiscount = (item.originalPrice || item.price) * item.quantity;
-      const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
-      const discountProportion = (itemTotalBeforeDiscount / totalOrderAmountBeforeDiscount) * order.discountAmount;
-      refundAmount -= discountProportion;
+    const delivery = order.totalDeliveryCharge || 40;
+
+    // Item cancellation refund calculation
+    let refundAmount = item.finalPayableAmount || ((item.originalPrice || item.price || 0) * item.quantity);
+
+    // Check if ALL items will be cancelled after this - if so, add delivery charge
+    const allItemsCancelled = order.Items.every(i => i.status === 'Cancelled' || i._id.toString() === itemId);
+    if (allItemsCancelled) {
+      refundAmount += delivery;
     }
 
     if (order.PaymentMethod === 'Online' && order.PaymentStatus === 'Completed') {
@@ -313,12 +322,16 @@ const updateItemStatus = async (req, res) => {
         product.Variants[variantIndex].Stock += item.quantity;
         await product.save();
       }
-      let refundAmount = item.price * item.quantity;
-      if (order.discountAmount > 0) {
-        const itemTotalBeforeDiscount = (item.originalPrice || item.price) * item.quantity;
-        const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
-        const discountProportion = (itemTotalBeforeDiscount / totalOrderAmountBeforeDiscount) * order.discountAmount;
-        refundAmount -= discountProportion;
+
+      const delivery = order.totalDeliveryCharge || 40;
+
+      // Status update to cancelled - refund calculation
+      let refundAmount = item.finalPayableAmount || ((item.originalPrice || item.price || 0) * item.quantity);
+
+      // Check if ALL items will be cancelled - if so, add delivery charge
+      const allItemsCancelled = order.Items.every(i => i.status === 'Cancelled' || i._id.toString() === itemId);
+      if (allItemsCancelled) {
+        refundAmount += delivery;
       }
 
       if (order.PaymentMethod === 'Online' && order.PaymentStatus === 'Completed') {

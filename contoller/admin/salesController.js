@@ -82,20 +82,12 @@ const downloadSalesReportExcel = async (req, res) => {
     // Data rows
     for (const order of orders) {
       const totalAmount = order.Items?.reduce(
-        (sum, item) => sum + item.price * (item.quantity || 0),
+        (sum, item) => sum + (item.finalPayableAmount || 0),
         0
       ) || 0;
 
-      const itemDiscount = order.Items?.reduce(
-        (sum, item) => sum + (item.itemDiscount || 0),
-        0
-      ) || 0;
-
-      const couponDiscount = order.discountAmount
-        ? order.discountAmount - itemDiscount
-        : 0;
-
-      const netAmount = totalAmount - itemDiscount - couponDiscount;
+      const totalDiscount = (order.totalOfferDiscount || 0) + (order.totalCouponDiscount || 0);
+      const netAmount = order.orderAmount || 0;
 
       // Last 4 characters formatting like PDF
       const id = order.OrderId.toString();
@@ -106,7 +98,7 @@ const downloadSalesReportExcel = async (req, res) => {
         new Date(order.OrderDate).toLocaleDateString(),
         order.UserId?.name ?? "Unknown",
         totalAmount.toFixed(2),
-        (itemDiscount + couponDiscount).toFixed(2),
+        totalDiscount.toFixed(2),
         netAmount.toFixed(2)
       ]);
     }
@@ -119,14 +111,14 @@ const downloadSalesReportExcel = async (req, res) => {
       (sum, order) =>
         sum +
         order.Items.reduce(
-          (inner, item) => inner + item.price * (item.quantity || 0),
+          (inner, item) => inner + (item.finalPayableAmount || 0),
           0
         ),
       0
     );
 
     const discountTotal = orders.reduce(
-      (sum, order) => sum + (order.discountAmount || 0),
+      (sum, order) => sum + ((order.totalOfferDiscount || 0) + (order.totalCouponDiscount || 0)),
       0
     );
 
@@ -221,24 +213,22 @@ const getSalesReport = async (req, res) => {
     const paginatedOrders = orders.slice(startIndex, endIndex);
 
     const report = paginatedOrders.map(order => {
-      const totalAmount = order.Items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      const totalItemDiscount = order.Items.reduce((sum, item) => sum + (item.itemDiscount || 0), 0);
-      const couponDiscount = order.discountAmount ? (order.discountAmount - totalItemDiscount) : 0;
+      const totalAmount = order.Items.reduce((sum, item) => sum + (item.finalPayableAmount || 0), 0);
+      const totalDiscount = (order.totalOfferDiscount || 0) + (order.totalCouponDiscount || 0);
 
       return {
         OrderId: order.OrderId,
         OrderDate: order.OrderDate,
         UserId: order.UserId,
         TotalAmount: totalAmount,
-        Discount: totalItemDiscount,
-        CouponDiscount: couponDiscount,
-        NetAmount: totalAmount - totalItemDiscount - couponDiscount
+        Discount: totalDiscount,
+        NetAmount: order.orderAmount || 0
       };
     });
 
     const overallSalesCount = orders.length;
-    const overallOrderAmount = orders.reduce((sum, order) => sum + order.Items.reduce((itemSum, item) => itemSum + (item.price * item.quantity), 0), 0);
-    const overallDiscount = orders.reduce((sum, order) => sum + (order.discountAmount || 0), 0);
+    const overallOrderAmount = orders.reduce((sum, order) => sum + order.Items.reduce((itemSum, item) => itemSum + (item.finalPayableAmount || 0), 0), 0);
+    const overallDiscount = orders.reduce((sum, order) => sum + ((order.totalOfferDiscount || 0) + (order.totalCouponDiscount || 0)), 0);
 
     res.render('sales', {
       period: period || 'daily',
@@ -266,7 +256,7 @@ const downloadSalesReport = async (req, res) => {
 
     let filter = {};
     const now = new Date();
-    now.setHours(23, 59, 59, 999); 
+    now.setHours(23, 59, 59, 999);
 
     if (period === 'custom' && startDate && endDate) {
       filter.OrderDate = {
@@ -355,10 +345,9 @@ const downloadSalesReport = async (req, res) => {
     let y = 140;
     for (const order of orders) {
       try {
-        const totalAmount = order.Items?.reduce((sum, item) => sum + (item.price * (item.quantity || 0) || 0), 0) || 0;
-        const totalItemDiscount = order.Items?.reduce((sum, item) => sum + (item.itemDiscount || 0), 0) || 0;
-        const couponDiscount = order.couponDiscount || 0;
-        const netAmount = totalAmount - totalItemDiscount;
+        const totalAmount = order.Items?.reduce((sum, item) => sum + (item.finalPayableAmount || 0), 0) || 0;
+        const totalDiscount = (order.totalOfferDiscount || 0) + (order.totalCouponDiscount || 0);
+        const netAmount = order.orderAmount || 0;
 
         if (!order.OrderId || !order.OrderDate || !order.Items) {
           console.warn('Skipping invalid order:', order._id);
@@ -376,7 +365,7 @@ const downloadSalesReport = async (req, res) => {
           .text(new Date(order.OrderDate).toLocaleDateString(), columns.date, y, { width: columnWidth, align: 'center' })
           .text((order.UserId?.name || 'Unknown').slice(0, 15), columns.customer, y, { width: columnWidth, align: 'center' })
           .text(`₹${totalAmount.toFixed(2)}`, columns.amount, y, { width: columnWidth, align: 'center' })
-          .text(`₹${(totalItemDiscount - couponDiscount).toFixed(2)}`, columns.discount, y, { width: columnWidth, align: 'center' })
+          .text(`₹${totalDiscount.toFixed(2)}`, columns.discount, y, { width: columnWidth, align: 'center' })
           .text(`₹${netAmount.toFixed(2)}`, columns.netAmount, y, { width: columnWidth, align: 'center' });
 
         y += 20;
@@ -400,8 +389,8 @@ const downloadSalesReport = async (req, res) => {
       }
     }
 
-    const overallOrderAmount = orders.reduce((sum, order) => sum + (order.Items?.reduce((itemSum, item) => itemSum + (item.price * (item.quantity || 0) || 0), 0) || 0), 0);
-    const overallDiscount = orders.reduce((sum, order) => sum + (order.discountAmount || 0), 0);
+    const overallOrderAmount = orders.reduce((sum, order) => sum + (order.Items?.reduce((itemSum, item) => itemSum + (item.finalPayableAmount || 0), 0) || 0), 0);
+    const overallDiscount = orders.reduce((sum, order) => sum + ((order.totalOfferDiscount || 0) + (order.totalCouponDiscount || 0)), 0);
 
     doc.moveDown(1)
       .font('Helvetica-Bold')

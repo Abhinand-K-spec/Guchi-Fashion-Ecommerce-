@@ -118,10 +118,12 @@ const cancelOrder = async (req, res) => {
     }
 
 
-    const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || i.price) * i.quantity, 0);
-    const overallDiscount = order.Items.reduce((sum, item) => sum += item.itemDiscount, 0);
-    const tax = ((totalOrderAmountBeforeDiscount - overallDiscount) * 0.5) / 100;
-    refundAmount = totalOrderAmountBeforeDiscount - overallDiscount + tax + 40;
+    const totalOrderAmountBeforeDiscount = order.Items.reduce((sum, i) => sum + (i.originalPrice || 0) * i.quantity, 0);
+    const overallDiscount = order.Items.reduce((sum, item) => sum + (item.offerDiscountAmount || 0) + (item.couponDiscountAmount || 0), 0);
+    const tax = order.totalTax || 0;
+
+    // Full order cancellation - refund the entire order amount
+    refundAmount = order.orderAmount || (totalOrderAmountBeforeDiscount - overallDiscount + tax + (order.totalDeliveryCharge || 40));
 
 
     const allCancelled = order.Items.every(i => i.status === 'Cancelled');
@@ -191,10 +193,16 @@ const cancelItem = async (req, res) => {
       await product.save();
     }
 
-    const delivery = 40;
-    const tax = (((item.price * item.quantity) * 0.05)) / 100;
+    const delivery = order.totalDeliveryCharge || 40;
 
-    let refundAmount = item.originalPrice * item.quantity + delivery + tax - item.itemDiscount;
+    // Item-level refund calculation
+    let refundAmount = item.finalPayableAmount || ((item.originalPrice || 0) * item.quantity);
+
+    // Check if ALL items are now cancelled - if so, add delivery charge
+    const allItemsCancelled = order.Items.every(i => i.status === 'Cancelled' || i._id.toString() === itemId);
+    if (allItemsCancelled) {
+      refundAmount += delivery;
+    }
 
     if (order.PaymentMethod === 'Wallet' || order.PaymentMethod === 'Online' && order.PaymentStatus !== 'Pending') {
       let wallet = await Wallet.findOne({ UserId: order.UserId });
@@ -487,25 +495,27 @@ const placeOrder = async (req, res) => {
       const price = salePrice || variant.Price || 0;
       const quantity = item.quantity || 0;
       const itemTotal = price * quantity;
-      const itemDiscount = (originalPrice - price) * quantity;
+      const offerDiscountAmount = (originalPrice - price) * quantity;
 
-      if (isNaN(itemDiscount) || isNaN(quantity) || isNaN(price)) {
-        console.error(`Invalid values for product ${product._id}: itemDiscount=${itemDiscount}, quantity=${quantity}, price=${price}`);
+      if (isNaN(offerDiscountAmount) || isNaN(quantity) || isNaN(price)) {
+        console.error(`Invalid values for product ${product._id}: offerDiscountAmount=${offerDiscountAmount}, quantity=${quantity}, price=${price}`);
         continue;
       }
 
       orderItems.push({
         product: product._id,
         quantity,
-        price,
         originalPrice,
+        offerDiscountAmount,
+        couponDiscountAmount: 0, // Will be calculated later
+        taxAmount: 0, // Will be calculated later
+        finalPayableAmount: 0, // Will be calculated later
         status: 'Pending',
-        itemDiscount,
         variantIndex: variantIndex
       });
 
       subtotal += itemTotal;
-      totalItemDiscount += itemDiscount;
+      totalItemDiscount += offerDiscountAmount;
     }
 
     if (!orderItems.length) {
@@ -513,12 +523,9 @@ const placeOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No valid items in cart. Please try again' });
     }
 
-
-
-    const tax = Math.round(subtotal * 0.0005);
-    const deliveryCharge = 40;
     let couponDiscount = 0;
     let couponData = null;
+
 
     if (coupon) {
 
@@ -540,28 +547,42 @@ const placeOrder = async (req, res) => {
         }
         couponDiscount = Math.round(couponDiscount * 100) / 100;
 
-        const totalItemTotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        // Distribute coupon discount proportionally across items
+        const totalItemTotal = orderItems.reduce((sum, item) => sum + ((item.originalPrice - item.offerDiscountAmount / item.quantity) * item.quantity), 0);
         orderItems.forEach(item => {
-          const itemRatio = (item.price * item.quantity) / totalItemTotal;
-          item.itemDiscount = (item.itemDiscount || 0) + Math.round((couponDiscount * itemRatio) * 100) / 100;
+          const itemSubtotal = (item.originalPrice - item.offerDiscountAmount / item.quantity) * item.quantity;
+          const itemRatio = itemSubtotal / totalItemTotal;
+          item.couponDiscountAmount = Math.round((couponDiscount * itemRatio) * 100) / 100;
         });
       }
     }
 
-    const discountAmount = couponDiscount;
 
-    if (isNaN(discountAmount)) {
-      console.error('Invalid discountAmount calculated:', discountAmount);
-      discountAmount = 0;
-    }
+    // Calculate tax (0.05% of subtotal after all discounts)
+    const totalTax = Math.round(((subtotal - couponDiscount) * 0.05) / 100 * 100) / 100;
 
+    // Distribute tax proportionally across items
+    const subtotalAfterCoupon = subtotal - couponDiscount;
+    orderItems.forEach(item => {
+      const itemSubtotalAfterDiscounts = (item.originalPrice * item.quantity) - item.offerDiscountAmount - item.couponDiscountAmount;
+      const itemRatio = itemSubtotalAfterDiscounts / subtotalAfterCoupon;
+      item.taxAmount = Math.round((totalTax * itemRatio) * 100) / 100;
+    });
 
+    // Calculate final payable amount per item
+    orderItems.forEach(item => {
+      item.finalPayableAmount = (item.originalPrice * item.quantity) - item.offerDiscountAmount - item.couponDiscountAmount + item.taxAmount;
+    });
 
-    console.log("datas are:", subtotal, discountAmount, tax, deliveryCharge)
-    const finalTotal = (subtotal - discountAmount) + tax + deliveryCharge;
+    // Calculate order totals
+    const totalOfferDiscount = totalItemDiscount;
+    const totalCouponDiscount = couponDiscount;
+    const deliveryCharge = 40;
+    const orderAmount = orderItems.reduce((sum, item) => sum + item.finalPayableAmount, 0) + deliveryCharge;
 
-    if (finalTotal < 1) {
+    console.log("Order calculation:", { subtotal, totalOfferDiscount, totalCouponDiscount, totalTax, deliveryCharge, orderAmount });
 
+    if (orderAmount < 1) {
       return res.status(400).json({ success: false, message: 'Order amount must be at least ₹1.00 after discounts.' });
     }
 
@@ -580,12 +601,11 @@ const placeOrder = async (req, res) => {
       },
       Items: orderItems,
       PaymentMethod: paymentMethod,
-      discountAmount: discountAmount,
-      couponDiscount,
-      totalItemDiscount,
-      subtotal,
-      tax,
-      deliveryCharge,
+      orderAmount: orderAmount,
+      totalDeliveryCharge: deliveryCharge,
+      totalTax: totalTax,
+      totalOfferDiscount: totalOfferDiscount,
+      totalCouponDiscount: totalCouponDiscount,
       PaymentStatus: paymentMethod === 'COD' ? 'Pending' : paymentMethod === 'Wallet' ? 'Completed' : 'Pending',
       Status: 'Pending',
       OrderId: `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -602,14 +622,14 @@ const placeOrder = async (req, res) => {
         wallet = new Wallet({ userId, Balance: 0, Transaction: [] });
         await wallet.save();
       }
-      if (wallet.Balance < finalTotal) {
-        console.log('Insufficient wallet balance:', { Balance: wallet.Balance, required: finalTotal });
+      if (wallet.Balance < orderAmount) {
+        console.log('Insufficient wallet balance:', { Balance: wallet.Balance, required: orderAmount });
         await Orders.findByIdAndDelete(order._id);
         return res.status(400).json({ success: false, message: 'Insufficient wallet balance.' });
       }
-      wallet.Balance -= finalTotal;
+      wallet.Balance -= orderAmount;
       wallet.Transaction.push({
-        TransactionAmount: -finalTotal,
+        TransactionAmount: -orderAmount,
         TransactionType: 'debit',
         description: `Order payment for order ID: ${order.OrderId}`,
         date: new Date()
@@ -621,7 +641,7 @@ const placeOrder = async (req, res) => {
       const receiptString = `order_${userId}_${Date.now()}`;
       const truncatedReceipt = receiptString.length > 40 ? receiptString.substring(0, 40) : receiptString;
       const options = {
-        amount: Math.round(finalTotal * 100),
+        amount: Math.round(orderAmount * 100),
         currency: 'INR',
         receipt: truncatedReceipt,
         notes: { userId, coupon, selectedAddressId, orderId: order._id }
