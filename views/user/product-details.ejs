@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title><%= product.productName %> | Male-Fashion</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>
+    <%= product.productName %> | Male-Fashion
+  </title>
 
   <!-- Fonts & CSS -->
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;900&display=swap" rel="stylesheet">
@@ -15,27 +18,37 @@
     body {
       font-family: 'Nunito Sans', sans-serif;
     }
+
     .breadcrumb-area {
       background-color: #f8f9fa;
       padding: 15px 0;
       margin-bottom: 20px;
     }
+
     .breadcrumb a {
       color: #007bff;
       text-decoration: none;
     }
+
     .breadcrumb a:hover {
       text-decoration: underline;
     }
+
     .main-image {
       max-width: 100%;
-      height: 70vh;
+      height: auto;
+      /* Allow height to adjust to content */
+      max-height: 70vh;
+      /* Limit max height but don't force it */
       border-radius: 10px;
       border: 1px solid #ddd;
-      padding: 8px;
+      padding: 0;
+      /* No padding */
       margin-bottom: 15px;
       cursor: crosshair;
+      display: block;
     }
+
     .thumbnail {
       width: 80px;
       height: 80px;
@@ -44,39 +57,63 @@
       margin: 0 5px;
       cursor: pointer;
     }
+
     .thumbnail:hover {
       border-color: #ff6b6b;
     }
+
     .rating-stars i {
       color: #f8d14b;
       margin-right: 2px;
     }
+
     .discount-price {
       text-decoration: line-through;
       color: #999;
       margin-left: 10px;
     }
+
     .out-of-stock {
       color: red;
       font-weight: bold;
     }
+
     .recommended {
       margin-top: 60px;
     }
+
     .recommended-card {
       border: 1px solid #eee;
       border-radius: 8px;
       padding: 10px;
       text-align: center;
     }
+
     .recommended-card img {
       height: 140px;
       object-fit: contain;
       margin-bottom: 10px;
     }
+
     .img-zoom-container {
       position: relative;
+      display: inline-block;
+      /* Critical for alignment */
     }
+
+    .img-zoom-lens {
+      position: absolute;
+      border: 1px solid #d4d4d4;
+      /*set the size of the lens:*/
+      width: 100px;
+      height: 100px;
+      background-color: rgba(255, 255, 255, 0.4);
+      cursor: crosshair;
+      display: none;
+      z-index: 100;
+      /* Ensure lens is above image */
+    }
+
     .img-zoom-result {
       border: 1px solid #d4d4d4;
       width: 300px;
@@ -89,33 +126,39 @@
       display: none;
       z-index: 99;
     }
+
     .price-container {
       display: flex;
       align-items: center;
       margin-bottom: 10px;
     }
+
     .product-price {
       color: #e74c3c;
       font-weight: bold;
       font-size: 1.5rem;
     }
+
     .regular-price {
       font-size: 1rem;
       color: #999;
       text-decoration: line-through;
       margin-left: 8px;
     }
+
     .offer-percentage {
       color: #e74c3c;
       font-weight: bold;
       font-size: 1rem;
       margin-left: 8px;
     }
+
     .wishlistbtn {
-      font-size: 0.7rem; 
+      font-size: 0.7rem;
       width: 6rem;
       margin-left: 4px;
     }
+
     .notification {
       position: fixed;
       top: 20px;
@@ -127,9 +170,11 @@
       display: none;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
+
     .notification.success {
       background-color: #28a745;
     }
+
     .notification.error {
       background-color: #dc3545;
     }
@@ -137,220 +182,229 @@
   <%- include('../partials/user/header') %>
 
 </head>
+
 <body>
 
-<!-- Breadcrumb -->
-<div class="container breadcrumb-area">
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb mb-0">
-      <li class="breadcrumb-item"><a href="/">Home</a></li>
-      <li class="breadcrumb-item"><a href="/shop">Shop</a></li>
-      <li class="breadcrumb-item active" aria-current="page"><%= product.productName %></li>
-    </ol>
-  </nav>
-</div>
-
-<!-- Product Details -->
-<div class="container mt-4 mb-5">
-  <div class="row">
-    <!-- Images -->
-    <div class="col-md-6 text-center">
-      <div class="img-zoom-container">
-        <img id="mainProductImage" src="<%= product.Image[0] || '/img/default-product.jpg' %>" alt="<%= product.productName %>" class="main-image"/>
-        <div id="zoom-result" class="img-zoom-result"></div>
-      </div>
-      <% if (product.Image.length > 1) { %>
-        <div class="d-flex justify-content-center mt-2" id="thumbnailsContainer">
-          <% product.Image.slice(1).forEach(img => { %>
-            <img src="<%= img %>" class="thumbnail" onclick="swapImage(this)" alt="Thumbnail"/>
-          <% }) %>
-        </div>
-      <% } %>
-    </div>
-
-    <!-- Info -->
-    <div class="col-md-6">
-      <h2><%= product.productName %></h2>
-      <p class="text-muted">Category: <%= product.Category?.categoryName || 'Uncategorized' %></p>
-      <p class="text-muted">SKU: <%= product._id %></p>
-      <div class="rating-stars mb-2">
-        <% const stars = product.rating || 4; %>
-        <% for (let i = 1; i <= 5; i++) { %>
-          <i class="fa <%= i <= stars ? 'fa-star' : 'fa-star-o' %>"></i>
-        <% } %>
-        <span>(<%= product.reviews?.length || 0 %> reviews)</span>
-      </div>
-      <% if (product.offer) { %>
-        <div class="price-container">
-          <h4 class="product-price" id="priceDisplay">₹<%= product.Variants[0].salePrice.toFixed(2) %></h4>
-
-
-        </div>
-      <% } else { %>
-        <h4 class="product-price" id="priceDisplay">₹<%= product.Variants[0].Price.toFixed(2) %></h4>
-      <% } %>
-      <p id="stockDisplay"><strong>Stock:</strong> <%= product.Variants[0]?.Stock || 0 %> available</p>
-
-      <p><strong>Size:</strong>
-        <select id="sizeSelector" class="form-select w-auto d-inline-block">
-          <% 
-            const uniqueSizes = [...new Set(product.Variants.map(v => v.Size).filter(size => size))];
-            if (uniqueSizes.length === 0) { %>
-              <option value="">Select Size</option>
-          <% } else { %>
-            <% uniqueSizes.forEach(size => { %>
-              <option value="<%= size %>"><%= size %></option>
-            <% }) %>
-          <% } %>
-        </select>
-      </p>
-
-      <p><strong>Material:</strong> <%= product.Material || 'Cotton Blend' %></p>
-      <p><strong>Weight:</strong> <%= product.Weight || '500g approx.' %></p>
-      <p><strong>Dimensions:</strong> <%= product.Dimensions || 'Standard Fit' %></p>
-      <p><strong>Return Policy:</strong> 7-day return policy*</p>
-      <p><%= product.Description || 'No description available.' %></p>
-     
-      <% if ((product.Variants[0]?.Stock || 0) > 0) { %>
-        <button class="btn btn-danger" id="addToCartBtn" data-product-id="<%= product._id %>">
-            Add to Cart
-        </button>
-
-        <button 
-          class="wishlistbtn btn btn-secondary" 
-          id="addToWishlistBtn"
-          data-product-id="<%= product._id %>">
-          Add to Wishlist
-        </button>
-
-      <% } else { %>
-        <button class="btn btn-danger" disabled id="addToCartBtn">Out of Stock</button>
-        <p class="out-of-stock mt-2">This product is currently out of stock</p>
-      <% } %>
-
-      <!-- Notification Container -->
-      <div id="notification" class="notification"></div>
-
-
-
-      <% if (product.reviews && product.reviews.length > 0) { %>
-        <hr class="my-4"/>
-        <h5>Customer Reviews</h5>
-        <% product.reviews.forEach(review => { %>
-          <div class="border rounded p-3 mb-3">
-            <strong><%= review.name %></strong>
-            <div class="rating-stars mb-1">
-              <% for (let i = 1; i <= 5; i++) { %>
-                <i class="fa <%= i <= review.rating ? 'fa-star' : 'fa-star-o' %>"></i>
-              <% } %>
-            </div>
-            <p class="mb-0"><%= review.comment %></p>
-          </div>
-        <% }) %>
-      <% } %>
-    </div>
+  <!-- Breadcrumb -->
+  <div class="container breadcrumb-area">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item"><a href="/shop">Shop</a></li>
+        <li class="breadcrumb-item active" aria-current="page">
+          <%= product.productName %>
+        </li>
+      </ol>
+    </nav>
   </div>
 
-  <!-- Recommended -->
-  <% if (recommendedProducts && recommendedProducts.length > 0) { %>
-    <div class="recommended">
-      <h5>Recommended for you</h5>
-      <div class="row">
-        <% recommendedProducts.forEach(item => { %>
-          <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
-            <div class="recommended-card">
-              <img src="<%= item.Image[0] %>" alt="<%= item.productName %>"/>
-              <h6 class="mt-2"><%= item.productName %></h6>
-              <p class="text-danger">₹<%= item.Variants[0]?.Price || '0.00' %></p>
-              <a href="/product-details/<%= item._id %>" class="btn btn-sm btn-outline-dark">View</a>
-            </div>
+  <!-- Product Details -->
+  <div class="container mt-4 mb-5">
+    <div class="row">
+      <!-- Images -->
+      <div class="col-md-6 text-center">
+        <div class="img-zoom-container">
+          <img id="mainProductImage" src="<%= product.Image[0] || '/img/default-product.jpg' %>"
+            alt="<%= product.productName %>" class="main-image" />
+          <div id="zoom-result" class="img-zoom-result"></div>
+        </div>
+        <% if (product.Image.length> 1) { %>
+          <div class="d-flex justify-content-center mt-2" id="thumbnailsContainer">
+            <% product.Image.slice(1).forEach(img=> { %>
+              <img src="<%= img %>" class="thumbnail" onclick="swapImage(this)" alt="Thumbnail" />
+              <% }) %>
           </div>
-        <% }) %>
+          <% } %>
+      </div>
+
+      <!-- Info -->
+      <div class="col-md-6">
+        <h2>
+          <%= product.productName %>
+        </h2>
+        <p class="text-muted">Category: <%= product.Category?.categoryName || 'Uncategorized' %>
+        </p>
+        <p class="text-muted">SKU: <%= product._id %>
+        </p>
+        <div class="rating-stars mb-2">
+          <% const stars=product.rating || 4; %>
+            <% for (let i=1; i <=5; i++) { %>
+              <i class="fa <%= i <= stars ? 'fa-star' : 'fa-star-o' %>"></i>
+              <% } %>
+                <span>(<%= product.reviews?.length || 0 %> reviews)</span>
+        </div>
+        <% if (product.offer) { %>
+          <div class="price-container">
+            <h4 class="product-price" id="priceDisplay">₹<%= product.Variants[0].salePrice.toFixed(2) %>
+            </h4>
+
+
+          </div>
+          <% } else { %>
+            <h4 class="product-price" id="priceDisplay">₹<%= product.Variants[0].Price.toFixed(2) %>
+            </h4>
+            <% } %>
+              <p id="stockDisplay"><strong>Stock:</strong>
+                <%= product.Variants[0]?.Stock || 0 %> available
+              </p>
+
+              <p><strong>Size:</strong>
+                <select id="sizeSelector" class="form-select w-auto d-inline-block">
+                  <% const uniqueSizes=[...new Set(product.Variants.map(v=> v.Size).filter(size => size))];
+                    if (uniqueSizes.length === 0) { %>
+                    <option value="">Select Size</option>
+                    <% } else { %>
+                      <% uniqueSizes.forEach(size=> { %>
+                        <option value="<%= size %>">
+                          <%= size %>
+                        </option>
+                        <% }) %>
+                          <% } %>
+                </select>
+              </p>
+
+              <p><strong>Material:</strong>
+                <%= product.Material || 'Cotton Blend' %>
+              </p>
+              <p><strong>Weight:</strong>
+                <%= product.Weight || '500g approx.' %>
+              </p>
+              <p><strong>Dimensions:</strong>
+                <%= product.Dimensions || 'Standard Fit' %>
+              </p>
+              <p><strong>Return Policy:</strong> 7-day return policy*</p>
+              <p>
+                <%= product.Description || 'No description available.' %>
+              </p>
+
+              <% if ((product.Variants[0]?.Stock || 0)> 0) { %>
+                <button class="btn btn-danger" id="addToCartBtn" data-product-id="<%= product._id %>">
+                  Add to Cart
+                </button>
+
+                <button class="wishlistbtn btn btn-secondary" id="addToWishlistBtn"
+                  data-product-id="<%= product._id %>">
+                  Add to Wishlist
+                </button>
+
+                <% } else { %>
+                  <button class="btn btn-danger" disabled id="addToCartBtn">Out of Stock</button>
+                  <p class="out-of-stock mt-2">This product is currently out of stock</p>
+                  <% } %>
+
+                    <!-- Notification Container -->
+                    <div id="notification" class="notification"></div>
+
+
+
+                    <% if (product.reviews && product.reviews.length> 0) { %>
+                      <hr class="my-4" />
+                      <h5>Customer Reviews</h5>
+                      <% product.reviews.forEach(review=> { %>
+                        <div class="border rounded p-3 mb-3">
+                          <strong>
+                            <%= review.name %>
+                          </strong>
+                          <div class="rating-stars mb-1">
+                            <% for (let i=1; i <=5; i++) { %>
+                              <i class="fa <%= i <= review.rating ? 'fa-star' : 'fa-star-o' %>"></i>
+                              <% } %>
+                          </div>
+                          <p class="mb-0">
+                            <%= review.comment %>
+                          </p>
+                        </div>
+                        <% }) %>
+                          <% } %>
       </div>
     </div>
-  <% } %>
-</div>
-<%- include('../partials/user/footer') %>
-<script>
-  // Define the swapImage function
-  function swapImage(thumbnailElement) {
 
-    const mainImage = document.getElementById('mainProductImage');
-    
-
-    const newImageUrl = thumbnailElement.src;
-    const currentMainImageUrl = mainImage.src;
-
-    mainImage.src = newImageUrl;
-    thumbnailElement.src = currentMainImageUrl;
-    
-  }
-
-
-</script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const sizeSelector = document.getElementById('sizeSelector');
-    const priceDisplay = document.getElementById('priceDisplay');
-    const stockDisplay = document.getElementById('stockDisplay');
-    const addToCartBtn = document.getElementById('addToCartBtn');
-
-    // Parse variants from server
-    const variants = <%- JSON.stringify(product.Variants) %>;
-    const productOffer = <%- JSON.stringify(product.offer || null) %>;
-
-    // Remember previous selection
-    const savedSize = localStorage.getItem('selectedSize_<%= product._id %>');
-    if (savedSize) {
-      sizeSelector.value = savedSize;
-    }
-
-    function updateVariant(selectedSize) {
-      const variant = variants.find(v => v.Size && v.Size.trim() === selectedSize.trim());
-
-
-      if (!variant) {
-        priceDisplay.textContent = "₹0.00";
-        stockDisplay.innerHTML = `<strong>Stock:</strong> 0 available`;
-        addToCartBtn.disabled = true;
-        addToCartBtn.textContent = "Out of Stock";
-        return;
+    <!-- Recommended -->
+    <% if (recommendedProducts && recommendedProducts.length> 0) { %>
+      <div class="recommended">
+        <h5>Recommended for you</h5>
+        <div class="row">
+          <% recommendedProducts.forEach(item=> { %>
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+              <div class="recommended-card">
+                <img src="<%= item.Image[0] %>" alt="<%= item.productName %>" />
+                <h6 class="mt-2">
+                  <%= item.productName %>
+                </h6>
+                <p class="text-danger">₹<%= item.Variants[0]?.Price || '0.00' %>
+                </p>
+                <a href="/product-details/<%= item._id %>" class="btn btn-sm btn-outline-dark">View</a>
+              </div>
+            </div>
+            <% }) %>
+        </div>
+      </div>
+      <% } %>
+  </div>
+  <%- include('../partials/user/footer') %>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sizeSelector = document.getElementById('sizeSelector');
+      const priceDisplay = document.getElementById('priceDisplay');
+      const stockDisplay = document.getElementById('stockDisplay');
+      const addToCartBtn = document.getElementById('addToCartBtn');
+      
+      // Parse variants from server
+      const variants = <% - JSON.stringify(product.Variants) %>;
+      const productOffer = <% - JSON.stringify(product.offer || null) %>;
+      
+      // Remember previous selection
+      const savedSize = localStorage.getItem('selectedSize_<%= product._id %>');
+      if (savedSize) {
+        sizeSelector.value = savedSize;
       }
-
-      // If offer available, use salePrice and show both prices
-      let priceHTML = "";
-      if (productOffer) {
-        priceHTML = `₹${parseFloat(variant.salePrice || variant.Price).toFixed(2)} 
+      
+      function updateVariant(selectedSize) {
+        const variant = variants.find(v => v.Size && v.Size.trim() === selectedSize.trim());
+        
+        
+        if (!variant) {
+          priceDisplay.textContent = "₹0.00";
+          stockDisplay.innerHTML = `<strong>Stock:</strong> 0 available`;
+          addToCartBtn.disabled = true;
+          addToCartBtn.textContent = "Out of Stock";
+          return;
+        }
+        
+        // If offer available, use salePrice and show both prices
+        let priceHTML = "";
+        if (productOffer) {
+          priceHTML = `₹${parseFloat(variant.salePrice || variant.Price).toFixed(2)} 
           <span class="offer-percentage">${productOffer.Discount}% OFF</span>
           <span class="regular-price">₹${parseFloat(variant.Price).toFixed(2)}</span>`;
-      } else {
-        priceHTML = `₹${parseFloat(variant.Price).toFixed(2)}`;
-      }
-
-      priceDisplay.innerHTML = priceHTML;
-
-      // Update stock
-      const stock = parseInt(variant.Stock || 0);
-      stockDisplay.innerHTML = `<strong>Stock:</strong> ${stock} available`;
-
-      // Update cart button
-      addToCartBtn.disabled = stock <= 0;
-      addToCartBtn.textContent = stock > 0 ? "Add to Cart" : "Out of Stock";
-    }
-
-    // Run once at page load (with saved or first variant)
-    const initialSize = sizeSelector.value || variants[0]?.Size;
-    if (initialSize) updateVariant(initialSize);
-
-    // Listen for change
-    sizeSelector.addEventListener('change', (e) => {
-      const selectedSize = e.target.value;
-      localStorage.setItem('selectedSize_<%= product._id %>', selectedSize);
-      updateVariant(selectedSize);
-    });
-  });
-</script>
-<script>
+        } else {
+          priceHTML = `₹${parseFloat(variant.Price).toFixed(2)}`;
+          }
+          
+          priceDisplay.innerHTML = priceHTML;
+          
+          // Update stock
+          const stock = parseInt(variant.Stock || 0);
+          stockDisplay.innerHTML = `<strong>Stock:</strong> ${stock} available`;
+          
+          // Update cart button
+          addToCartBtn.disabled = stock <= 0;
+          addToCartBtn.textContent = stock > 0 ? "Add to Cart" : "Out of Stock";
+        }
+        
+        // Run once at page load (with saved or first variant)
+        const initialSize = sizeSelector.value || variants[0]?.Size;
+        if (initialSize) updateVariant(initialSize);
+        
+        // Listen for change
+        sizeSelector.addEventListener('change', (e) => {
+          const selectedSize = e.target.value;
+          localStorage.setItem('selectedSize_<%= product._id %>', selectedSize);
+          updateVariant(selectedSize);
+        });
+      });
+      </script>
+      <script>
   document.addEventListener('DOMContentLoaded', () => {
     const addToCartBtn = document.getElementById('addToCartBtn');
     const notification = document.getElementById('notification');
@@ -410,54 +464,177 @@
     }
   });
 </script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const wishlistBtn = document.getElementById('addToWishlistBtn');
-    const notification = document.getElementById('notification');
-
-    // Use the same notification function as Add to Cart
-    function showNotification(type, message) {
-      notification.textContent = message;
-      notification.className = `notification ${type}`;
-      notification.style.display = 'block';
-      setTimeout(() => {
-        notification.style.display = 'none';
-      }, 2500);
-    }
-
-    if (wishlistBtn) {
-      wishlistBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const productId = wishlistBtn.dataset.productId;
-
-        wishlistBtn.disabled = true;
-        wishlistBtn.textContent = 'Adding...';
-
-        try {
-          const response = await fetch(`/add-to-wishlist/${productId}`, {
-            method: 'GET'
+        <script>
+          document.addEventListener('DOMContentLoaded', () => {
+            const wishlistBtn = document.getElementById('addToWishlistBtn');
+            const notification = document.getElementById('notification');
+            
+            // Use the same notification function as Add to Cart
+            function showNotification(type, message) {
+              notification.textContent = message;
+              notification.className = `notification ${type}`;
+              notification.style.display = 'block';
+              setTimeout(() => {
+                notification.style.display = 'none';
+              }, 2500);
+            }
+            
+            if (wishlistBtn) {
+              wishlistBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const productId = wishlistBtn.dataset.productId;
+                
+                wishlistBtn.disabled = true;
+                wishlistBtn.textContent = 'Adding...';
+                
+                try {
+                  const response = await fetch(`/add-to-wishlist/${productId}`, {
+                    method: 'GET'
+                  });
+                  
+                  const result = await response.json();
+                  
+                  if (response.ok && result.success) {
+                    showNotification('success', result.message || 'Added to wishlist successfully!');
+                  } else {
+                    showNotification('error', result.message || result.error || 'Failed to add to wishlist.');
+                  }
+            } catch (err) {
+              console.error('Wishlist error:', err);
+              showNotification('error', 'Something went wrong while adding to wishlist.');
+            } finally {
+              wishlistBtn.disabled = false;
+              wishlistBtn.textContent = 'Add to Wishlist';
+            }
           });
-
-          const result = await response.json();
-
-          if (response.ok && result.success) {
-            showNotification('success', result.message || 'Added to wishlist successfully!');
-          } else {
-            showNotification('error', result.message || result.error || 'Failed to add to wishlist.');
-          }
-        } catch (err) {
-          console.error('Wishlist error:', err);
-          showNotification('error', 'Something went wrong while adding to wishlist.');
-        } finally {
-          wishlistBtn.disabled = false;
-          wishlistBtn.textContent = 'Add to Wishlist';
         }
       });
-    }
-  });
-</script>
+      </script>
+      <script>
+        // Image Zoom Script
+        function imageZoom(imgID, resultID) {
+          var img, lens, result, cx, cy;
+          img = document.getElementById(imgID);
+          result = document.getElementById(resultID);
+  
+          /* Create lens: */
+          lens = document.createElement("DIV");
+          lens.setAttribute("class", "img-zoom-lens");
+  
+          /* Insert lens: */
+          img.parentElement.insertBefore(lens, img);
+  
+          /* Calculate the ratio between result DIV and lens: */
+          cx = result.offsetWidth / lens.offsetWidth;
+          cy = result.offsetHeight / lens.offsetHeight;
+  
+          /* Set background properties for the result DIV */
+          result.style.backgroundImage = "url('" + img.src + "')";
+          result.style.backgroundSize = (img.offsetWidth * cx) + "px " + (img.offsetHeight * cy) + "px";
+  
+          /* Execute a function when someone moves the cursor over the image, or the lens: */
+          /* Use container for events to prevent flickering when mouse enters lens */
+          const container = img.parentElement;
+  
+          container.addEventListener("mousemove", moveLens);
+          container.addEventListener("touchmove", moveLens);
+  
+          /* Show result and lens on mouse enter */
+          container.addEventListener("mouseenter", function () {
+            result.style.display = "block";
+            lens.style.display = "block";
+  
+            // Force reflow to ensure dimensions are available
+            let lensW = lens.offsetWidth;
+            let lensH = lens.offsetHeight;
+  
+            // Fallback if dimensions are 0 (shouldn't happen with display:block)
+            if (lensW === 0) lensW = 100;
+            if (lensH === 0) lensH = 100;
+  
+            // Recalculate ratios
+            cx = result.offsetWidth / lensW;
+            cy = result.offsetHeight / lensH;
+  
+            result.style.backgroundImage = "url('" + img.src + "')";
+            result.style.backgroundSize = (img.offsetWidth * cx) + "px " + (img.offsetHeight * cy) + "px";
+          });
+  
+          /* Hide result and lens on mouse leave */
+          container.addEventListener("mouseleave", function () {
+            result.style.display = "none";
+            lens.style.display = "none";
+          });
+  
+          function moveLens(e) {
+            var pos, x, y;
+            /* Prevent any other actions that may occur when moving over the image */
+            e.preventDefault();
+            /* Get the cursor's x and y positions: */
+            pos = getCursorPos(e);
+            /* Calculate the position of the lens: */
+            x = pos.x - (lens.offsetWidth / 2);
+            y = pos.y - (lens.offsetHeight / 2);
+            /* Prevent the lens from being positioned outside the image: */
+            if (x > img.offsetWidth - lens.offsetWidth) { x = img.offsetWidth - lens.offsetWidth; }
+            if (x < 0) { x = 0; }
+            if (y > img.offsetHeight - lens.offsetHeight) { y = img.offsetHeight - lens.offsetHeight; }
+            if (y < 0) { y = 0; }
+            /* Set the position of the lens: */
+            lens.style.left = x + "px";
+            lens.style.top = y + "px";
+            /* Display what the lens "sees": */
+            result.style.backgroundPosition = "-" + (x * cx) + "px -" + (y * cy) + "px";
+          }
+  
+          function getCursorPos(e) {
+            var a, x = 0, y = 0;
+            e = e || window.event;
+            /* Get the x and y positions of the image: */
+            a = img.getBoundingClientRect();
+            /* Calculate the cursor's x and y coordinates, relative to the image: */
+            x = e.clientX - a.left;
+            y = e.clientY - a.top;
+            /* Consider any page scrolling: */
+            return { x: x, y: y };
+          }
+        }
+  
+        // Initialize zoom
+        document.addEventListener('DOMContentLoaded', function () {
+          const img = document.getElementById("mainProductImage");
+  
+          function init() {
+            imageZoom("mainProductImage", "zoom-result");
+          }
+  
+          if (img.complete) {
+            init();
+          } else {
+            img.onload = init;
+          }
+        });
+  
+        // Define the swapImage function
+        function swapImage(thumbnailElement) {
+          const mainImage = document.getElementById('mainProductImage');
+          const result = document.getElementById('zoom-result');
+  
+          const newImageUrl = thumbnailElement.src;
+          const currentMainImageUrl = mainImage.src;
+  
+          mainImage.src = newImageUrl;
+          thumbnailElement.src = currentMainImageUrl;
+  
+          // Update zoom background image
+          if (result) {
+            result.style.backgroundImage = "url('" + newImageUrl + "')";
+          }
+        }
+      </script>
 
 
 
 </body>
+
 </html>

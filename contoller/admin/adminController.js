@@ -5,20 +5,20 @@ const Orders = require('../../model/ordersSchema');
 const Products = require('../../model/productSchema');
 const Category = require('../../model/categorySchema');
 const { last } = require('lodash');
- 
-const pageNotFound = async(req,res)=>{
+
+const pageNotFound = async (req, res) => {
   try {
-      return res.render('page-404');
+    return res.render('page-404');
   } catch (error) {
-      res.redirect('/pageNotFound');
+    res.redirect('/pageNotFound');
   }
 };
 
-const loadLogin = (req,res)=>{
-    if(req.session.admin){
-        return res.redirect('/admin');
-    }
-    res.render('admin-login');
+const loadLogin = (req, res) => {
+  if (req.session.admin) {
+    return res.redirect('/admin');
+  }
+  res.render('admin-login');
 };
 
 
@@ -31,16 +31,17 @@ const loadDashboard = async (req, res) => {
 
 
     const orders = Orders.find().populate("Items.product").lean();
-    const lastOrders = await Orders.find({}).sort({createdAt:-1}).limit(5)
+    const lastOrders = await Orders.find({}).sort({ createdAt: -1 }).limit(5)
     const totalOrders = (await orders).length;
 
 
+    // Calculate total revenue from completed orders
     const [totalsalesPrice] = await Orders.aggregate([
-      { $unwind: "$Items" },
+      { $match: { PaymentStatus: "Completed" } },
       {
         $group: {
           _id: null,
-          totalPrice: { $sum: "$Items.price" }
+          totalPrice: { $sum: "$orderAmount" }
         }
       }
     ]);
@@ -94,34 +95,34 @@ const loadDashboard = async (req, res) => {
     ====================================== */
 
     const last7StartDate = new Date();
-    last7StartDate.setDate(last7StartDate.getDate() - 6); 
+    last7StartDate.setDate(last7StartDate.getDate() - 6);
     last7StartDate.setHours(0, 0, 0, 0);
 
     let last7DaysMap = {};
     const last7DaysLabels = [];
-    
-    for (let i = 0; i < 7; i++) {
-        const d = new Date(last7StartDate);
-        d.setDate(d.getDate() + i);
-        
-        const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        last7DaysMap[dateKey] = 0;
 
-        const options = { weekday: 'short', day: 'numeric' };
-        last7DaysLabels.push(d.toLocaleDateString('en-US', options));
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(last7StartDate);
+      d.setDate(d.getDate() + i);
+
+      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      last7DaysMap[dateKey] = 0;
+
+      const options = { weekday: 'short', day: 'numeric' };
+      last7DaysLabels.push(d.toLocaleDateString('en-US', options));
     }
 
     const last7Agg = await Orders.aggregate([
       {
         $match: {
-          OrderDate: { $gte: last7StartDate }   
+          OrderDate: { $gte: last7StartDate },
+          PaymentStatus: "Completed"
         }
       },
-      { $unwind: "$Items" },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$OrderDate" } },
-          revenue: { $sum: "$Items.price" }
+          revenue: { $sum: "$orderAmount" }
         }
       }
     ]);
@@ -136,7 +137,7 @@ const loadDashboard = async (req, res) => {
 
 
     const last7DaysValues = Object.values(last7DaysMap);
-    
+
 
     /* ======================================
           MONTHLY → Week1–Week4
@@ -154,18 +155,22 @@ const loadDashboard = async (req, res) => {
     const baseWeekNumber = getWeekNumber(monthStart);
 
     const monthWeekAgg = await Orders.aggregate([
-      { $match: { OrderDate: { $gte: monthStart, $lt: nextMonthStart } } },
-      { $unwind: "$Items" },
+      {
+        $match: {
+          OrderDate: { $gte: monthStart, $lt: nextMonthStart },
+          PaymentStatus: "Completed"
+        }
+      },
       {
         $group: {
           _id: { week: { $week: "$OrderDate" } },
-          revenue: { $sum: "$Items.price" }
+          revenue: { $sum: "$orderAmount" }
         }
       }
     ]);
 
-    let monthlyWeekValues = [0,0,0,0];
-    let monthlyWeekLabels = ["Week 1","Week 2","Week 3","Week 4"];
+    let monthlyWeekValues = [0, 0, 0, 0];
+    let monthlyWeekLabels = ["Week 1", "Week 2", "Week 3", "Week 4"];
 
     monthWeekAgg.forEach(e => {
       let w = e._id.week - baseWeekNumber + 1;
@@ -182,24 +187,28 @@ const loadDashboard = async (req, res) => {
     const yearStart = new Date(today.getFullYear(), 0, 1);
 
     const yearlyAgg = await Orders.aggregate([
-      { $match: { OrderDate: { $gte: yearStart } } },
-      { $unwind: "$Items" },
+      {
+        $match: {
+          OrderDate: { $gte: yearStart },
+          PaymentStatus: "Completed"
+        }
+      },
       {
         $group: {
           _id: { month: { $month: "$OrderDate" } },
-          revenue: { $sum: "$Items.price" }
+          revenue: { $sum: "$orderAmount" }
         }
       },
       { $sort: { "_id.month": 1 } }
     ]);
 
-    const allMonths = ["Jan","Feb","Mar","Apr","May","Jun", "Jul","Aug","Sep","Oct","Nov","Dec"];
+    const allMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     let yearlyLabels = [];
     let yearlyValues = [];
 
     for (let i = 0; i <= today.getMonth(); i++) {
-      const found = yearlyAgg.find(m => m._id.month === i+1);
+      const found = yearlyAgg.find(m => m._id.month === i + 1);
       yearlyLabels.push(allMonths[i]);
       yearlyValues.push(found ? found.revenue : 0);
     }
@@ -244,7 +253,7 @@ const loadDashboard = async (req, res) => {
 
     const topProducts = await Orders.aggregate([
       { $unwind: "$Items" },
-    
+
       // Fetch product details
       {
         $lookup: {
@@ -255,7 +264,7 @@ const loadDashboard = async (req, res) => {
         }
       },
       { $unwind: "$productDetails" },
-    
+
 
       {
         $group: {
@@ -264,12 +273,12 @@ const loadDashboard = async (req, res) => {
           totalSold: { $sum: "$Items.quantity" }
         }
       },
-    
+
       { $sort: { totalSold: -1 } },
-    
+
       { $limit: 5 }
     ]);
-    
+
 
 
     res.render("admin", {
@@ -309,57 +318,57 @@ const loadDashboard = async (req, res) => {
 
 
 const login = async (req, res) => {
-    try {
-      const { email, password } = req.body;
-  
-      const admin = await User.findOne({ email: email, isAdmin: true });
-  
-      if (!admin) {
-        return res.render('admin-login', { msg: 'Admin not found' });
-      }
-  
-      if (!admin.password) {
-        return res.render('admin-login', { msg: 'Password is missing for this admin' });
-      }
-  
-      const passwordMatch = await bcrypt.compare(password, admin.password);
-  
-      if (passwordMatch) {
-        req.session.admin = true;
-        return res.redirect('/admin');
-      } else {
-        return res.render('admin-login', { msg: 'Password not matching' });
-      }
-  
-    } catch (error) {
-      console.error('Error during admin login:', error);
-      res.status(500).render('page-404');
+  try {
+    const { email, password } = req.body;
+
+    const admin = await User.findOne({ email: email, isAdmin: true });
+
+    if (!admin) {
+      return res.render('admin-login', { msg: 'Admin not found' });
     }
-  };
-  
-const logout = async (req,res)=>{
- try {
 
-  delete req.session.admin;
-  res.redirect('/admin/login');
-  
- } catch (error) {
-  console.log('error destroying admin session');
-  res.render('page-404');
- }
+    if (!admin.password) {
+      return res.render('admin-login', { msg: 'Password is missing for this admin' });
+    }
+
+    const passwordMatch = await bcrypt.compare(password, admin.password);
+
+    if (passwordMatch) {
+      req.session.admin = true;
+      return res.redirect('/admin');
+    } else {
+      return res.render('admin-login', { msg: 'Password not matching' });
+    }
+
+  } catch (error) {
+    console.error('Error during admin login:', error);
+    res.status(500).render('page-404');
+  }
 };
-  
 
-const loadUsers = async(req,res)=>{
+const logout = async (req, res) => {
+  try {
+
+    delete req.session.admin;
+    res.redirect('/admin/login');
+
+  } catch (error) {
+    console.log('error destroying admin session');
+    res.render('page-404');
+  }
+};
+
+
+const loadUsers = async (req, res) => {
   res.render('users');
 };
 
 
 module.exports = {
-    loadLogin,
-    loadDashboard,
-    login,
-    logout,
-    loadUsers,
-    pageNotFound
+  loadLogin,
+  loadDashboard,
+  login,
+  logout,
+  loadUsers,
+  pageNotFound
 };
