@@ -1,12 +1,11 @@
-const User = require('../../model/userSchema');
-const mongoose = require('mongoose')
+const user = require('../../model/userSchema');
 
-
+// List all non-admin users with optional search and pagination
 const customerinfo = async (req, res) => {
   try {
     const search = req.query.search || '';
     const page = parseInt(req.query.page) || 1;
-    const limit = 8;
+    const limit = 10;
     const skip = (page - 1) * limit;
 
     const searchQuery = {
@@ -17,13 +16,13 @@ const customerinfo = async (req, res) => {
       ]
     };
 
-    const userData = await User
+    const userData = await user
       .find(searchQuery)
       .skip(skip)
       .limit(limit)
       .exec();
 
-    const totalUsers = await User.countDocuments(searchQuery);
+    const totalUsers = await user.countDocuments(searchQuery);
 
     res.render('users', {
       data: userData,
@@ -34,82 +33,41 @@ const customerinfo = async (req, res) => {
 
   } catch (error) {
     console.error('Error in customerinfo:', error);
-    res.render('page-404');
+    res.render('pageNotFound');
   }
 };
 
-
-
+// Block a costumer
 const costumerBlocked = async (req, res) => {
   try {
-    console.log(`Reached costumerBlocked endpoint for URL: ${req.originalUrl}, body: ${JSON.stringify(req.body)}`);
-    const { id } = req.body;
-    console.log(`Blocking user with ID: ${id}`);
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      console.log(`Invalid ObjectId: ${id}`);
-      return res.status(400).json({ success: false, message: 'Invalid user ID' });
-    }
-    const user = await User.findById(id);
-    if (!user) {
-      console.log(`User not found for ID: ${id}`);
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-    if (user.isBlocked) {
-      console.log(`User already blocked: ${id}`);
-      return res.status(400).json({ success: false, message: 'User is already blocked' });
-    }
-    const result = await User.updateOne({ _id: id }, { $set: { isBlocked: true } });
-    if (result.modifiedCount === 0) {
-      console.log(`Failed to block user: ${id}`);
-      return res.status(500).json({ success: false, message: 'Failed to block user' });
-    }
-    console.log(`User blocked successfully: ${id}`);
-    res.json({ success: true, message: 'User blocked successfully' });
+    const id = req.query.id;
+    await user.updateOne({ _id: id }, { $set: { isBlocked: true } });
+    res.redirect('/admin/users');
   } catch (error) {
-    console.error(`Error in costumerBlocked for ID: ${req.body.id}`, error);
-    res.status(500).json({ success: false, message: 'Error blocking user' });
+    console.error('Error in costumerBlocked:', error);
+    res.render('pageNotFound');
   }
 };
 
+// Unblock a costumer
 const costumerUnBlocked = async (req, res) => {
   try {
-    console.log(`Reached costumerUnBlocked endpoint for URL: ${req.originalUrl}, body: ${JSON.stringify(req.body)}`);
-    const { id } = req.body;
-    console.log(`Unblocking user with ID: ${id}`);
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      console.log(`Invalid ObjectId: ${id}`);
-      return res.status(400).json({ success: false, message: 'Invalid user ID' });
-    }
-    const user = await User.findById(id);
-    if (!user) {
-      console.log(`User not found for ID: ${id}`);
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-    console.log(`User isBlocked status: ${user.isBlocked}`);
-    if (!user.isBlocked) {
-      console.log(`User already unblocked: ${id}`);
-      return res.status(400).json({ success: false, message: 'User is already unblocked' });
-    }
-    const result = await User.updateOne({ _id: id }, { $set: { isBlocked: false } });
-    if (result.modifiedCount === 0) {
-      console.log(`Failed to unblock user: ${id}`);
-      return res.status(500).json({ success: false, message: 'Failed to unblock user' });
-    }
-    console.log(`User unblocked successfully: ${id}`);
-    res.json({ success: true, message: 'User unblocked successfully' });
+    const id = req.query.id;
+    await user.updateOne({ _id: id }, { $set: { isBlocked: false } });
+    res.redirect('/admin/users');
   } catch (error) {
-    console.error(`Error in costumerUnBlocked for ID: ${req.body.id}`, error);
-    res.status(500).json({ success: false, message: 'Error unblocking user' });
+    console.error('Error in costumerUnBlocked:', error);
+    res.render('pageNotFound');
   }
 };
 
-
+// Clear search (just redirect to full user list)
 const clearSearch = (req, res) => {
   try {
     res.redirect('/admin/users');
   } catch (error) {
     console.error('Error in clearSearch:', error);
-    res.render('page-404');
+    res.render('pageNotFound');
   }
 };
 

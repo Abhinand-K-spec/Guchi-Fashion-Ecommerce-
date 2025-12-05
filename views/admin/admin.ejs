@@ -3,507 +3,59 @@
 <head>
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-  <title>Admin Dashboard</title>
+  <title>Add Product</title>
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Tailwind CSS -->
+  <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+
+  <!-- Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
 
+  <!-- Cropper.js CSS and JS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
+
+
+
   <style>
-    body.bg-dark {
-      background-color: #1a1b26 !important;
-      color: #f5f5f5 !important;
-    }
-    .bg-dark-secondary {
-      background-color: #242531 !important;
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .rev-btn {
-      padding: 6px 16px;
-      border-radius: 10px;
-      border: none;
-      background: #1e1f26;
-      color: #9ca3af;
-      margin-right: 10px;
-      cursor: pointer;
-      font-weight: 500;
-      transition: 0.2s;
-    }
-    .rev-btn.active {
-      background: linear-gradient(to right, #6a00ff, #9b4dff);
-      color: #fff;
-      box-shadow: 0 0 10px rgba(138, 0, 255, 0.4);
-    }
-    .chart-container-large {
-      position: relative;
-      width: 100%;
-      height: 280px;
-    }
-    .order-status-legend .legend-item {
-      color: #ddd;
-      font-size: 10px;
-      font-weight: 500;
+    .image-preview {
+      max-width: 100%;
+      max-height: 200px;
+      display: none;
     }
 
-    .legend-color {
-      width: 14px;
-      height: 14px;
-      border-radius: 4px;
-      display: inline-block;
-      margin-right: 8px;
+    .cropped-image {
+      max-width: 100%;
+      max-height: 200px;
+      display: none;
     }
-/* Full-width card UI consistency */
-.table-card {
-  background-color: #242531 !important;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.08);
-  padding: 20px;
-}
 
-/* Table */
-.table-dark-custom {
-  background-color: transparent !important;
-  color: #e5e7eb !important;
-}
-
-.table-dark-custom thead th {
-  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
-  color: #d1d5db;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.table-dark-custom tbody tr {
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.table-dark-custom tbody tr:hover {
-  background-color: rgba(255,255,255,0.05) !important;
-  transition: 0.25s ease;
-}
-
-/* Cells */
-.table-dark-custom td {
-  font-size: 14px;
-  color: #cbd5e1 !important;
-}
-
-/* Badge adjustments to match theme */
-.badge {
-  padding: 6px 10px;
-  font-size: 11px;
-  border-radius: 6px;
-}
-
-/* Card Title */
-.table-section-title {
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 18px;
-}
-
-/* Responsive fix */
-.table-responsive::-webkit-scrollbar {
-  height: 6px;
-}
-.table-responsive::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
-  border-radius: 10px;
-}
-
+    .image-cropper-container {
+      display: none;
+      margin-bottom: 1rem;
+    }
   </style>
-
-  <%- include("../partials/admin/header") %>
-
+  
 </head>
 
-<body class="bg-dark">
-  <div class="main-content">
-    <div class="container-fluid">
+<body class="bg-white text-gray-700 min-h-screen flex flex-col">
 
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-white">Analytics</h2>
+  <!-- Header -->
+  <%- include("../partials/admin/header") %>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-6">
+    <div class="container mx-auto max-w-screen-xl">
+      <div class="bg-black text-white p-4 rounded-lg shadow">
+        Dashboard
       </div>
-
-      <!-- KPI ROW -->
-      <div class="row mb-5">
-        
-        <div class="col-lg-3 col-md-6 mb-4">
-          <div class="card bg-dark-secondary border-0 shadow-sm">
-            <div class="card-body text-center">
-              <p class="text-white small mb-0">Total Orders</p>
-              <h3 class="text-white"><%= totalOrders %></h3>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6 mb-4">
-          <div class="card bg-dark-secondary border-0 shadow-sm">
-            <div class="card-body text-center">
-              <p class=" text-white  small mb-0">Total Revenue</p>
-              <h3 class="text-success">₹<%= Math.round(totalRevenue) %></h3>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6 mb-4">
-          <div class="card bg-dark-secondary border-0 shadow-sm">
-            <div class="card-body d-flex justify-content-between align-items-center">
-        
-              <!-- Total Products -->
-              <div class="">
-                <p class="text-white small mb-1">Total Products</p>
-                <h3 class="text-white mb-0"><%= totalProducts %></h3>
-              </div>
-        
-              <!-- Low Stock -->
-              <div class="text-end">
-                <p class="text-danger small mb-1">Low Stock</p>
-                <h5 class="text-danger mb-0"><%= lowStock %></h5>
-              </div>
-        
-            </div>
-          </div>
-        </div>
-        
-
-        <div class="col-lg-3 col-md-6 mb-4">
-          <div class="card bg-dark-secondary border-0 shadow-sm">
-            <div class="card-body text-center">
-              <p class="text-white  small mb-0">Total Users</p>
-              <h3 class="text-white"><%= totalUsers %></h3>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- CHART ROW -->
-      <div class="row mb-5">
-        
-
-        <!-- Order Status -->
-        <div class="col-lg-4 mb-4">
-          
-          <div class="card bg-dark-secondary border-0 shadow-sm">
-            <div class="card-body text-center">
-              <h5 class="text-white mb-3">Order Status</h5>
-              <div class="chart-container-large">
-                <canvas id="websiteVisitorsChart"></canvas>
-              </div>
-              
-            </div>
-          </div>
-          <div class="order-status-legend mt-3 d-flex justify-content-center gap-4 flex-wrap">
-
-            <div class="legend-item d-flex align-items-center">
-              <span class="legend-color" style="background:#006400;"></span>
-              <span class="legend-text">Delivered</span>
-            </div>
-          
-            <div class="legend-item d-flex align-items-center">
-              <span class="legend-color" style="background:#6c63ff;"></span>
-              <span class="legend-text">Pending</span>
-            </div>
-          
-            <div class="legend-item d-flex align-items-center">
-              <span class="legend-color" style="background:#8B0000;"></span>
-              <span class="legend-text">Cancelled</span>
-            </div>
-          
-            <div class="legend-item d-flex align-items-center">
-              <span class="legend-color" style="background:#FFB300;"></span>
-              <span class="legend-text">Returned</span>
-            </div>
-          
-          </div>
-          
-        </div>
-        
-
-        <!-- Top Category -->
-        <div class="col-lg-8 mb-4">
-          <div class="card bg-dark-secondary border-0 shadow-sm">
-            
-            <div class="card-body">
-              <h5 class="text-white mb-3">Top Sold Category</h5>
-              <div class="chart-container-large container-fluid">
-                <canvas id="revenueByCustomerChart"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- TOGGLE BUTTONS -->
-      <div class="revenue-toggle mb-4">
-        <button id="weeklyBtn" class="rev-btn ">Daily</button>
-        <button id="monthlyBtn" class="rev-btn">Weekly</button>
-        <button id="yearlyBtn" class="rev-btn active">Monthly</button>
-      </div>
-
-      <!-- MAIN LINE CHART -->
-      <div class="card bg-dark-secondary border-0 shadow-sm mb-5">
-        <div class="card-body">
-          <h5 class="text-white mb-3">Revenue Overview</h5>
-          <div class="chart-container-large">
-            <canvas id="completedTasksChart"></canvas>
-          </div>
-        </div>
-      </div>
-      <!-- TOP 10 ORDERS SECTION -->
-<!-- RECENT ORDERS + TOP SELLING PRODUCTS SECTION -->
-<div class="row mt-4">
-
-  <!-- Recent Orders Table -->
-  <div class="col-lg-6 mb-4">
-    <div class="card bg-dark-secondary border-0 shadow-sm">
-      <div class="card-body">
-        <h5 class="text-white mb-3">Recent Orders</h5>
-
-        <div class="table-responsive">
-          <table class="table table-dark table-hover align-middle">
-            <thead>
-              <tr>
-                <th></th>
-                <th>Order ID</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <% lastOrders.forEach((order, index) => { %>
-              <tr>
-                <td><%= index + 1 %></td>
-                <td>ORD-<%= order._id %></td>
-                <td><%= order.createdAt.toLocaleDateString("en-IN") %></td>
-              </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        </div>
-
-      </div>
+      <!-- Add your product form here -->
     </div>
-  </div>
+  </main>
 
-  <!-- Top Selling Products Table -->
-  <div class="col-lg-6 mb-4">
-    <div class="card bg-dark-secondary border-0 shadow-sm">
-      <div class="card-body">
-        <h5 class="text-white mb-3">Top Selling Products</h5>
-
-        <div class="table-responsive">
-          <table class="table table-dark table-hover align-middle">
-            <thead>
-              <tr>
-                <th></th>
-                <th>Product</th>
-                <th>Sold</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <% topProducts.forEach((product, index) => { %>
-              <tr>
-                <td><%= index + 1 %></td>
-                <td><%= product.productName %></td>
-                <td><%= product.totalSold %></td>
-              </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-</div>
-
-
-
-    </div>
-  </div>
-
-  <!-- SCRIPTS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
-  <script>
-    const deliveredOrders = <%= deliveredOrders %>;
-    const pendingOrders = <%= pendingOrders %>;
-    const cancelledOrders = <%= cancelledOrders %>;
-    const returnedOrders = <%= returnedOrders %>;
-  
-    const categoryLabels = <%- JSON.stringify(categoryLabels) %>;
-    const categoryData = <%- JSON.stringify(categoryData) %>;
-  
-    // Backend provides date strings (various formats) and values for last 7 days
-    const last7DaysLabels = <%- JSON.stringify(last7DaysLabels) %>;
-    const last7DaysValues = <%- JSON.stringify(last7DaysValues) %>;
-  
-    // Backend provides weekly-in-month labels like "Week 1" and corresponding revenues
-    const monthlyWeekLabels = <%- JSON.stringify(monthlyWeekLabels) %>;
-    const monthlyWeekValues = <%- JSON.stringify(monthlyWeekValues) %>;
-  
-    // Yearly month labels and values (from controller)
-    const yearlyLabels = <%- JSON.stringify(yearlyLabels) %>;
-    const yearlyValues = <%- JSON.stringify(yearlyValues) %>;
-  
-    /* -----------------------------------
-         DOUGHNUT : ORDER STATUS
-    ----------------------------------- */
-    new Chart(document.getElementById('websiteVisitorsChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Delivered','Pending','Cancelled','Returned'],
-        datasets: [{
-          data: [deliveredOrders,pendingOrders,cancelledOrders,returnedOrders],
-          backgroundColor: ['#006400','#6c63ff','#8B0000','#FFB300'],
-          borderWidth: 0
-        }]
-      },
-      options: {
-        cutout: '68%',
-        plugins: { legend: { display: false } }
-      }
-    });
-  
-    /* -----------------------------------
-         BAR : TOP CATEGORIES
-    ----------------------------------- */
-    new Chart(document.getElementById('revenueByCustomerChart'), {
-      type: 'bar',
-      data: {
-        labels: categoryLabels,
-        datasets: [{
-          data: categoryData,
-          backgroundColor: ['#E0A800','#3A8DFF','#29B6F6','#00897B']
-        }]
-      },
-      options: {
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { color: 'rgba(255,255,255,0.1)' }},
-          y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }}
-        }
-      }
-    });
-  
-    /* -----------------------------------
-          LINE CHART : REVENUE OVERVIEW
-    ----------------------------------- */
-  
-    const ctx = document.getElementById('completedTasksChart').getContext('2d');
-
-
-    const weeklyData = {
-        labels: Array.isArray(last7DaysLabels) ? last7DaysLabels : [],
-        values: Array.isArray(last7DaysValues) ? last7DaysValues.map(Number) : []
-    };
-    
-    const fixedMonthlyLabels = ["Week 1","Week 2","Week 3","Week 4"];
-    const fixedMonthlyValues = [0,0,0,0];
-
-    if (Array.isArray(monthlyWeekLabels) && Array.isArray(monthlyWeekValues)) {
-      for (let i = 0; i < monthlyWeekLabels.length; i++) {
-        const lbl = String(monthlyWeekLabels[i] || "").trim();
-        const val = Number(monthlyWeekValues[i]) || 0;
-        const m = lbl.match(/(\d+)/);
-        let weekNum = m ? Number(m[1]) : null;
-        if (weekNum === null || isNaN(weekNum)) {
-          continue;
-        }
-        // cap to 4
-        const idx = Math.min(weekNum, 4) - 1;
-        if (idx >= 0 && idx < 4) {
-            fixedMonthlyValues[idx] += val;
-        }
-      }
-    }
-
-    // ---------- YEARLY (as provided) ----------
-    const yearlyData = {
-      labels: Array.isArray(yearlyLabels) ? yearlyLabels : [],
-      values: Array.isArray(yearlyValues) ? yearlyValues.map(Number) : []
-    };
-
-    function formatINR(v){
-      return "₹" + Number(v).toLocaleString("en-IN");
-    }
-
-    // DEFAULT → YEARLY
-    const revenueChart = new Chart(ctx,{
-      type:"line",
-      data:{
-        labels: yearlyData.labels,
-        datasets:[{
-          label:"Revenue",
-          data: yearlyData.values,
-          borderColor:"#3b82f6",
-          backgroundColor:"rgba(59,130,246,0.25)",
-          pointBackgroundColor:"#3b82f6",
-          pointBorderColor:"#fff",
-          pointRadius:6,
-          fill:true,
-          tension:0.35,
-          borderWidth:3
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        plugins:{
-          legend:{display:false},
-          tooltip:{
-            callbacks:{label:(ctx)=>formatINR(ctx.raw)}
-          }
-        },
-        scales:{
-          y:{
-            beginAtZero:true,
-            ticks:{callback:(v)=>formatINR(v)}
-          },
-          x: {
-            ticks: { color: '#cbd5e1' }
-          }
-        }
-      }
-    });
-
-    /* SWITCH BUTTON HANDLER */
-    function updateChart(type){
-      document.querySelectorAll(".rev-btn").forEach(btn=>btn.classList.remove("active"));
-
-      if(type==="weekly"){
-        weeklyBtn.classList.add("active");
-        // 💡 Direct assignment of dynamic labels and values
-        revenueChart.data.labels = weeklyData.labels;
-        revenueChart.data.datasets[0].data = weeklyData.values;
-
-      } else if(type==="monthly"){
-        monthlyBtn.classList.add("active");
-        revenueChart.data.labels = fixedMonthlyLabels;
-        revenueChart.data.datasets[0].data = fixedMonthlyValues;
-
-      } else {
-        yearlyBtn.classList.add("active");
-        revenueChart.data.labels = yearlyData.labels;
-        revenueChart.data.datasets[0].data = yearlyData.values;
-      }
-
-      revenueChart.update();
-    }
-
-    // BUTTON EVENTS
-    weeklyBtn.addEventListener("click",()=>updateChart("weekly"));
-    monthlyBtn.addEventListener("click",()=>updateChart("monthly"));
-    yearlyBtn.addEventListener("click",()=>updateChart("yearly"));
-  </script>
-  
+  <!-- Footer -->
+  <%- include("../partials/admin/footer") %>
 
 </body>
 </html>

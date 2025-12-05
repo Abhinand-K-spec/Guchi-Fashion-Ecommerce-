@@ -74,6 +74,7 @@
       object-fit: contain;
       margin-bottom: 10px;
     }
+
     .img-zoom-container {
       position: relative;
     }
@@ -89,53 +90,7 @@
       display: none;
       z-index: 99;
     }
-    .price-container {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .product-price {
-      color: #e74c3c;
-      font-weight: bold;
-      font-size: 1.5rem;
-    }
-    .regular-price {
-      font-size: 1rem;
-      color: #999;
-      text-decoration: line-through;
-      margin-left: 8px;
-    }
-    .offer-percentage {
-      color: #e74c3c;
-      font-weight: bold;
-      font-size: 1rem;
-      margin-left: 8px;
-    }
-    .wishlistbtn {
-      font-size: 0.7rem; 
-      width: 6rem;
-      margin-left: 4px;
-    }
-    .notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px 20px;
-      border-radius: 5px;
-      color: white;
-      z-index: 1000;
-      display: none;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-    .notification.success {
-      background-color: #28a745;
-    }
-    .notification.error {
-      background-color: #dc3545;
-    }
   </style>
-  <%- include('../partials/user/header') %>
-
 </head>
 <body>
 
@@ -156,7 +111,7 @@
     <!-- Images -->
     <div class="col-md-6 text-center">
       <div class="img-zoom-container">
-        <img id="mainProductImage" src="<%= product.Image[0] || '/img/default-product.jpg' %>" alt="<%= product.productName %>" class="main-image"/>
+        <img id="mainProductImage" src="<%= product.Image[0] %>" alt="<%= product.productName %>" class="main-image"/>
         <div id="zoom-result" class="img-zoom-result"></div>
       </div>
       <% if (product.Image.length > 1) { %>
@@ -180,28 +135,20 @@
         <% } %>
         <span>(<%= product.reviews?.length || 0 %> reviews)</span>
       </div>
-      <% if (product.offer) { %>
-        <div class="price-container">
-          <h4 class="product-price" id="priceDisplay">₹<%= product.Variants[0].salePrice.toFixed(2) %></h4>
-
-
-        </div>
-      <% } else { %>
-        <h4 class="product-price" id="priceDisplay">₹<%= product.Variants[0].Price.toFixed(2) %></h4>
-      <% } %>
+      <% const price = product.Variants[0]?.Price || 0; %>
+      <% const discount = product.discount || 0; %>
+      <% const discountedPrice = price - (price * discount / 100); %>
+      <h4 class="text-danger fw-bold" id="priceDisplay">₹<%= discountedPrice.toFixed(2) %></h4>
       <p id="stockDisplay"><strong>Stock:</strong> <%= product.Variants[0]?.Stock || 0 %> available</p>
 
       <p><strong>Size:</strong>
         <select id="sizeSelector" class="form-select w-auto d-inline-block">
           <% 
-            const uniqueSizes = [...new Set(product.Variants.map(v => v.Size).filter(size => size))];
-            if (uniqueSizes.length === 0) { %>
-              <option value="">Select Size</option>
-          <% } else { %>
-            <% uniqueSizes.forEach(size => { %>
-              <option value="<%= size %>"><%= size %></option>
-            <% }) %>
-          <% } %>
+            const uniqueSizes = [...new Set(product.Variants.map(v => v.Size))];
+            uniqueSizes.forEach(size => { 
+          %>
+            <option value="<%= size %>"><%= size %></option>
+          <% }) %>
         </select>
       </p>
 
@@ -212,26 +159,13 @@
       <p><%= product.Description || 'No description available.' %></p>
      
       <% if ((product.Variants[0]?.Stock || 0) > 0) { %>
-        <button class="btn btn-danger" id="addToCartBtn" data-product-id="<%= product._id %>">
-            Add to Cart
-        </button>
-
-        <button 
-          class="wishlistbtn btn btn-secondary" 
-          id="addToWishlistBtn"
-          data-product-id="<%= product._id %>">
-          Add to Wishlist
-        </button>
-
+        <form action="/addToCart/<%= product._id %>" method="POST">
+          <button class="btn btn-danger" id="addToCartBtn">Add to Cart</button>
+        </form>
       <% } else { %>
         <button class="btn btn-danger" disabled id="addToCartBtn">Out of Stock</button>
         <p class="out-of-stock mt-2">This product is currently out of stock</p>
       <% } %>
-
-      <!-- Notification Container -->
-      <div id="notification" class="notification"></div>
-
-
 
       <% if (product.reviews && product.reviews.length > 0) { %>
         <hr class="my-4"/>
@@ -270,194 +204,107 @@
     </div>
   <% } %>
 </div>
-<%- include('../partials/user/footer') %>
+<!-- JS -->
 <script>
-  // Define the swapImage function
-  function swapImage(thumbnailElement) {
+  const mainImg = document.getElementById("mainProductImage");
+  const result = document.getElementById("zoom-result");
 
-    const mainImage = document.getElementById('mainProductImage');
-    
+  function imageZoom(img, resultBox) {
+    const zoom = 2;
+    resultBox.style.display = "block";
+    resultBox.style.backgroundImage = `url('${img.src}')`;
 
-    const newImageUrl = thumbnailElement.src;
-    const currentMainImageUrl = mainImage.src;
+    function moveLens(e) {
+      const rect = img.getBoundingClientRect();
+      const x = e.pageX - rect.left - window.pageXOffset;
+      const y = e.pageY - rect.top - window.pageYOffset;
 
-    mainImage.src = newImageUrl;
-    thumbnailElement.src = currentMainImageUrl;
-    
+      const posX = x / img.width * 100;
+      const posY = y / img.height * 100;
+
+      resultBox.style.backgroundPosition = `${posX}% ${posY}%`;
+    }
+
+    img.addEventListener("mousemove", moveLens);
+    resultBox.addEventListener("mousemove", moveLens);
+
+    img.addEventListener("mouseleave", () => {
+      resultBox.style.display = "none";
+    });
+  }
+
+  mainImg.addEventListener("mouseenter", () => imageZoom(mainImg, result));
+
+  function swapImage(clickedThumb) {
+    const tempSrc = mainImg.src;
+    mainImg.src = clickedThumb.src;
+    clickedThumb.src = tempSrc;
+    result.style.backgroundImage = `url('${mainImg.src}')`;
+  }
+
+  const variants = JSON.parse(`<%- JSON.stringify(product.Variants) %>`);
+  const productDiscount = `<%= product.discount || 0 %>`;
+
+  const sizeSelector = document.getElementById('sizeSelector');
+  const priceDisplay = document.getElementById('priceDisplay');
+  const stockDisplay = document.getElementById('stockDisplay');
+  const addToCartBtn = document.getElementById('addToCartBtn');
+
+  function updateVariantDetails(selectedSize) {
+    const variant = variants.find(v => v.Size === selectedSize);
+    if (variant) {
+      const discountedPrice = variant.Price - (variant.Price * productDiscount / 100);
+      priceDisplay.innerText = `₹${discountedPrice.toFixed(2)}`;
+      stockDisplay.innerHTML = variant.Stock <= 0
+        ? '<span class="out-of-stock">Out of Stock</span>'
+        : `<strong>Stock:</strong> ${variant.Stock} available`;
+
+      if (addToCartBtn) {
+        addToCartBtn.disabled = variant.Stock <= 0;
+        addToCartBtn.innerText = variant.Stock <= 0 ? "Out of Stock" : "Add to Cart";
+      }
+    }
   }
 
 
-</script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const sizeSelector = document.getElementById('sizeSelector');
-    const priceDisplay = document.getElementById('priceDisplay');
-    const stockDisplay = document.getElementById('stockDisplay');
-    const addToCartBtn = document.getElementById('addToCartBtn');
-
-    // Parse variants from server
-    const variants = <%- JSON.stringify(product.Variants) %>;
-    const productOffer = <%- JSON.stringify(product.offer || null) %>;
-
-    // Remember previous selection
-    const savedSize = localStorage.getItem('selectedSize_<%= product._id %>');
-    if (savedSize) {
+  window.addEventListener('DOMContentLoaded', () => {
+    const savedSize = localStorage.getItem('selectedSize');
+    if (savedSize && [...sizeSelector.options].some(opt => opt.value === savedSize)) {
       sizeSelector.value = savedSize;
+      updateVariantDetails(savedSize);
+    } else {
+      updateVariantDetails(sizeSelector.value);
     }
-
-    function updateVariant(selectedSize) {
-      const variant = variants.find(v => v.Size && v.Size.trim() === selectedSize.trim());
+  });
 
 
-      if (!variant) {
-        priceDisplay.textContent = "₹0.00";
-        stockDisplay.innerHTML = `<strong>Stock:</strong> 0 available`;
-        addToCartBtn.disabled = true;
-        addToCartBtn.textContent = "Out of Stock";
-        return;
-      }
+  sizeSelector?.addEventListener('change', function () {
+    const selectedSize = this.value;
+    localStorage.setItem('selectedSize', selectedSize);
+    updateVariantDetails(selectedSize);
+  });
+</script>
 
-      // If offer available, use salePrice and show both prices
-      let priceHTML = "";
-      if (productOffer) {
-        priceHTML = `₹${parseFloat(variant.salePrice || variant.Price).toFixed(2)} 
-          <span class="offer-percentage">${productOffer.Discount}% OFF</span>
-          <span class="regular-price">₹${parseFloat(variant.Price).toFixed(2)}</span>`;
-      } else {
-        priceHTML = `₹${parseFloat(variant.Price).toFixed(2)}`;
-      }
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
 
-      priceDisplay.innerHTML = priceHTML;
-
-      // Update stock
-      const stock = parseInt(variant.Stock || 0);
-      stockDisplay.innerHTML = `<strong>Stock:</strong> ${stock} available`;
-
-      // Update cart button
-      addToCartBtn.disabled = stock <= 0;
-      addToCartBtn.textContent = stock > 0 ? "Add to Cart" : "Out of Stock";
-    }
-
-    // Run once at page load (with saved or first variant)
-    const initialSize = sizeSelector.value || variants[0]?.Size;
-    if (initialSize) updateVariant(initialSize);
-
-    // Listen for change
-    sizeSelector.addEventListener('change', (e) => {
-      const selectedSize = e.target.value;
-      localStorage.setItem('selectedSize_<%= product._id %>', selectedSize);
-      updateVariant(selectedSize);
+<script>
+  document.querySelector('form[action^="/addToCart"]')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const form = this;
+    const response = await fetch(form.action, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
     });
-  });
-</script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const addToCartBtn = document.getElementById('addToCartBtn');
-    const notification = document.getElementById('notification');
 
-    // Utility function to show success/error
-    function showNotification(type, message) {
-      notification.textContent = message;
-      notification.className = `notification ${type}`;
-      notification.style.display = 'block';
-      setTimeout(() => {
-        notification.style.display = 'none';
-      }, 2500);
-    }
-
-    if (addToCartBtn) {
-      addToCartBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const productId = addToCartBtn.dataset.productId;
-        const sizeSelector = document.getElementById('sizeSelector');
-        const selectedSize = sizeSelector ? sizeSelector.value : '';
-        
-        // Find variant index based on selected size
-        const variants = <%- JSON.stringify(product.Variants) %>;
-        const variantIndex = variants.findIndex(v => v.Size && v.Size.trim() === selectedSize.trim());
-        const finalVariantIndex = variantIndex >= 0 ? variantIndex : 0;
-
-        // Disable button while request runs
-        addToCartBtn.disabled = true;
-        addToCartBtn.textContent = 'Adding...';
-
-        try {
-          const response = await fetch(`/addToCart/${productId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ variantIndex: finalVariantIndex })
-          });
-
-          const result = await response.json();
-          
-        if (result.error === "LOGIN_REQUIRED") {
-          window.location.href = '/login';
-          return;
-        }
-          if (response.ok && result.success) {
-            showNotification('success', result.success || result.message || 'Product added to cart successfully!');
-          }else {
-            showNotification('error', result.message || result.error  || 'Failed to add product to cart.');
-          }
-        } catch (err) {
-          console.error('Add to cart error:', err);
-          showNotification('error', 'Something went wrong. Please try again.');
-        } finally {
-          addToCartBtn.disabled = false;
-          addToCartBtn.textContent = 'Add to Cart';
-        }
-      });
+    if (response.ok) {
+      window.location.href = '/shop';
+    } else {
+      const data = await response.json();
+      alert(data.error || 'Something went wrong');
     }
   });
 </script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const wishlistBtn = document.getElementById('addToWishlistBtn');
-    const notification = document.getElementById('notification');
-
-    // Use the same notification function as Add to Cart
-    function showNotification(type, message) {
-      notification.textContent = message;
-      notification.className = `notification ${type}`;
-      notification.style.display = 'block';
-      setTimeout(() => {
-        notification.style.display = 'none';
-      }, 2500);
-    }
-
-    if (wishlistBtn) {
-      wishlistBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const productId = wishlistBtn.dataset.productId;
-
-        wishlistBtn.disabled = true;
-        wishlistBtn.textContent = 'Adding...';
-
-        try {
-          const response = await fetch(`/add-to-wishlist/${productId}`, {
-            method: 'GET'
-          });
-
-          const result = await response.json();
-
-          if (response.ok && result.success) {
-            showNotification('success', result.message || 'Added to wishlist successfully!');
-          } else {
-            showNotification('error', result.message || result.error || 'Failed to add to wishlist.');
-          }
-        } catch (err) {
-          console.error('Wishlist error:', err);
-          showNotification('error', 'Something went wrong while adding to wishlist.');
-        } finally {
-          wishlistBtn.disabled = false;
-          wishlistBtn.textContent = 'Add to Wishlist';
-        }
-      });
-    }
-  });
-</script>
-
-
 
 </body>
 </html>

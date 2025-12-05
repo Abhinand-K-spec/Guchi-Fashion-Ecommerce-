@@ -8,34 +8,20 @@
   <link rel="stylesheet" href="/css/style.css" />
 
   <style>
-    a {
-      text-decoration: none;
-    }
-
-    .cart__table table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .cart__table th,
-    .cart__table td {
+    a { text-decoration: none; }
+    .cart__table table { width: 100%; border-collapse: collapse; }
+    .cart__table th, .cart__table td {
       padding: 20px;
       border: 1px solid #ebebeb;
       text-align: center;
       vertical-align: middle;
     }
-
-    .cart__product__item img {
-      width: 70px;
-      border-radius: 4px;
-    }
-
+    .cart__product__item img { width: 70px; border-radius: 4px; }
     .cart__quantity .pro-qty {
       display: flex;
       justify-content: center;
       align-items: center;
     }
-
     .pro-qty input {
       width: 40px;
       text-align: center;
@@ -43,14 +29,12 @@
       margin: 0 5px;
       padding: 5px;
     }
-
     .pro-qty button.qtybtn {
       border: none;
       background: #f5f5f5;
       padding: 5px 10px;
       cursor: pointer;
     }
-
     .cart__btn a {
       background-color: #000;
       color: #fff;
@@ -59,30 +43,15 @@
       text-transform: uppercase;
       font-weight: 600;
     }
-
     .cart__total {
       background: #f6f6f6;
       padding: 30px;
       border: 1px solid #ebebeb;
       text-align: right;
     }
-
-    .cart__total h6 {
-      font-weight: 700;
-      margin-bottom: 20px;
-    }
-
-    .cart__total ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    .cart__total ul li {
-      font-size: 16px;
-      margin-bottom: 10px;
-    }
-
+    .cart__total h6 { font-weight: 700; margin-bottom: 20px; }
+    .cart__total ul { list-style: none; padding: 0; margin: 0; }
+    .cart__total ul li { font-size: 16px; margin-bottom: 10px; }
     .cart__total .primary-btn {
       background-color: #000;
       color: #fff;
@@ -92,452 +61,253 @@
       display: inline-block;
       margin-top: 20px;
     }
-
-    .cart__total .primary-btn.hide {
-      display: none;
-    }
-
-    .price-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .product-price {
-      color: #e74c3c;
-      font-weight: bold;
-    }
-
-    .offer-percentage {
-      color: #e74c3c;
-      font-weight: bold;
-      font-size: 0.9rem;
-    }
-
-    .regular-price {
-      font-size: 0.9rem;
-      color: #999;
-      text-decoration: line-through;
-    }
-
-    .typing-indicator {
-      width: 60px;
-      height: 30px;
-      left: 50%;
-      position: relative;
-      z-index: 4;
-    }
-
-    .typing-circle {
-      width: 8px;
-      height: 8px;
-      position: absolute;
-      border-radius: 50%;
-      background-color: #000;
-      animation: typing-circle7124 0.5s alternate infinite ease;
-    }
-
-    @keyframes typing-circle7124 {
-      0% {
-        top: 20px;
-        height: 5px;
-        border-radius: 50px 50px 25px 25px;
-        transform: scaleX(1.7);
-      }
-
-      40% {
-        height: 8px;
-        border-radius: 50%;
-        transform: scaleX(1);
-      }
-
-      100% {
-        top: 0%;
-      }
-    }
-
-    .typing-circle:nth-child(1) {
-      left: 15%;
-    }
-
-    .typing-circle:nth-child(2) {
-      left: 45%;
-      animation-delay: 0.2s;
-    }
-
-    .typing-circle:nth-child(3) {
-      right: 15%;
-      animation-delay: 0.3s;
-    }
-
-    .typing-shadow {
-      width: 5px;
-      height: 4px;
-      border-radius: 50%;
-      background-color: rgba(0, 0, 0, 0.2);
-      position: absolute;
-      top: 30px;
-      transform-origin: 50%;
-      z-index: 3;
-      filter: blur(1px);
-      animation: typing-shadow046 0.5s alternate infinite ease;
-    }
-
-    @keyframes typing-shadow046 {
-      0% {
-        transform: scaleX(1.5);
-      }
-
-      40% {
-        transform: scaleX(1);
-        opacity: 0.7;
-      }
-
-      100% {
-        transform: scaleX(0.2);
-        opacity: 0.4;
-      }
-    }
-
-    .typing-shadow:nth-child(4) {
-      left: 45%;
-      animation-delay: 0.2s;
-    }
-
-    .typing-shadow:nth-child(5) {
-      right: 15%;
-      animation-delay: 0.3s;
-    }
+    .cart__total .primary-btn.hide { display: none; }
   </style>
 </head>
 
 <%- include('../partials/user/header') %>
 
-  <section class="shopping-cart spad">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-12">
-          <% if (cartItems.length===0) { %>
-            <div class="typing-indicator" class="text-center">
-              <div class="typing-circle"></div>
-              <div class="typing-circle"></div>
-              <div class="typing-circle"></div>
-              <div class="typing-shadow"></div>
-              <div class="typing-shadow"></div>
-              <div class="typing-shadow"></div>
+<section class="shopping-cart spad">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="cart__table">
+          <table>
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th class="p-name">Product Name</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (cartItems.length === 0) { %>
+                <tr><td colspan="6">Your cart is empty</td></tr>
+              <% } else { %>
+                <% cartItems.forEach(item => { %>
+                  <tr data-product-id="<%= item._id %>">
+                    <td class="cart__product__item">
+                      <img src="<%= item.image %>" alt="Product Image" />
+                    </td>
+                    <td class="cart__product__item__title">
+                      <h6><%= item.name %></h6>
+                    </td>
+                    <td class="cart__price">₹<%= item.price %></td>
+                    <td class="cart__quantity">
+                      <% if (item.stock > 0) { %>
+                        <div class="pro-qty" data-stock="<%= item.stock %>">
+                          <button class="dec qtybtn" data-id="<%= item._id %>">-</button>
+                          <input type="text" value="<%= item.quantity %>" readonly />
+                          <button class="inc qtybtn" data-id="<%= item._id %>">+</button>
+                        </div>
+                      <% } else { %>
+                        <span class="text-danger">Out of Stock</span>
+                      <% } %>
+                    </td>
+                    <td class="cart__total">₹<%= item.itemTotal %></td>
+                    <td class="cart__close">
+                      <button class="remove-from-cart" data-id="<%= item._id %>">
+                        <i class="fa fa-close"></i>
+                      </button>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="row mt-4">
+          <div class="col-lg-6">
+            <div class="cart__btn">
+              <a href="/shopnow">Continue Shopping</a>
             </div>
-            <tr>
-              <td>
-                <h4>Your cart is empty or The item is already ordered</h4>
-              </td>
-            </tr>
-            <% } else { %>
-              <div class="cart__table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Image</th>
-                      <th class="p-name">Product Name</th>
-                      <th>Price</th>
-                      <th>Quantity</th>
-                      <th>Total</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-
-
-                    <% cartItems.forEach(item=> { %>
-                      <tr data-product-id="<%= item._id %>" data-variant-index="<%= item.variantIndex %>">
-                        <td class="cart__product__item">
-                          <img src="<%= item.image %>" alt="Product Image" />
-                        </td>
-                        <td class="cart__product__item__title">
-                          <h6>
-                            <%= item.name %>
-                          </h6>
-                        </td>
-                        <td class="cart__price">
-                          <% if (item.offer) { %>
-                            <div class="price-container">
-                              <span class="product-price">₹<%= item.price.toFixed(2) %></span>
-
-                            </div>
-                            <% } else { %>
-                              <span class="product-price">₹<%= item.price.toFixed(2) %></span>
-                              <% } %>
-                        </td>
-                        <td class="cart__quantity">
-                          <% if (!item.isListed) { %>
-                            <span class="text-danger">Unavailable</span>
-                            <% } else if (item.stock> 0) { %>
-                              <div class="pro-qty" data-stock="<%= item.stock %>">
-                                <button class="dec qtybtn" data-id="<%= item._id %>">-</button>
-                                <input type="text" value="<%= item.quantity %>" readonly />
-                                <button class="inc qtybtn" data-id="<%= item._id %>">+</button>
-                              </div>
-                              <% } else { %>
-                                <span class="text-danger">Out of Stock</span>
-                                <% } %>
-                        </td>
-                        <td class="cart__total">₹<%= item.itemTotal.toFixed(2) %>
-                        </td>
-                        <td class="cart__close">
-                          <button class="remove-from-cart" data-id="<%= item._id %>"
-                            data-variant="<%= item.variantIndex %>">
-                            <i class="fa fa-close"></i>
-                          </button>
-
-                        </td>
-                      </tr>
-                      <% }) %>
-                        <% } %>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="row mt-4">
-                <div class="col-lg-6">
-                  <div class="cart__btn">
-                    <a href="/shopnow">Continue Shopping</a>
-                  </div>
-                </div>
-                <div class="col-lg-6 text-right">
-                  <div class="cart__total">
-                    <h6>Cart total</h6>
-                    <ul>
-
-                      <li>Subtotal <span class="subtotal">₹<%= totalPrice.toFixed(2) %></span></li>
-
-                    </ul>
-                    <% const hasOutOfStock=cartItems.some(item=> item.stock === 0 || item.stock < item.quantity); %>
-                        <% const hasUnlisted=cartItems.some(item=> !item.isListed); %>
-                          <% if (hasOutOfStock) { %>
-                            <p class="text-danger">Please remove the out-of-stock product to proceed.</p>
-                            <% } %>
-                              <% if (hasUnlisted) { %>
-                                <p class="text-danger">Some items are currently unavailable. Please remove them to
-                                  proceed.</p>
-                                <% } %>
-                                  <a href="/checkout"
-                                    class="primary-btn <%= hasOutOfStock || hasUnlisted ? 'hide' : '' %>">Proceed to
-                                    checkout</a>
-                  </div>
-                </div>
-              </div>
-        </div>
-      </div>
-    </div>
-
-
-    <div class="modal fade" id="qtyLimitModal" tabindex="-1" aria-labelledby="qtyLimitModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content text-center">
-          <div class="modal-header">
-            <h5 class="modal-title" id="qtyLimitModalLabel">Quantity Limit</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-body" id="qtyModalMessage"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <div class="modal fade" id="removeCartModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Remove Item</h5>
-          <button class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          Are you sure you want to remove this item from your cart?
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button id="confirmRemoveBtn" class="btn btn-danger">Remove</button>
+          <div class="col-lg-6 text-right">
+            <div class="cart__total">
+              <h6>Cart total</h6>
+              <ul>
+                <li>Subtotal <span class="subtotal">₹<%= totalPrice %></span></li>
+              </ul>
+              <% const hasOutOfStock = cartItems.some(item => item.stock === 0 || item.stock < item.quantity); %>
+              <% if (hasOutOfStock) { %>
+                <p class="text-danger">Please remove the out-of-stock product to proceed.</p>
+              <% } %>
+              <a href="/checkout" class="primary-btn <%= hasOutOfStock ? 'hide' : '' %>">Proceed to checkout</a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Quantity Limit Modal -->
+  <div class="modal fade" id="qtyLimitModal" tabindex="-1" aria-labelledby="qtyLimitModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content text-center">
+        <div class="modal-header">
+          <h5 class="modal-title" id="qtyLimitModalLabel">Quantity Limit</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="qtyModalMessage"></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function showQtyModal(message) {
+    const messageEl = document.getElementById("qtyModalMessage");
+    const modalEl = document.getElementById("qtyLimitModal");
+    if (messageEl && modalEl) {
+      messageEl.innerText = message;
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+      setTimeout(() => modal.hide(), 2000);
+    }
+  }
 
-  <script>
-    function showQtyModal(message) {
-      const messageEl = document.getElementById("qtyModalMessage");
-      const modalEl = document.getElementById("qtyLimitModal");
-      if (messageEl && modalEl) {
-        messageEl.innerText = message;
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-        setTimeout(() => modal.hide(), 2000);
+  function updateCartUI(cartItems, totalPrice) {
+    const tbody = document.querySelector('.cart__table tbody');
+    const subtotalEl = document.querySelector('.cart__total .subtotal');
+    const proceedBtn = document.querySelector('.cart__total .primary-btn');
+    const outOfStockMsg = document.querySelector('.cart__total .text-danger');
+
+    // Check for out-of-stock items
+    const hasOutOfStock = cartItems.some(item => item.stock === 0 || item.stock < item.quantity);
+
+    // Update subtotal
+    subtotalEl.textContent = `₹${totalPrice}`;
+
+    // Update proceed button visibility
+    if (hasOutOfStock) {
+      proceedBtn.classList.add('hide');
+      if (!outOfStockMsg) {
+        const msg = document.createElement('p');
+        msg.className = 'text-danger';
+        msg.textContent = 'Please remove the out-of-stock product to proceed.';
+        proceedBtn.parentNode.insertBefore(msg, proceedBtn);
+      }
+    } else {
+      proceedBtn.classList.remove('hide');
+      if (outOfStockMsg) {
+        outOfStockMsg.remove();
       }
     }
 
-    function updateCartUI(cartItems, totalPrice) {
-      const tbody = document.querySelector('.cart__table tbody');
-      const subtotalEl = document.querySelector('.cart__total .subtotal');
-      const proceedBtn = document.querySelector('.cart__total .primary-btn');
-      const outOfStockMsg = document.querySelector('.cart__total .text-danger');
-
-      const hasOutOfStock = cartItems.some(item => item.stock === 0 || item.stock < item.quantity);
-      const hasUnlisted = cartItems.some(item => !item.isListed);
-
-      subtotalEl.textContent = `₹${totalPrice.toFixed(2)}`;
-
-      if (hasOutOfStock || hasUnlisted) {
-        proceedBtn.classList.add('hide');
-        if (!outOfStockMsg) {
-          const msg = document.createElement('p');
-          msg.className = 'text-danger';
-          if (hasUnlisted) {
-            msg.textContent = 'Some items are currently unavailable. Please remove them to proceed.';
-          } else {
-            msg.textContent = 'Please remove the out-of-stock product to proceed.';
-          }
-          proceedBtn.parentNode.insertBefore(msg, proceedBtn);
-        } else {
-          if (hasUnlisted) {
-            outOfStockMsg.textContent = 'Some items are currently unavailable. Please remove them to proceed.';
-          } else {
-            outOfStockMsg.textContent = 'Please remove the out-of-stock product to proceed.';
-          }
-        }
-      } else {
-        proceedBtn.classList.remove('hide');
-        if (outOfStockMsg) outOfStockMsg.remove();
-      }
-
-      cartItems.forEach(item => {
-        const row = tbody.querySelector(
-          `tr[data-product-id="${item._id}"][data-variant-index="${item.variantIndex}"]`
-        );
-
-        if (row) {
-          const qtyCell = row.querySelector('.cart__quantity');
-          const totalCell = row.querySelector('.cart__total');
-          const priceCell = row.querySelector('.cart__price');
-
-          if (!item.isListed) {
-            qtyCell.innerHTML = '<span class="text-danger">Unavailable</span>';
-          } else if (item.stock > 0) {
-            qtyCell.innerHTML = `
+    // Update cart items
+    cartItems.forEach(item => {
+      const row = tbody.querySelector(`tr[data-product-id="${item._id}"]`);
+      if (row) {
+        const qtyCell = row.querySelector('.cart__quantity');
+        const totalCell = row.querySelector('.cart__total');
+        if (item.stock > 0) {
+          qtyCell.innerHTML = `
             <div class="pro-qty" data-stock="${item.stock}">
-              <button class="dec qtybtn" data-id="${item._id}" data-variant="${item.variantIndex}">-</button>
+              <button class="dec qtybtn" data-id="${item._id}">-</button>
               <input type="text" value="${item.quantity}" readonly />
-              <button class="inc qtybtn" data-id="${item._id}" data-variant="${item.variantIndex}">+</button>
+              <button class="inc qtybtn" data-id="${item._id}">+</button>
             </div>
           `;
-          } else {
-            qtyCell.innerHTML = '<span class="text-danger">Out of Stock</span>';
-          }
-
-          priceCell.innerHTML = `
-          <span class="product-price">₹${item.price.toFixed(2)}</span>
-        `;
-
-          totalCell.textContent = `₹${item.itemTotal.toFixed(2)}`;
+        } else {
+          qtyCell.innerHTML = '<span class="text-danger">Out of Stock</span>';
         }
-      });
+        totalCell.textContent = `₹${item.itemTotal}`;
+      }
+    });
 
-      attachQtyButtonListeners();
-      attachRemoveListeners();
-    }
+    // Reattach event listeners for new quantity buttons
+    attachQtyButtonListeners();
+  }
 
-    function attachQtyButtonListeners() {
-      document.querySelectorAll(".qtybtn").forEach(btn => {
-        btn.addEventListener("click", function () {
-          const productId = this.dataset.id;
-          const variantIndex = this.dataset.variant;
-          const isIncrement = this.classList.contains("inc");
+  function attachQtyButtonListeners() {
+    document.querySelectorAll(".qtybtn").forEach(btn => {
+      btn.addEventListener("click", function () {
+        const productId = this.dataset.id;
+        const isIncrement = this.classList.contains("inc");
+        const qtyContainer = this.closest(".pro-qty");
+        const input = qtyContainer.querySelector("input");
+        const currentQty = parseInt(input.value) || 0;
+        const stock = parseInt(qtyContainer.dataset.stock) || 100;
 
-          const qtyContainer = this.closest(".pro-qty");
-          let currentQty = parseInt(qtyContainer.querySelector("input").value);
-          const stock = parseInt(qtyContainer.dataset.stock);
+        if (!productId) {
+          showQtyModal(" Invalid product.");
+          return;
+        }
 
-          if (isIncrement) {
-            if (currentQty >= 5) return showQtyModal("You cannot add more than 5 items.");
-            if (currentQty >= stock) return showQtyModal(`Only ${stock} items available.`);
-          } else {
-            if (currentQty <= 1) return showQtyModal("Quantity cannot be less than 1.");
+        if (isIncrement) {
+          if (currentQty >= 5) {
+            showQtyModal(" You can't add more than 5 items.");
+            return;
           }
+          if (currentQty >= stock) {
+            showQtyModal(` Only ${stock} items are available.`);
+            return;
+          }
+        } else {
+          if (currentQty <= 1) {
+            showQtyModal(" Quantity cannot be less than 1.");
+            return;
+          }
+        }
 
-          fetch(`/cart/update-quantity/${productId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: isIncrement ? "increment" : "decrement",
-              variantIndex
-            })
+        fetch(`/cart/update-quantity/${productId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: isIncrement ? "increment" : "decrement" })
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              updateCartUI(data.cartItems, data.totalPrice);
+            } else {
+              showQtyModal(data.message === 'You cannot add more than 5 items.' || data.message.startsWith('Only') ? data.message : "⚠️ Failed to update quantity.");
+            }
           })
-            .then(res => res.json())
-            .then(data => {
-              if (data.success) {
-                updateCartUI(data.cartItems, data.totalPrice);
-              } else {
-                showQtyModal(data.message || "Failed to update quantity.");
-              }
-            })
-            .catch(err => console.error("Quantity update error:", err));
-        });
+          .catch(err => {
+            console.error("Quantity update error:", err);
+            showQtyModal(" Something went wrong.");
+          });
       });
-    }
+    });
+  }
 
-    // REMOVE ITEM — VARIANT SPECIFIC
-    let removeProductId = null;
-    let removeVariantIndex = null;
-
-    const removeCartModal = new bootstrap.Modal(document.getElementById("removeCartModal"));
-    const confirmRemoveBtn = document.getElementById("confirmRemoveBtn");
-
-    function attachRemoveListeners() {
-      document.querySelectorAll(".remove-from-cart").forEach(btn => {
-        btn.addEventListener("click", function () {
-          removeProductId = this.dataset.id;
-          removeVariantIndex = this.dataset.variant;
-          removeCartModal.show();
-        });
-      });
-    }
-
-    confirmRemoveBtn.addEventListener("click", function () {
-      if (!removeProductId) return;
-
-      fetch(`/cart/remove/${removeProductId}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ variantIndex: removeVariantIndex })
+  document.querySelectorAll(".remove-from-cart").forEach(btn => {
+    btn.addEventListener("click", function () {
+      const productId = this.dataset.id;
+      fetch(`/cart/remove/${productId}`, {
+        method: "DELETE"
       })
         .then(res => res.json())
         .then(data => {
           if (data.success) {
-            const row = document.querySelector(
-              `tr[data-product-id="${removeProductId}"][data-variant-index="${removeVariantIndex}"]`
-            );
+            const row = document.querySelector(`tr[data-product-id="${productId}"]`);
             if (row) row.remove();
-
+            // Fetch updated cart data
             fetch('/cart/data')
               .then(res => res.json())
               .then(data => {
-                if (data.success) updateCartUI(data.cartItems, data.totalPrice);
+                if (data.success) {
+                  updateCartUI(data.cartItems, data.totalPrice);
+                } else {
+                  showQtyModal("⚠️ Failed to refresh cart.");
+                }
               });
-          } else {
-            showQtyModal("Failed to remove item.");
           }
         })
-        .finally(() => {
-          removeProductId = null;
-          removeVariantIndex = null;
-          removeCartModal.hide();
+        .catch(err => {
+          console.error("Remove error:", err);
+          showQtyModal("⚠️ Something went wrong.");
         });
     });
+  });
 
-    attachQtyButtonListeners();
-    attachRemoveListeners();
-  </script>
+  // Initial attachment of quantity button listeners
+  attachQtyButtonListeners();
+</script>
 
-
-  <%- include('../partials/user/footer') %>
+<%- include('../partials/user/footer') %>

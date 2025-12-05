@@ -1,8 +1,6 @@
 const Orders = require('../../model/ordersSchema');
 const User = require('../../model/userSchema');
 const Product = require('../../model/productSchema');
-const Wallet = require('../../model/walletSchema');
-const { after } = require('lodash');
 
 const getAdminOrders = async (req, res) => {
   try {
@@ -11,74 +9,34 @@ const getAdminOrders = async (req, res) => {
     const search = req.query.search || '';
     const statusFilter = req.query.status || '';
 
-    // Basic search filter
     const filter = {};
     if (search) {
       filter.OrderId = { $regex: search, $options: 'i' };
     }
-
-    let orders = await Orders.find(filter)
-      .sort({ createdAt: -1 })
-      .populate('UserId', 'name email')
-      .populate('Items.product')
-      .lean();
-
-    // --------------------------
-    // COMPUTE STATUS FOR EACH ORDER
-    // --------------------------
-    orders = orders.map(order => {
-      const statuses = order.Items.map(i => i.status);
-
-      let computedStatus = "";
-
-      if (order.PaymentStatus === "Pending") {
-        computedStatus = "Payment Failed";
-      } else if (statuses.every(s => s === "Delivered")) {
-        computedStatus = "Delivered";
-      } else if (statuses.every(s => s === "Cancelled")) {
-        computedStatus = "Cancelled";
-      } else if (statuses.every(s => s === "Returned")) {
-        computedStatus = "Returned";
-      } else if (statuses.includes("Delivered") && statuses.includes("Pending")) {
-        computedStatus = "Partially Delivered";
-      } else if (statuses.includes("Returned") && statuses.includes("Delivered")) {
-        computedStatus = "Partially Returned";
-      } else if (statuses.includes("Pending")) {
-        computedStatus = "Pending";
-      } else {
-        computedStatus = statuses[0] || "Pending";
-      }
-
-      return { ...order, computedStatus };
-    });
-
-    // --------------------------
-    // FILTER BY COMPUTED STATUS
-    // --------------------------
-    if (statusFilter && statusFilter.trim() !== "") {
-      orders = orders.filter(o => o.computedStatus === statusFilter);
+    if (statusFilter) {
+      filter.Status = statusFilter;
     }
 
-    // --------------------------
-    // PAGINATION AFTER FILTERING
-    // --------------------------
-    const totalOrders = orders.length;
-    const paginatedOrders = orders.slice((page - 1) * limit, page * limit);
+    const totalOrders = await Orders.countDocuments(filter);
+    const orders = await Orders.find(filter)
+      .sort({ createdAt: -1 })
+      .populate('UserId', 'name email')
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
 
     res.render('order-manage', {
-      orders: paginatedOrders,
+      orders,
       currentPage: page,
       totalPages: Math.ceil(totalOrders / limit),
       search,
       status: statusFilter,
     });
-
   } catch (err) {
     console.error('Error loading orders:', err);
     res.status(500).render('page-404');
   }
 };
-
 
 const getOrderDetails = async (req, res) => {
   try {
@@ -115,42 +73,8 @@ const approveReturn = async (req, res) => {
 
     item.returnStatus = 'Request Approved';
     item.status = 'Returned';
-
-    const delivery = order.totalDeliveryCharge || 40;
-
-    // Item return refund calculation
-    let refundAmount = item.finalPayableAmount || ((item.originalPrice || item.price || 0) * item.quantity);
-
-    // Check if ALL items are now returned - if so, add delivery charge
-    const allReturned = order.Items.every(i => i.status === 'Returned' || (i.product?._id.toString() === productId && i.returnStatus === 'Return Requested'));
-    if (allReturned) {
-      refundAmount += delivery;
-    }
-
-    if (order.PaymentMethod === 'Online' || order.PaymentMethod === 'COD') {
-      let wallet = await Wallet.findOne({ UserId: order.UserId });
-      if (!wallet) {
-        wallet = new Wallet({ UserId: order.UserId, Balance: 0, Transaction: [] });
-
-      }
-      if (refundAmount > 0) {
-        wallet.Balance += refundAmount;
-        wallet.Transaction.push({
-          TransactionAmount: refundAmount,
-          TransactionType: 'credit',
-          description: `Refund for returned item ${item.product.productName} in order ${order._id}`,
-          TransactionDate: new Date()
-        });
-        wallet.UpdatedAt = new Date();
-        await wallet.save();
-      } else {
-        console.log(`No refund applied, amount too low: ${refundAmount}`);
-      }
-    } else {
-      console.log(`No wallet update, payment method is ${order.PaymentMethod}`);
-    }
-
     await order.save();
+
     res.redirect(`/admin/order-details/${orderId}`);
   } catch (err) {
     console.error('Error approving return:', err);
@@ -203,37 +127,9 @@ const cancelSingleItem = async (req, res) => {
     item.cancelReason = reason || 'No reason provided';
 
     const product = item.product;
-    const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
-    if (product && product.Variants?.[variantIndex]) {
-      product.Variants[variantIndex].Stock += item.quantity;
+    if (product && product.Variants?.[0]) {
+      product.Variants[0].Stock += item.quantity;
       await product.save();
-    }
-
-    const delivery = order.totalDeliveryCharge || 40;
-
-    // Item cancellation refund calculation
-    let refundAmount = item.finalPayableAmount || ((item.originalPrice || item.price || 0) * item.quantity);
-
-    // Check if ALL items will be cancelled after this - if so, add delivery charge
-    const allItemsCancelled = order.Items.every(i => i.status === 'Cancelled' || i._id.toString() === itemId);
-    if (allItemsCancelled) {
-      refundAmount += delivery;
-    }
-
-    if (order.PaymentMethod === 'Online' && order.PaymentStatus === 'Completed') {
-      let wallet = await Wallet.findOne({ UserId: order.UserId });
-      if (!wallet) {
-        wallet = new Wallet({ UserId: order.UserId, Balance: 0, Transaction: [] });
-      }
-      wallet.Balance += refundAmount;
-      wallet.Transaction.push({
-        amount: refundAmount,
-        type: 'credit',
-        description: `Refund for cancelled item ${item.product?.productName} in order ${order._id}`,
-        date: new Date()
-      });
-      wallet.UpdatedAt = new Date();
-      await wallet.save();
     }
 
     const allCancelled = order.Items.every(i => i.status === 'Cancelled');
@@ -317,37 +213,9 @@ const updateItemStatus = async (req, res) => {
 
     if (status === 'Cancelled') {
       const product = item.product;
-      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
-      if (product && product.Variants?.[variantIndex]) {
-        product.Variants[variantIndex].Stock += item.quantity;
+      if (product && product.Variants?.[0]) {
+        product.Variants[0].Stock += item.quantity;
         await product.save();
-      }
-
-      const delivery = order.totalDeliveryCharge || 40;
-
-      // Status update to cancelled - refund calculation
-      let refundAmount = item.finalPayableAmount || ((item.originalPrice || item.price || 0) * item.quantity);
-
-      // Check if ALL items will be cancelled - if so, add delivery charge
-      const allItemsCancelled = order.Items.every(i => i.status === 'Cancelled' || i._id.toString() === itemId);
-      if (allItemsCancelled) {
-        refundAmount += delivery;
-      }
-
-      if (order.PaymentMethod === 'Online' && order.PaymentStatus === 'Completed') {
-        let wallet = await Wallet.findOne({ UserId: order.UserId });
-        if (!wallet) {
-          wallet = new Wallet({ UserId: order.UserId, Balance: 0, Transaction: [] });
-        }
-        wallet.Balance += refundAmount;
-        wallet.Transaction.push({
-          amount: refundAmount,
-          type: 'credit',
-          description: `Refund for cancelled item ${item.product.productName} in order ${order._id}`,
-          date: new Date()
-        });
-        wallet.UpdatedAt = new Date();
-        await wallet.save();
       }
     }
 
