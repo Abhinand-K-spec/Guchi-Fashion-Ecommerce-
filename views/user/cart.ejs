@@ -449,7 +449,14 @@
 
     function attachQtyButtonListeners() {
       document.querySelectorAll(".qtybtn").forEach(btn => {
-        btn.addEventListener("click", function () {
+        // Remove old event listeners by cloning the button
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+
+        newBtn.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+
           const productId = this.dataset.id;
           const variantIndex = this.dataset.variant;
           const isIncrement = this.classList.contains("inc");
@@ -458,12 +465,19 @@
           let currentQty = parseInt(qtyContainer.querySelector("input").value);
           const stock = parseInt(qtyContainer.dataset.stock);
 
+          // Prevent multiple clicks while request is in progress
+          if (this.disabled) return;
+
           if (isIncrement) {
             if (currentQty >= 5) return showQtyModal("You cannot add more than 5 items.");
             if (currentQty >= stock) return showQtyModal(`Only ${stock} items available.`);
           } else {
             if (currentQty <= 1) return showQtyModal("Quantity cannot be less than 1.");
           }
+
+          // Disable all buttons in this container during request
+          const allBtns = qtyContainer.querySelectorAll(".qtybtn");
+          allBtns.forEach(b => b.disabled = true);
 
           fetch(`/cart/update-quantity/${productId}`, {
             method: "PATCH",
@@ -479,9 +493,30 @@
                 updateCartUI(data.cartItems, data.totalPrice);
               } else {
                 showQtyModal(data.message || "Failed to update quantity.");
+                // Refresh cart data to ensure UI is in sync with server
+                fetch('/cart/data')
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.success) updateCartUI(data.cartItems, data.totalPrice);
+                  });
               }
             })
-            .catch(err => console.error("Quantity update error:", err));
+            .catch(err => {
+              console.error("Quantity update error:", err);
+              // Refresh cart data on error to ensure UI is in sync
+              fetch('/cart/data')
+                .then(res => res.json())
+                .then(data => {
+                  if (data.success) updateCartUI(data.cartItems, data.totalPrice);
+                });
+            })
+            .finally(() => {
+              // Re-enable buttons after request completes
+              setTimeout(() => {
+                const currentBtns = qtyContainer.querySelectorAll(".qtybtn");
+                currentBtns.forEach(b => b.disabled = false);
+              }, 100);
+            });
         });
       });
     }

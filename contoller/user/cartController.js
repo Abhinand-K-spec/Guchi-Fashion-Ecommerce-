@@ -158,23 +158,37 @@ const getCartData = async (req, res) => {
     const userId = req.session.user;
     if (!userId) return res.json({ success: false, message: 'User not logged in' });
 
-    const cartData = await Cart.findOne({ user: userId }).populate('Items.product').lean();
+    const cartData = await Cart.findOne({ user: userId })
+      .populate({
+        path: 'Items.product',
+        populate: { path: 'Category' }
+      })
+      .lean();
 
     if (!cartData || !cartData.Items.length) {
       return res.json({ success: true, cartItems: [], totalPrice: 0 });
     }
 
     let totalPrice = 0;
-    const cartItems = cartData.Items.map(item => {
+    const cartItems = await Promise.all(cartData.Items.map(async item => {
       const product = item.product;
       const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
       const variant = product?.Variants?.[variantIndex];
-      const price = variant?.Price || 0;
+
+      // Get offer price
+      const { offer, salePrice } = await getProductOffer(product, variantIndex);
+      const price = salePrice || variant?.Price || 0;
+
       const quantity = item.quantity;
       const itemTotal = price * quantity;
-      if (variant?.Stock >= item.quantity) {
+
+      const isProductListed = product.IsListed;
+      const isCategoryListed = product.Category && product.Category.isListed;
+
+      if (variant?.Stock >= item.quantity && isProductListed && isCategoryListed) {
         totalPrice += itemTotal;
       }
+
       let imagePath = 'images/default.jpg';
       if (variant?.Image?.length) {
         const raw = variant.Image[0];
@@ -183,6 +197,7 @@ const getCartData = async (req, res) => {
         const raw = product.Image[0];
         imagePath = raw.startsWith('http') ? raw : `${raw}`;
       }
+
       return {
         _id: product._id,
         name: product.productName,
@@ -191,9 +206,10 @@ const getCartData = async (req, res) => {
         quantity,
         stock: variant?.Stock || 0,
         itemTotal,
-        variantIndex: variantIndex
+        variantIndex: variantIndex,
+        isListed: isProductListed && isCategoryListed
       };
-    });
+    }));
 
     res.json({ success: true, cartItems, totalPrice });
   } catch (err) {
@@ -210,9 +226,9 @@ const addToCart = async (req, res) => {
     const { variantIndex = 0 } = req.body;
 
     if (!req.session.user) {
-        return res.status(401).json({ error: "LOGIN_REQUIRED" });
+      return res.status(401).json({ error: "LOGIN_REQUIRED" });
     }
-    
+
     const product = await Products.findById(productId);
     if (!product) return res.redirect('/shop');
 
@@ -257,37 +273,53 @@ const updateCartQuantity = async (req, res) => {
   try {
     const userId = req.session.user;
     const productId = req.params.id;
-    const { action } = req.body;
+    const { action, variantIndex } = req.body;
 
     if (!userId || !productId || !action) {
       return res.json({ success: false, message: 'Invalid request data.' });
     }
 
-    const cart = await Cart.findOne({ user: userId }).populate('Items.product');
+    const cart = await Cart.findOne({ user: userId })
+      .populate({
+        path: 'Items.product',
+        populate: { path: 'Category' }
+      });
 
     if (!cart) {
       return res.json({ success: false, message: 'Cart not found.' });
     }
 
-    const item = cart.Items.find(i => String(i.product._id) === String(productId));
+    // Find item by both productId and variantIndex
+    const item = cart.Items.find(i =>
+      String(i.product._id) === String(productId) &&
+      (variantIndex !== undefined ? i.variantIndex === Number(variantIndex) : true)
+    );
+
     if (!item) {
       return res.json({ success: false, message: 'Item not found in cart.' });
     }
 
     if (action === 'increment') {
-      item.quantity += 1;
-      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
-      const stock = item.product?.Variants?.[variantIndex]?.Stock || 0;
-      if (item.quantity > 5) {
-        item.quantity -= 1;
-        item.quantity = 5;
+      const itemVariantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      const stock = item.product?.Variants?.[itemVariantIndex]?.Stock || 0;
+      const isProductListed = item.product.IsListed;
+      const isCategoryListed = item.product.Category && item.product.Category.isListed;
+
+      // Check if product/category is unlisted
+      if (!isProductListed || !isCategoryListed) {
+        return res.json({ success: false, message: 'This item is currently unavailable.' });
+      }
+
+      // Check quantity limits before incrementing
+      if (item.quantity >= 5) {
         return res.json({ success: false, message: 'You cannot add more than 5 items.' });
       }
-      if (item.quantity > stock) {
-        item.quantity -= 1;
-        item.quantity = stock;
+      if (item.quantity >= stock) {
         return res.json({ success: false, message: `Only ${stock} items are available.` });
       }
+
+      // All checks passed, increment quantity
+      item.quantity += 1;
     } else if (action === 'decrement') {
       if (item.quantity <= 1) {
         return res.json({ success: false, message: 'Quantity cannot be less than 1.' });
@@ -297,19 +329,47 @@ const updateCartQuantity = async (req, res) => {
       return res.json({ success: false, message: 'Invalid action.' });
     }
 
+    // Final safeguard: ensure quantity is within valid bounds before saving
+    if (action === 'increment') {
+      const itemVariantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      const stock = item.product?.Variants?.[itemVariantIndex]?.Stock || 0;
+
+      // Cap at maximum allowed values
+      if (item.quantity > 5) {
+        item.quantity = 5;
+      }
+      if (item.quantity > stock) {
+        item.quantity = stock;
+      }
+    } else if (action === 'decrement') {
+      // Ensure quantity doesn't go below 1
+      if (item.quantity < 1) {
+        item.quantity = 1;
+      }
+    }
+
     await cart.save();
 
     let totalPrice = 0;
-    const cartItems = cart.Items.map(item => {
+    const cartItems = await Promise.all(cart.Items.map(async item => {
       const product = item.product;
       const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
       const variant = product?.Variants?.[variantIndex];
-      const price = variant?.Price || 0;
+
+      // Get offer price
+      const { offer, salePrice } = await getProductOffer(product, variantIndex);
+      const price = salePrice || variant?.Price || 0;
+
       const quantity = item.quantity;
       const itemTotal = price * quantity;
-      if (variant?.Stock >= item.quantity) {
+
+      const isProductListed = product.IsListed;
+      const isCategoryListed = product.Category && product.Category.isListed;
+
+      if (variant?.Stock >= item.quantity && isProductListed && isCategoryListed) {
         totalPrice += itemTotal;
       }
+
       let imagePath = 'images/default.jpg';
       if (variant?.Image?.length) {
         const raw = variant.Image[0];
@@ -318,6 +378,7 @@ const updateCartQuantity = async (req, res) => {
         const raw = product.Image[0];
         imagePath = raw.startsWith('http') ? raw : `${raw}`;
       }
+
       return {
         _id: product._id,
         name: product.productName,
@@ -326,9 +387,10 @@ const updateCartQuantity = async (req, res) => {
         quantity,
         stock: variant?.Stock || 0,
         itemTotal,
-        variantIndex: variantIndex
+        variantIndex: variantIndex,
+        isListed: isProductListed && isCategoryListed
       };
-    });
+    }));
 
     res.json({ success: true, cartItems, totalPrice });
   } catch (err) {
