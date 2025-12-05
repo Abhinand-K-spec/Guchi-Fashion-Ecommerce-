@@ -42,9 +42,12 @@ const addressSchema = new Schema({
     state:{
         type :String,
 
+    },
+    isDefault:{
+        type:Boolean
     }
-})
+});
 
-const Address = mongoose.model('address',addressSchema)
+const Address = mongoose.model('address',addressSchema);
 
 module.exports = Address;

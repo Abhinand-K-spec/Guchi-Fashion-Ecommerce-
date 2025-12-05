@@ -1,0 +1,369 @@
+<%- include("../partials/admin/header") %>
+<head>
+    <title>Coupon Management - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #2c2c2c;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .form-group {
+            margin-bottom: 10px;
+            width: 30%;
+            display: inline-block;
+            margin-right: 3%;
+        }
+        .form-group:nth-child(3n) {
+            margin-right: 0;
+        }
+        .form-row {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 3px;
+            color: #bbb;
+        }
+        input {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #333;
+            color: #fff;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 7px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn:hover { background-color: #0056b3; }
+        .btn-danger:hover { background-color: #c82333; }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #444;
+        }
+        .error {
+            color: #ff4d4d !important;
+            font-size: 12px;
+            margin-top: 3px;
+            display: none;
+        }
+
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <h2>Add New Coupon</h2>
+
+    <!-- FORM IS COMPLETELY SEPARATE FROM TABLE -->
+    <form id="couponForm" onsubmit="handleCouponSubmit(event)">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Coupon Name</label>
+                <input type="text" id="couponName" name="CouponName">
+                <span class="error" id="couponNameError">Coupon Name is required</span>
+            </div>
+
+            <div class="form-group">
+                <label>Coupon Code</label>
+                <input type="text" id="couponCode" name="CouponCode">
+                <span class="error" id="couponCodeError">Enter 4+ alphanumeric characters</span>
+            </div>
+
+            <div class="form-group">
+                <label>Usage Limit</label>
+                <input type="number" id="usageLimit" name="UsageLimit">
+                <span class="error" id="usageLimitError">Must be at least 1</span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Start Date</label>
+                <input type="date" id="startDate" name="StartDate">
+                <span class="error" id="startDateError">Required</span>
+            </div>
+
+            <div class="form-group">
+                <label>End Date</label>
+                <input type="date" id="endDate" name="EndDate">
+                <span class="error" id="endDateError">Required</span>
+            </div>
+
+            <div class="form-group">
+                <label>Discount (%)</label>
+                <input type="number" id="discount" name="Discount">
+                <span class="error" id="discountError">0 - 100 only</span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn">Create Coupon</button>
+    </form>
+
+    <!-- ❗ NOTHING BELOW IS INSIDE FORM -->
+    <hr>
+
+    <h2>Coupon Management</h2>
+
+    <div style="margin-bottom: 10px;">
+        <input type="text" id="searchCoupons" placeholder="Search..." style="padding: 6px;">
+        <button type="button" class="btn" onclick="searchCoupons()">Search</button>
+        <button type="button" class="btn" onclick="clearSearch()">Clear</button>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Code</th>
+            <th>Discount</th>
+            <th>Usage</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+
+        <tbody id="couponTable">
+        <% coupons.forEach(coupon => { %>
+            <tr id="coupon-<%= coupon._id %>">
+                <td><%= coupon.CouponName %></td>
+                <td><%= coupon.CouponCode %></td>
+                <td><%= coupon.Discount %></td>
+                <td><%= coupon.UsageLimit %></td>
+                <td><%= new Date(coupon.StartDate).toLocaleDateString() %></td>
+                <td><%= new Date(coupon.ExpiryDate).toLocaleDateString() %></td>
+                <td class="status"><%= coupon.IsListed ? "Listed" : "Unlisted" %></td>
+                <td>
+                    <button 
+                        type="button" 
+                        class="btn btn-danger"
+                        onclick="toggleCouponStatus('<%= coupon._id %>', <%= coupon.IsListed %>)">
+                        <%= coupon.IsListed ? "Unlist" : "List" %>
+                    </button>
+                </td>
+            </tr>
+        <% }) %>
+        </tbody>
+    </table>
+
+    <!-- pagination stays normal -->
+    <div class="pagination">
+        <% if (hasPrevPage) { %>
+            <button type="button" class="btn" onclick="window.location.href='/admin/coupons?page=<%= currentPage - 1 %>'">Previous</button>
+        <% } %>
+
+        <% for (let i=1; i<= totalPages; i++) { %>
+            <button type="button" class="btn" onclick="window.location.href='/admin/coupons?page=<%= i %>'"><%= i %></button>
+        <% } %>
+
+        <% if (hasNextPage) { %>
+            <button type="button" class="btn" onclick="window.location.href='/admin/coupons?page=<%= currentPage + 1 %>'">Next</button>
+        <% } %>
+    </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+<script>
+
+
+function showToast(message, isError = false) {
+    Toastify({
+        text: message,
+        duration: 3000,
+        gravity: "bottom",
+        position: "right",
+        close: true,
+        style: {
+            background: isError ? "#dc3545" : "#28a745",
+            color: "#fff",
+            borderRadius: "6px",
+            padding: "10px 16px",
+            fontSize: "15px"
+        }
+    }).showToast();
+}
+
+
+function validateForm() {
+    let ok = true;
+
+    if (!couponName.value.trim()) ok = showErr("couponNameError");
+    if (!couponCode.value.trim() || couponCode.value.length < 4) ok = showErr("couponCodeError");
+    if (!usageLimit.value.trim() || usageLimit.value < 1) ok = showErr("usageLimitError");
+    if (!startDate.value) ok = showErr("startDateError");
+    if (!endDate.value) ok = showErr("endDateError");
+    if (discount.value < 0 || discount.value > 100) ok = showErr("discountError");
+
+    return ok;
+}
+
+function showErr(id) {
+    document.getElementById(id).style.display = "block";
+    return false;
+}
+
+
+async function handleCouponSubmit(event) {
+    event.preventDefault();
+    if (!validateForm()) return;
+
+    const data = Object.fromEntries(new FormData(couponForm));
+    data.CouponCode = data.CouponCode.toUpperCase();
+
+    try {
+        const res = await axios.post("/admin/addCoupon", data,{validateStatus:(status)=> status!==500});
+
+        if (res.data.success) {
+            showToast("Coupon created successfully");
+            addCouponToTable(res.data.coupon);
+            couponForm.reset();
+        }else if(res.data.error){
+            showToast(res.data.error,true);
+            
+        }else {
+            showToast(res.data.error|| res.error || "Something went wrong", true);
+        }
+    } catch (err) {
+        const msg =
+            err.response?.data?.error ||
+            err.response?.data?.message ||
+            err.response?.data?.msg ||
+            "Server error";
+
+        showToast(msg, true);
+    }
+}
+
+
+function addCouponToTable(c) {
+    const row = `
+    <tr id="coupon-${c._id}">
+        <td>${c.CouponName}</td>
+        <td>${c.CouponCode}</td>
+        <td>${c.Discount}</td>
+        <td>${c.UsageLimit}</td>
+        <td>${new Date(c.StartDate).toLocaleDateString()}</td>
+        <td>${new Date(c.ExpiryDate).toLocaleDateString()}</td>
+        <td class="status">${c.IsListed ? "Listed" : "Unlisted"}</td>
+        <td>
+            <button type="button" class="btn btn-danger"
+                onclick="toggleCouponStatus('${c._id}', ${c.IsListed})">
+                ${c.IsListed ? "Unlist" : "List"}
+            </button>
+        </td>
+    </tr>`;
+
+    couponTable.innerHTML = row + couponTable.innerHTML;
+}
+
+
+async function toggleCouponStatus(id, current) {
+    const action = current ? "unlistCoupon" : "listCoupon";
+
+    try {
+        const res = await axios.post(`/admin/${action}/${id}`);
+        
+        showToast(res.data.message);
+        updateCouponStatus(id, !current);
+    } catch (err) {
+        console.log("CAUGHT ERROR:", err.response?.data);
+        const msg =
+            err.response?.data?.error ||
+            err.response?.data?.message ||
+            responsse.error ||
+            "Error creating coupon";
+        showToast(msg, true);
+    }
+}
+
+function updateCouponStatus(id, status) {
+    const row = document.getElementById(`coupon-${id}`);
+    row.querySelector(".status").innerText = status ? "Listed" : "Unlisted";
+
+    const btn = row.querySelector("button");
+    btn.innerText = status ? "Unlist" : "List";
+    btn.setAttribute("onclick", `toggleCouponStatus('${id}', ${status})`);
+}
+
+
+function searchCoupons() {
+    const term = document.getElementById("searchCoupons").value.toLowerCase();
+
+    document.querySelectorAll("#couponTable tr").forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(term) ? "" : "none";
+    });
+}
+
+function clearSearch() {
+    document.getElementById("searchCoupons").value = "";
+    document.querySelectorAll("#couponTable tr").forEach(row => {
+        row.style.display = "";
+    });
+}
+
+
+document.getElementById("couponName").addEventListener("input", () => {
+    const v = couponName.value.trim();
+    document.getElementById("couponNameError").style.display = v ? "none" : "block";
+});
+
+document.getElementById("couponCode").addEventListener("input", () => {
+    const valid = /^[A-Za-z0-9]{4,}$/.test(couponCode.value.trim());
+    document.getElementById("couponCodeError").style.display = valid ? "none" : "block";
+});
+
+document.getElementById("usageLimit").addEventListener("input", () => {
+    const v = parseInt(usageLimit.value);
+    document.getElementById("usageLimitError").style.display = v >= 1 ? "none" : "block";
+});
+
+document.getElementById("startDate").addEventListener("change", () => {
+    document.getElementById("startDateError").style.display = startDate.value ? "none" : "block";
+});
+
+document.getElementById("endDate").addEventListener("change", () => {
+    const start = new Date(startDate.value);
+    const end = new Date(endDate.value);
+    const error = (!endDate.value || end < start);
+    document.getElementById("endDateError").style.display = error ? "block" : "none";
+});
+
+document.getElementById("discount").addEventListener("input", () => {
+    const v = parseFloat(discount.value);
+    const valid = !isNaN(v) && v >= 0 && v <= 100;
+    document.getElementById("discountError").style.display = valid ? "none" : "block";
+});
+
+</script>
+
+
+</body>
+</html>

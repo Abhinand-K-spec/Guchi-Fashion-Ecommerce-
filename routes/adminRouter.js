@@ -5,6 +5,9 @@ const costumerController = require('../contoller/admin/costumerController');
 const categoryController = require('../contoller/admin/categoryController');
 const productsController = require('../contoller/admin/productsController');
 const orderController = require('../contoller/admin/orderController');
+const couponController = require('../contoller/admin/couponController');
+const offerController = require('../contoller/admin/offerController');
+const salesController = require('../contoller/admin/salesController');
 const { userAuth, adminAuth } = require('../middlewares/auth');
 const upload = require('../middlewares/multer');
 
@@ -15,8 +18,8 @@ router.get('/', adminAuth, adminController.loadDashboard);
 router.get('/logout', adminController.logout);
 
 router.get('/users', adminAuth, costumerController.customerinfo);
-router.get('/blockCostumer', adminAuth, costumerController.costumerBlocked);
-router.get('/unblockCostumer', adminAuth, costumerController.costumerUnBlocked);
+router.post('/blockCostumer', adminAuth, costumerController.costumerBlocked);
+router.post('/unblockCostumer', adminAuth, costumerController.costumerUnBlocked);
 router.get('/costumer/clear', adminAuth, costumerController.clearSearch);
 
 router.get('/category', adminAuth, categoryController.categoryinfo);
@@ -31,18 +34,41 @@ router.get('/category/clear', adminAuth, categoryController.clearSearch);
 router.get('/addProducts', adminAuth, productsController.getAddProductPage);
 router.post('/addproduct', adminAuth, upload.none(), productsController.addProducts);
 router.get('/products', adminAuth, productsController.getAllProducts);
-router.get('/unlistProduct/:productId', adminAuth, productsController.unlist);
-router.get('/listProduct/:productId', adminAuth, productsController.list);
+router.post('/unlistProduct/:productId', adminAuth, productsController.unlist);
+router.post('/listProduct/:productId', adminAuth, productsController.list);
 router.get('/editProduct/:productId', adminAuth, productsController.getEditProductPage);
 router.post('/updateProduct/:productId', upload.any(), productsController.postEditProduct);
 
 router.get('/orders', adminAuth, orderController.getAdminOrders);
 // router.post('/order-status/:orderId', adminAuth, orderController.updateOrderStatus);
-router.post('/order-details/:orderId/update-item-status/:itemId', orderController.updateItemStatus)
+router.post('/order-details/:orderId/update-item-status/:itemId', orderController.updateItemStatus);
 router.get('/order-details/:orderId', adminAuth, orderController.getOrderDetails);
 router.post('/approve-return/:orderId', adminAuth, orderController.approveReturn);
 router.post('/reject-return/:orderId', adminAuth, orderController.rejectReturn);
 router.post('/order-details/:orderId/cancel-item/:itemId', adminAuth, orderController.cancelSingleItem);
 router.post('/order-details/:orderId/return-item/:itemId', adminAuth, orderController.returnSingleItem);
+
+//Coupon management -------------------------------------------------------------->
+router.get('/coupon',adminAuth,couponController.coupon);
+router.post('/addCoupon',adminAuth,couponController.addCoupon);
+router.get('/coupons',adminAuth, couponController.coupon);
+router.post('/unlistCoupon/:couponId', adminAuth, couponController.unlist);
+router.post('/listCoupon/:couponId', adminAuth, couponController.list);
+// router.get('/editCoupon/:id', couponController.editCoupon);
+// router.post('/updateCoupon/:id', couponController.updateCoupon);
+
+
+router.post('/addCategoryOffer/:id', adminAuth,offerController.addCategoryOffer);
+router.post('/removeCategoryOffer/:id',adminAuth, offerController.removeCategoryOffer);
+router.post('/addProductOffer/:id',adminAuth, offerController.addProductOffer);
+router.post('/removeProductOffer/:id',adminAuth, offerController.removeProductOffer);
+
+
+router.get('/sales',adminAuth, salesController.getSalesReport);
+router.get('/sales/download',adminAuth, salesController.downloadSalesReport);
+router.get("/sales/download-excel",adminAuth, salesController.downloadSalesReportExcel);
+
+
+
 
 module.exports = router;

@@ -1,5 +1,11 @@
 const express = require('express');
 const app = express();
+
+        app.use((req, res, next) => {
+          res.setHeader("Access-Control-Allow-Origin", "https://ec31749df6df.ngrok-free.app");
+          next();
+        });
+    
 const path = require('path');
 const env = require('dotenv').config();
 const passport = require('passport');
@@ -11,6 +17,7 @@ const adminRouter = require('./routes/adminRouter');
 const db = require('./config/db');
 const flash = require('connect-flash');
 const MongoStore = require('connect-mongo');
+const morgan = require('morgan');
 db();
 
 app.use(express.json());
@@ -22,19 +29,19 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(nocache());
 
 app.use(session({
-secret: process.env.SESSION_SECRET,
-resave: false,
-saveUninitialized: true,
-store: MongoStore.create({
-  mongoUrl: process.env.Mongodb_uri,
-  collectionName: 'sessions'
-}),
-
-cookie: {
-  secure: false,
-  httpOnly: true,
-  maxAge: 24 * 60 * 60 * 1000
-}
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: true,
+  store: MongoStore.create({
+    mongoUrl: process.env.Mongodb_uri,
+    collectionName: 'sessions'
+  }),
+  
+  cookie: {
+    secure: false,
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000
+  }
 }));
 
 app.use(passport.initialize());
@@ -58,6 +65,9 @@ app.set('view engine', 'ejs');
 app.set('views', [path.join(__dirname, 'views/user'), path.join(__dirname, 'views/admin')]);
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms',{
+  skip: (req, res) => req.url.includes(".js") || req.url.includes(".css") || req.url.includes(".png") || res.statusCode < 400 
+}));
 app.use('/', userRouter);
 app.use('/admin', adminRouter);
 

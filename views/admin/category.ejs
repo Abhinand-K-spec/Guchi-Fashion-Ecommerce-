@@ -14,9 +14,9 @@
     }
 
     .admin-panel {
-      width: 90%;
+      width: 100%;
       max-width: 1000px;
-      margin: 40px auto;
+      margin: 4px auto;
       background: #212124;
       padding: 40px;
       border-radius: 16px;
@@ -30,7 +30,7 @@
       color: #ffffff;
     }
 
-    input[type="text"], textarea, .form-control {
+    input[type="text"], input[type="date"], input[type="number"], textarea, .form-control {
       width: 100%;
       background-color: #2c2c2e;
       border: 1px solid #3a3a3c;
@@ -41,11 +41,13 @@
     }
 
     input[type="text"]::placeholder,
+    input[type="date"]::placeholder,
+    input[type="number"]::placeholder,
     textarea::placeholder {
       color: #999;
     }
 
-    input[type="text"]:focus, textarea:focus {
+    input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, textarea:focus {
       border-color: #0a84ff;
       outline: none;
       color: #fff;
@@ -88,6 +90,20 @@
       color: #ccc;
     }
 
+    .action-btn {
+      background-color: #dc2626;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .action-btn:hover {
+      background-color: #b91c1c;
+    }
+
     table {
       width: 100%;
       margin-top: 10px;
@@ -108,16 +124,6 @@
       background-color: #2c2c2e;
       font-weight: 600;
       color: #ffffff;
-    }
-
-    .action-btn {
-      background-color: #dc2626;
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 500;
     }
 
     .pagination {
@@ -160,6 +166,61 @@
     .gap-2 {
       gap: 10px;
     }
+
+    .offer-input {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .offer-submit {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+
+    .offer-display {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Modal styling */
+    .modal-content {
+      background-color: #212124;
+      color: #eaeaea;
+      border: 1px solid #3a3a3c;
+      border-radius: 10px;
+    }
+
+    .modal-header {
+      background-color: #2c2c2e;
+      border-bottom: 1px solid #444;
+    }
+
+    .modal-title {
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .modal-footer {
+      border-top: 1px solid #444;
+    }
+
+    .btn-close {
+      background-color: #444;
+      opacity: 1;
+    }
+
+    .btn-close:hover {
+      background-color: #555;
+    }
+
+    #offer-error {
+      margin-bottom: 15px;
+    }
   </style>
 </head>
 <body>
@@ -188,8 +249,8 @@
           <th>Name</th>
           <th>Description</th>
           <th>Status</th>
+          <th>Offer</th>
           <th>Actions</th>
-          <th>Edit</th>
         </tr>
       </thead>
       <tbody>
@@ -199,13 +260,21 @@
             <td><%= category.description %></td>
             <td><%= category.isListed ? 'Listed' : 'Unlisted' %></td>
             <td>
-              <form action="/admin/<%= category.isListed ? 'unlistCategory' : 'listCategory' %>?id=<%= category._id %>" method="POST">
-                <button class="action-btn"><%= category.isListed ? 'Unlist' : 'List' %></button>
-              </form>
+              <div id="offer-<%= category._id %>" class="offer-display">
+                <% if (category.offer && category.offer.Discount !== undefined) { %>
+                  <span><%= category.offer.Discount %>%</span>
+                  <button class="action-btn btn-sm" onclick="removeOffer('<%= category._id %>', '<%= category.offer._id %>', '<%= currentPage %>')">Remove</button>
+                <% } else { %>
+                  <button class="btn btn-primary btn-sm offer-btn" data-bs-toggle="modal" data-bs-target="#offerModal" onclick="showOfferInput('<%= category._id %>')">Add Offer</button>
+                <% } %>
+              </div>
             </td>
             <td>
-              <form action="/admin/editCategory/<%= category._id %>" method="GET">
-                <button class="btn btn-primary">Edit</button>
+              <form action="/admin/<%= category.isListed ? 'unlistCategory' : 'listCategory' %>?id=<%= category._id %>&page=<%= currentPage %>" method="POST" style="display: inline;">
+                <button class="action-btn btn-sm"><%= category.isListed ? 'Unlist' : 'List' %></button>
+              </form>
+              <form action="/admin/editCategory/<%= category._id %>?page=<%= currentPage %>" method="GET" style="display: inline;">
+                <button class="btn btn-primary btn-sm">Edit</button>
               </form>
             </td>
           </tr>
@@ -217,6 +286,28 @@
       <% for (let i = 1; i <= totalPages; i++) { %>
         <a href="?page=<%= i %>" class="<%= i === currentPage ? 'active' : '' %>"><%= i %></a>
       <% } %>
+    </div>
+  </div>
+
+  <!-- Offer Modal -->
+  <div class="modal fade" id="offerModal" tabindex="-1" aria-labelledby="offerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="offerModalLabel">Add Offer</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <span id="offer-error" class="error"></span>
+          <div id="offerFormContainer" class="offer-form">
+            <!-- Form will be dynamically inserted here -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary offer-submit" id="submitOfferBtn">Submit</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -283,7 +374,7 @@
     }
 
     function clearErrorMsg() {
-      ['name-error', 'description-error'].forEach(id => {
+      ['name-error', 'description-error', 'offer-error'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
           el.innerText = '';
@@ -291,6 +382,109 @@
         }
       });
     }
+
+    let currentCategoryId = null;
+    let currentPage = '<%= currentPage %>';
+
+    function showOfferInput(categoryId) {
+      console.log('Opening modal for categoryId:', categoryId); // Debugging
+      currentCategoryId = categoryId;
+      const offerFormContainer = document.getElementById('offerFormContainer');
+      offerFormContainer.innerHTML = `
+        <input type="text" class="offer-input" id="offerName-${categoryId}" placeholder="Offer Name" />
+        <input type="date" class="offer-input" id="startDate-${categoryId}" />
+        <input type="date" class="offer-input" id="endDate-${categoryId}" />
+        <input type="number" class="offer-input" id="discount-${categoryId}" placeholder="Discount %" min="0" max="100" />
+      `;
+    }
+
+    // Handle submit button click
+    document.getElementById('submitOfferBtn').addEventListener('click', () => {
+      console.log('Submit button clicked, currentCategoryId:', currentCategoryId); // Debugging
+      if (!currentCategoryId) {
+        displayErrorMessage('offer-error', 'No category selected.');
+        return;
+      }
+      submitOffer(currentCategoryId, currentPage);
+    });
+
+    // Clear form on modal close
+    document.getElementById('offerModal').addEventListener('hidden.bs.modal', () => {
+      console.log('Modal closed, clearing form'); // Debugging
+      document.getElementById('offerFormContainer').innerHTML = '';
+      document.getElementById('offer-error').innerText = '';
+      document.getElementById('offer-error').style.display = 'none';
+      currentCategoryId = null;
+    });
+
+    function submitOffer(categoryId, page) {
+      console.log('Submitting offer for categoryId:', categoryId, 'page:', page); // Debugging
+      clearErrorMsg();
+      const offerName = document.getElementById(`offerName-${categoryId}`)?.value.trim();
+      const startDate = document.getElementById(`startDate-${categoryId}`)?.value;
+      const endDate = document.getElementById(`endDate-${categoryId}`)?.value;
+      const discount = document.getElementById(`discount-${categoryId}`)?.value.trim();
+
+      if (!offerName || !startDate || !endDate || !discount) {
+        displayErrorMessage('offer-error', 'Offer name, start date, end date, and discount are required.');
+        return;
+      }
+
+      if (isNaN(discount) || discount < 0 || discount > 100) {
+        displayErrorMessage('offer-error', 'Discount must be between 0 and 100.');
+        return;
+      }
+
+      if (new Date(startDate) > new Date(endDate)) {
+        displayErrorMessage('offer-error', 'Start date cannot be later than end date.');
+        return;
+      }
+
+      fetch(`/admin/addCategoryOffer/${categoryId}?page=${page}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          OfferName: offerName,
+          StartDate: startDate,
+          EndDate: endDate,
+          Discount: discount,
+        })
+      })
+      .then(res => {
+        console.log('Fetch response status:', res.status); // Debugging
+        if (!res.ok) {
+          return res.json().then(err => { throw new Error(err.error); });
+        }
+        const modal = bootstrap.Modal.getInstance(document.getElementById('offerModal'));
+        modal.hide();
+        location.reload();
+      })
+      .catch(error => {
+        console.error('Fetch error:', error); // Debugging
+        displayErrorMessage('offer-error', error.message || 'Failed to add offer');
+      });
+    }
+
+    function removeOffer(categoryId, offerId, page) {
+      console.log('Removing offer for categoryId:', categoryId, 'offerId:', offerId); // Debugging
+      fetch(`/admin/removeCategoryOffer/${categoryId}?page=${page}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offerId })
+      })
+      .then(res => {
+        console.log('Remove offer response status:', res.status); // Debugging
+        if (!res.ok) {
+          return res.json().then(err => { throw new Error(err.error); });
+        }
+        location.reload();
+      })
+      .catch(error => {
+        console.error('Remove offer error:', error); // Debugging
+        alert(error.message || 'Failed to remove offer');
+      });
+    }
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

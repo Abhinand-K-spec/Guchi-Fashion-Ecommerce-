@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Add Product</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -13,29 +14,26 @@
       font-family: 'Inter', sans-serif;
       color: #fff;
     }
-  
+
     .container {
-      max-width: 900px;
-      margin: 40px auto;
-      background-color: #1c1c1c;
-      padding: 45px 50px;
+      background-color: #000000;
       border-radius: 12px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
     }
-  
+
     h2 {
       color: #fff;
       font-size: 28px;
       font-weight: 700;
       margin-bottom: 30px;
     }
-  
+
     .form-label {
       color: #ccc;
       font-weight: 500;
       margin-bottom: 6px;
     }
-  
+
     .form-control,
     .form-select {
       background-color: #121212;
@@ -44,19 +42,19 @@
       border-radius: 8px;
       padding: 10px 12px;
     }
-  
+
     .form-control:focus,
     .form-select:focus {
       border-color: #0d6efd;
       outline: none;
       box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
     }
-  
+
     input::placeholder,
     textarea::placeholder {
       color: #888;
     }
-  
+
     input[type="file"] {
       background-color: #222;
       color: #bbb;
@@ -64,16 +62,16 @@
       border-radius: 6px;
       padding: 10px;
     }
-  
+
     textarea.form-control {
-      height: 100px;
+      height: 10px;
       resize: none;
     }
-  
+
     .form-check-label {
       color: #ccc;
     }
-  
+
     .crop-preview {
       width: 100px;
       height: 100px;
@@ -83,7 +81,7 @@
       margin-top: 5px;
       border: 1px solid #444;
     }
-  
+
     .submit-btn {
       background-color: #0d6efd;
       color: #fff;
@@ -92,65 +90,72 @@
       padding: 10px 25px;
       font-weight: 600;
     }
-  
+
     .submit-btn:hover {
       background-color: #0b5ed7;
     }
-  
+
     table {
       color: #fff;
       background-color: #1c1c1c;
       border: 1px solid #444;
     }
-  
+
     thead {
       background-color: #0d6efd;
       color: #fff;
     }
-  
+
     .table th,
     .table td {
       vertical-align: middle;
       text-align: center;
     }
-  
+
     .modal-content {
       background-color: #1c1c1c;
       color: #fff;
       border: 1px solid #444;
     }
-  
+
     .modal-header .btn-close {
       filter: invert(1);
     }
-  
+
     .form-check-input:checked {
       background-color: #0d6efd;
       border-color: #0d6efd;
     }
-  </style>
-  
-  
-</head>
-<body class="bg-black">
-  <%- include("../partials/admin/header") %>
 
-  <div class="container bg-black">
-    <h2 class="text-white">Add New Product</h2>
+    #productnamepart {
+      margin-top: 10vh;
+    }
+  </style>
+
+  <%- include("../partials/admin/header") %>
+</head>
+
+<body>
+
+  <div class="container bg-dark">
+
     <form method="POST" action="/admin/addproduct" enctype="multipart/form-data" onsubmit="return validateForm()">
-      <div class="row g-4">
+      <div id="productnamepart" class="row g-4">
         <div class="col-md-6">
-          <label class="form-label">Product Name</label>
-          <input type="text" name="productName" class="form-control" placeholder="Enter product name">
+          <label class="form-labe text-white p-1">Product Name</label>
+          <input type="text" name="productName" class="form-control bg-dark text-white border-secondary"
+            placeholder="Enter product name">
         </div>
 
         <div class="col-md-6">
           <label class="form-label">Product Category</label>
-          <select name="category" class="form-select">
+          <select name="category" class="form-select bg-dark text-white border-secondary">
             <option value="">--Select Category--</option>
-            <% for (let i = 0; i < cat.length; i++) { %>
-              <option value="<%= cat[i].categoryName %>"><%= cat[i].categoryName %></option>
-            <% } %>
+            <% for (let i=0; i < cat.length; i++) { %>
+              <option value="<%= cat[i].categoryName %>">
+                <%= cat[i].categoryName %>
+              </option>
+              <% } %>
           </select>
         </div>
 
@@ -160,13 +165,16 @@
             <div style="min-width: 200px;">
               <label class="form-label">Available Sizes</label>
               <div class="d-flex flex-column gap-2">
-                <% const sizes = ['S', 'M', 'L', 'XL', 'XXL']; %>
-                <% sizes.forEach(size => { %>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="<%= size %>" name="size[]" onchange="toggleSizeRow(this)">
-                    <label class="form-check-label"><%= size %></label>
-                  </div>
-                <% }) %>
+                <% const sizes=['S', 'M' , 'L' , 'XL' , 'XXL' ]; %>
+                  <% sizes.forEach(size=> { %>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="<%= size %>" name="size[]"
+                        onchange="toggleSizeRow(this)">
+                      <label class="form-check-label">
+                        <%= size %>
+                      </label>
+                    </div>
+                    <% }) %>
               </div>
             </div>
 
@@ -188,30 +196,32 @@
 
         <div class="col-12">
           <label class="form-label">Product Description</label>
-          <textarea name="description" rows="4" class="form-control" placeholder="Write a brief description..."></textarea>
+          <textarea name="description" rows="4" class="form-control bg-dark text-white border-secondary"
+            placeholder="Write a brief description..."></textarea>
         </div>
 
         <div class="col-12">
           <label class="form-label">Upload 3 Product Images</label>
           <div class="d-flex flex-wrap gap-4 justify-content-between align-items-end">
-            <% for (let i = 1; i <= 3; i++) { %>
+            <% for (let i=1; i <=3; i++) { %>
               <div class="text-center">
-                <input type="file" id="img<%= i %>" accept="image/*" onchange="openModal('<%= i %>')" class="form-control">
+                <input type="file" id="img<%= i %>" accept="image/*" onchange="openModal('<%= i %>')"
+                  class="form-control">
                 <img id="preview<%= i %>" class="crop-preview" />
                 <input type="hidden" name="croppedImage<%= i %>" id="croppedImage<%= i %>">
               </div>
-            <% } %>
+              <% } %>
 
-            <div class="text-end" style="flex: 1;">
-              <button class="submit-btn" type="submit">Add Product</button>
-            </div>
+                <div class="text-end" style="flex: 1;">
+                  <button class="submit-btn" type="submit">Add Product</button>
+                </div>
           </div>
 
-          <% if (locals.msg && msg.length > 0) { %>
+          <% if (locals.msg && msg.length> 0) { %>
             <div class="text-danger text-center mt-3">
               <%= msg %>
             </div>
-          <% } %>
+            <% } %>
         </div>
       </div>
     </form>
@@ -239,248 +249,264 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-   let currentInputId, currentPreviewId, currentHiddenId, cropper;
+    let currentInputId, currentPreviewId, currentHiddenId, cropper;
 
-function openModal(index) {
-  currentInputId = `img${index}`;
-  currentPreviewId = `preview${index}`;
-  currentHiddenId = `croppedImage${index}`;
+    function openModal(index) {
+      currentInputId = `img${index}`;
+      currentPreviewId = `preview${index}`;
+      currentHiddenId = `croppedImage${index}`;
 
-  const fileInput = document.getElementById(currentInputId);
-  const modalImage = document.getElementById('modalImage');
-  const file = fileInput.files[0];
+      const fileInput = document.getElementById(currentInputId);
+      const modalImage = document.getElementById('modalImage');
+      const file = fileInput.files[0];
 
-  if (file) {
-    console.log(`Opening modal for image ${index}`);
-    const reader = new FileReader();
-    reader.onload = () => {
-      modalImage.src = reader.result;
-      const modal = new bootstrap.Modal(document.getElementById('cropperModal'));
-      modal.show();
+      if (file) {
+        console.log(`Opening modal for image ${index}`);
+        const reader = new FileReader();
+        reader.onload = () => {
+          modalImage.src = reader.result;
+          const modal = new bootstrap.Modal(document.getElementById('cropperModal'));
+          modal.show();
 
-      if (cropper) cropper.destroy();
-      cropper = new Cropper(modalImage, {
-        aspectRatio: NaN,
-        viewMode: 1,
-        autoCropArea: 1
-      });
-    };
-    reader.readAsDataURL(file);
-  } else {
-    console.warn(`No file selected for image ${index}`);
-  }
-}
-
-function applyCrop() {
-  if (!cropper) {
-    console.warn('Cropper not initialized');
-    return;
-  }
-  console.log(`Applying crop for ${currentPreviewId}`);
-  const canvas = cropper.getCroppedCanvas({ width: 800, height: 800 });
-  const preview = document.getElementById(currentPreviewId);
-  const hiddenInput = document.getElementById(currentHiddenId);
-
-  preview.src = canvas.toDataURL('image/jpeg');
-  hiddenInput.value = canvas.toDataURL('image/jpeg');
-
-  const modal = bootstrap.Modal.getInstance(document.getElementById('cropperModal'));
-  modal.hide();
-  cropper.destroy();
-}
-
-function toggleSizeRow(checkbox) {
-  const size = checkbox.value;
-  const tableBody = document.getElementById('variantBody');
-
-  if (checkbox.checked) {
-    console.log(`Adding size row for ${size}`);
-    const row = document.createElement('tr');
-    row.setAttribute('data-size', size);
-    row.innerHTML = `
-      <td><input type="text" name="size[]" value="${size}" readonly class="form-control-plaintext text-center" style="background-color: #ffffff; color: #000;"></td>
-      <td><input type="number" name="price[]" class="form-control" placeholder="₹" min="1"></td>
-      <td><input type="number" name="stock[]" class="form-control" min="1"></td>`;
-    tableBody.appendChild(row);
-  } else {
-    console.log(`Removing size row for ${size}`);
-    const row = tableBody.querySelector(`tr[data-size="${size}"]`);
-    if (row) row.remove();
-  }
-}
-
-function validateForm() {
-  console.log('Validating form...');
-  const productName = document.querySelector('input[name="productName"]').value.trim();
-  const category = document.querySelector('select[name="category"]').value.trim();
-  const description = document.querySelector('textarea[name="description"]').value.trim();
-  const variantRows = document.querySelectorAll('#variantTable tbody tr');
-  const croppedImages = [
-    document.getElementById('croppedImage1').value,
-    document.getElementById('croppedImage2').value,
-    document.getElementById('croppedImage3').value
-  ];
-  const sizeSet = new Set();
-
-  // Validate product name
-  if (!productName) {
-    alert('Product Name is required.');
-    console.warn('Validation failed: Product Name is empty');
-    return false;
-  }
-
-  // Validate category
-  if (!category) {
-    alert('Please select a Product Category.');
-    console.warn('Validation failed: Category not selected');
-    return false;
-  }
-
-  // Validate description
-  if (!description) {
-    alert('Product Description is required.');
-    console.warn('Validation failed: Description is empty');
-    return false;
-  }
-
-  // Validate sizes, prices, and stock
-  if (variantRows.length === 0) {
-    alert('At least one size must be selected.');
-    console.warn('Validation failed: No sizes selected');
-    return false;
-  }
-
-  for (const row of variantRows) {
-    const size = row.querySelector('input[name="size[]"]').value.trim();
-    const price = row.querySelector('input[name="price[]"]').value.trim();
-    const stock = row.querySelector('input[name="stock[]"]').value.trim();
-
-    if (!size || !price || !stock) {
-      alert(`All variant fields for size ${size} (Size, Price, Stock) must be filled.`);
-      console.warn(`Validation failed: Incomplete fields for size ${size}`);
-      return false;
-    }
-
-    if (isNaN(price) || parseFloat(price) <= 0) {
-      alert(`Price for size ${size} must be a positive number.`);
-      console.warn(`Validation failed: Invalid price for size ${size}`);
-      return false;
-    }
-
-    if (isNaN(stock) || parseInt(stock) <= 0) {
-      alert(`Stock for size ${size} must be a positive number.`);
-      console.warn(`Validation failed: Invalid stock for size ${size}`);
-      return false;
-    }
-
-    if (sizeSet.has(size)) {
-      alert(`Duplicate size detected: ${size}`);
-      console.warn(`Validation failed: Duplicate size ${size}`);
-      return false;
-    }
-
-    sizeSet.add(size);
-  }
-
-  // Validate images
-  if (croppedImages.some(img => !img)) {
-    alert('All three product images must be uploaded and cropped.');
-    console.warn('Validation failed: Not all images are cropped');
-    return false;
-  }
-
-  console.log('Form validation passed');
-  return true;
-}
-
-document.getElementById('addProductForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  console.log('Form submitted');
-
-  if (!validateForm()) {
-    console.warn('Form submission halted due to validation failure');
-    return;
-  }
-
-  const form = document.getElementById('addProductForm');
-  const formData = new FormData();
-
-  // Append form fields
-  const productName = form.querySelector('input[name="productName"]').value;
-  const category = form.querySelector('select[name="category"]').value;
-  const description = form.querySelector('textarea[name="description"]').value;
-  formData.append('productName', productName);
-  formData.append('category', category);
-  formData.append('description', description);
-  console.log('Appending form fields:', { productName, category, description });
-
-  // Append sizes, prices, and stock
-  const sizes = form.querySelectorAll('input[name="size[]"]');
-  const prices = form.querySelectorAll('input[name="price[]"]');
-  const stocks = form.querySelectorAll('input[name="stock[]"]');
-  for (let i = 0; i < sizes.length; i++) {
-    formData.append('size[]', sizes[i].value);
-    formData.append('price[]', prices[i].value);
-    formData.append('stock[]', stocks[i].value);
-    console.log(`Appending variant ${i + 1}:`, {
-      size: sizes[i].value,
-      price: prices[i].value,
-      stock: stocks[i].value
-    });
-  }
-
-  // Append cropped images
-  for (let i = 1; i <= 3; i++) {
-    const croppedImage = form.querySelector(`#croppedImage${i}`).value;
-    if (croppedImage) {
-      try {
-        const blob = dataURLtoBlob(croppedImage);
-        formData.append(`image${i}`, blob, `image${i}.jpg`);
-        console.log(`Appending image${i}`);
-      } catch (error) {
-        console.error(`Failed to process image${i}:`, error);
-        alert('Error processing image. Please try re-uploading.');
-        return;
+          if (cropper) cropper.destroy();
+          cropper = new Cropper(modalImage, {
+            aspectRatio: NaN,
+            viewMode: 1,
+            autoCropArea: 1
+          });
+        };
+        reader.readAsDataURL(file);
+      } else {
+        console.warn(`No file selected for image ${index}`);
       }
     }
-  }
 
-  try {
-    console.log('Sending Axios POST request to /admin/addproduct');
-    const response = await axios.post('/admin/addproduct', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    function applyCrop() {
+      if (!cropper) {
+        console.warn('Cropper not initialized');
+        return;
+      }
+      console.log(`Applying crop for ${currentPreviewId}`);
+      const canvas = cropper.getCroppedCanvas({ width: 800, height: 800 });
+      const preview = document.getElementById(currentPreviewId);
+      const hiddenInput = document.getElementById(currentHiddenId);
 
-    console.log('Server response:', response.data);
-    if (response.data.success) {
-      alert('Product added successfully!');
-      window.location.href = '/admin/products';
-    } else {
-      alert(response.data.message || 'Failed to add product.');
-      console.warn('Server returned failure:', response.data.message);
+      preview.src = canvas.toDataURL('image/jpeg');
+      hiddenInput.value = canvas.toDataURL('image/jpeg');
+
+      const modal = bootstrap.Modal.getInstance(document.getElementById('cropperModal'));
+      modal.hide();
+      cropper.destroy();
     }
-  } catch (error) {
-    console.error('Axios error:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status
-    });
-    alert(error.response?.data?.message || 'An error occurred while adding the product.');
-  }
-});
 
-// Convert base64 data URL to Blob for image upload
-function dataURLtoBlob(dataURL) {
-  console.log('Converting dataURL to Blob');
-  const [header, data] = dataURL.split(',');
-  const mime = header.match(/:(.*?);/)[1];
-  const binary = atob(data);
-  const array = [];
-  for (let i = 0; i < binary.length; i++) {
-    array.push(binary.charCodeAt(i));
-  }
-  return new Blob([new Uint8Array(array)], { type: mime });
-}
+    function toggleSizeRow(checkbox) {
+      const size = checkbox.value;
+      const tableBody = document.getElementById('variantBody');
+
+      if (checkbox.checked) {
+        console.log(`Adding size row for ${size}`);
+        const row = document.createElement('tr');
+        row.setAttribute('data-size', size);
+        row.innerHTML = `
+      <td><input type="text" name="size[]" value="${size}" readonly class="form-control-plaintext text-center text-white"></td>
+      <td><input type="number" name="price[]" class="form-control" placeholder="₹" min="1"></td>
+      <td><input type="number" name="stock[]" class="form-control" min="1"></td>`;
+        tableBody.appendChild(row);
+      } else {
+        console.log(`Removing size row for ${size}`);
+        const row = tableBody.querySelector(`tr[data-size="${size}"]`);
+        if (row) row.remove();
+      }
+    }
+
+    function validateForm() {
+      console.log('Validating form...');
+      const submitBtn = document.querySelector('.submit-btn[type="submit"]');
+
+      // Show loading state
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding Product...';
+      }
+
+      const productNameInput = document.querySelector('input[name="productName"]');
+      const productName = productNameInput.value;
+      const category = document.querySelector('select[name="category"]').value.trim();
+      const description = document.querySelector('textarea[name="description"]').value.trim();
+      const variantRows = document.querySelectorAll('#variantTable tbody tr');
+      const croppedImages = [
+        document.getElementById('croppedImage1').value,
+        document.getElementById('croppedImage2').value,
+        document.getElementById('croppedImage3').value
+      ];
+      const sizeSet = new Set();
+
+      if (!productName.trim() || /[^A-Za-z\s]/.test(productName.trim())) {
+        toastBody('Product Name is required and must contain only letters.');
+        console.warn('Validation failed: Product Name is invalid');
+        productNameInput.focus();
+        // Reset button
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Add Product';
+        }
+        return false;
+      }
+
+
+      // Validate category
+      if (!category) {
+        toastBody('Please select a Product Category.');
+        console.warn('Validation failed: Category not selected');
+        return false;
+      }
+
+      // Validate description
+      if (!description) {
+        toastBody('Product Description is required.');
+        console.warn('Validation failed: Description is empty');
+        return false;
+      }
+
+      // Validate sizes, prices, and stock
+      if (variantRows.length === 0) {
+        toastBody('At least one size must be selected.');
+        console.warn('Validation failed: No sizes selected');
+        return false;
+      }
+
+      for (const row of variantRows) {
+        const size = row.querySelector('input[name="size[]"]').value.trim();
+        const price = row.querySelector('input[name="price[]"]').value.trim();
+        const stock = row.querySelector('input[name="stock[]"]').value.trim();
+
+        if (!size || !price || !stock) {
+          toastBody(`All variant fields for size ${size} (Size, Price, Stock) must be filled.`);
+          console.warn(`Validation failed: Incomplete fields for size ${size}`);
+          return false;
+        }
+
+        if (isNaN(price) || parseFloat(price) <= 0) {
+          toastBody(`Price for size ${size} must be a positive number.`);
+          console.warn(`Validation failed: Invalid price for size ${size}`);
+          return false;
+        }
+
+        if (isNaN(stock) || parseInt(stock) <= 0) {
+          toastBody(`Stock for size ${size} must be a positive number.`);
+          console.warn(`Validation failed: Invalid stock for size ${size}`);
+          return false;
+        }
+
+        if (sizeSet.has(size)) {
+          toastBody(`Duplicate size detected: ${size}`);
+          console.warn(`Validation failed: Duplicate size ${size}`);
+          return false;
+        }
+
+        sizeSet.add(size);
+      }
+
+      // Validate images
+      if (croppedImages.some(img => !img)) {
+        toastBody('All three product images must be uploaded and cropped.');
+        console.warn('Validation failed: Not all images are cropped');
+        return false;
+      }
+
+      console.log('Form validation passed');
+      return true;
+    }
+
+    document.getElementById('addProductForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      console.log('Form submitted');
+
+      if (!validateForm()) {
+        console.warn('Form submission halted due to validation failure');
+        return;
+      }
+
+      const form = document.getElementById('addProductForm');
+      const formData = new FormData();
+
+      // Append form fields
+      const productName = form.querySelector('input[name="productName"]').value;
+      const category = form.querySelector('select[name="category"]').value;
+      const description = form.querySelector('textarea[name="description"]').value;
+      formData.append('productName', productName);
+      formData.append('category', category);
+      formData.append('description', description);
+      console.log('Appending form fields:', { productName, category, description });
+
+      // Append sizes, prices, and stock
+      const sizes = form.querySelectorAll('input[name="size[]"]');
+      const prices = form.querySelectorAll('input[name="price[]"]');
+      const stocks = form.querySelectorAll('input[name="stock[]"]');
+      for (let i = 0; i < sizes.length; i++) {
+        formData.append('size[]', sizes[i].value);
+        formData.append('price[]', prices[i].value);
+        formData.append('stock[]', stocks[i].value);
+        console.log(`Appending variant ${i + 1}:`, {
+          size: sizes[i].value,
+          price: prices[i].value,
+          stock: stocks[i].value
+        });
+      }
+
+      // Append cropped images
+      for (let i = 1; i <= 3; i++) {
+        const croppedImage = form.querySelector(`#croppedImage${i}`).value;
+        if (croppedImage) {
+          try {
+            const blob = dataURLtoBlob(croppedImage);
+            formData.append(`image${i}`, blob, `image${i}.jpg`);
+            console.log(`Appending image${i}`);
+          } catch (error) {
+            console.error(`Failed to process image${i}:`, error);
+            toastBody('Error processing image. Please try re-uploading.');
+            return;
+          }
+        }
+      }
+
+      try {
+        console.log('Sending Axios POST request to /admin/addproduct');
+        const response = await axios.post('/admin/addproduct', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        console.log('Server response:', response.data);
+        if (response.data.success) {
+          toastBody('Product added successfully!');
+          window.location.href = '/admin/products';
+        } else {
+          toastBody(response.data.message || 'Failed to add product.');
+          console.warn('Server returned failure:', response.data.message);
+        }
+      } catch (error) {
+        console.error('Axios error:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status
+        });
+        toastBody(error.response?.data?.message || 'An error occurred while adding the product.');
+      }
+    });
+
+
+    function dataURLtoBlob(dataURL) {
+      console.log('Converting dataURL to Blob');
+      const [header, data] = dataURL.split(',');
+      const mime = header.match(/:(.*?);/)[1];
+      const binary = atob(data);
+      const array = [];
+      for (let i = 0; i < binary.length; i++) {
+        array.push(binary.charCodeAt(i));
+      }
+      return new Blob([new Uint8Array(array)], { type: mime });
+    }
   </script>
 </body>
+
 </html>

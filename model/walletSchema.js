@@ -4,12 +4,12 @@ const { Schema } = mongoose;
 const WalletSchema = new Schema({
   UserId: {
     type: Schema.Types.ObjectId,
-    ref: 'User',        
-    required: true,     
+    ref: 'User',
+    required: true,
   },
   CreatedAt: {
     type: Date,
-    default: Date.now,  
+    default: Date.now,
   },
   AddedAccount: {
     type: Number,
@@ -22,13 +22,16 @@ const WalletSchema = new Schema({
     },
     TransactionType: {
       type: String,
-      enum: ['credit', 'debit'], 
+      enum: ['credit', 'debit'],
       required: true,
     },
     TransactionDate: {
       type: Date,
       default: Date.now,
     },
+    description:{
+      type:String
+    }
   }],
   UpdatedAt: {
     type: Date,
@@ -46,4 +49,4 @@ const WalletSchema = new Schema({
 
 const Wallet = mongoose.model('Wallet', WalletSchema);
 
-export default Wallet;
+module.exports = Wallet;

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    <%= typeof pageTitle !=='undefined' ? pageTitle : 'Payment Failed' %>
+  </title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/styles/style.css">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f8f9fa;
+    }
+
+    .container {
+      margin-top: 40px;
+      margin-bottom: 40px;
+    }
+
+    .failure-img {
+      width: 120px;
+      height: auto;
+    }
+
+    .btn-custom {
+      margin: 10px;
+      padding: 10px 20px;
+    }
+
+    h1 {
+      color: #dc3545;
+      font-weight: bold;
+    }
+
+    .message {
+      color: #333;
+      font-size: 1.1rem;
+    }
+
+    .order-details-card {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .order-item {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+      padding: 10px 0;
+    }
+
+    .order-item img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-right: 15px;
+    }
+
+    .order-item p {
+      margin: 0;
+    }
+
+    .order-summary p {
+      margin: 5px 0;
+    }
+
+    .address-details {
+      background-color: #f1f3f5;
+      padding: 15px;
+      border-radius: 6px;
+    }
+
+    a {
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+  <%- include('../partials/user/header') %>
+    <div class="container">
+      <div class="text-center">
+        <h1>Payment Failed</h1>
+        <i class="fas fa-times-circle text-danger" style="font-size: 80px;"></i>
+        <p class="message mt-3">
+          <%= typeof errorMessage !=='undefined' ? errorMessage : 'Payment failed. Please try again or contact support.'
+            %>
+        </p>
+      </div>
+
+      <% if (order && order.Items && order.Items.length> 0) { %>
+        <div class="order-details-card">
+          <h5>Order Details</h5>
+          <hr>
+          <div class="row">
+            <!-- Order Information -->
+            <div class="col-md-6">
+              <p><strong>Order ID:</strong>
+                <%= order.OrderId || 'N/A' %>
+              </p>
+              <p><strong>Order Date:</strong>
+                <%= order.OrderDate ? new Date(order.OrderDate).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+                  : 'N/A' %>
+              </p>
+              <p><strong>Payment Method:</strong>
+                <%= order.PaymentMethod || 'N/A' %>
+              </p>
+              <p><strong>Payment Status:</strong>
+                <%= order.PaymentStatus || 'Failed' %>
+              </p>
+              <p><strong>Order Status:</strong>
+                <%= order.Status || 'N/A' %>
+              </p>
+            </div>
+            <!-- Address Information -->
+            <div class="col-md-6">
+              <div class="address-details">
+                <p><strong>Delivery Address:</strong></p>
+                <p>
+                  <%= order.Address?.name || 'N/A' %>
+                </p>
+                <p>
+                  <%= (order.Address?.line1 || '' ) + (order.Address?.town ? ', ' + order.Address.town : '' ) %>
+                </p>
+                <p>
+                  <%= (order.Address?.city || '' ) + (order.Address?.state ? ', ' + order.Address.state : '' ) %>
+                    <%= order.Address?.postCode || '' %>
+                </p>
+                <p>Phone: <%= order.Address?.phone || 'N/A' %>
+                </p>
+                <% if (order.Address?.alternativePhone) { %>
+                  <p>Alt Phone: <%= order.Address?.alternativePhone %>
+                  </p>
+                  <% } %>
+              </div>
+            </div>
+          </div>
+
+          <!-- Order Items -->
+          <h5 class="mt-4">Items Ordered</h5>
+          <% order.Items.forEach(item=> { %>
+            <div class="order-item">
+              <img
+                src="<%= item.product && item.product.Image && item.product.Image.length > 0 ? item.product.Image[0] : (item.product && item.product._id ? '/images/placeholder-' + item.product._id + '.png' : '/images/placeholder.png') %>"
+                alt="<%= item.product && item.product.productName ? item.product.productName : 'Product ID: ' + (item.product?._id || item.product || 'N/A') %>">
+              <div>
+                <p><strong>
+                    <%= item.product && item.product.productName ? item.product.productName : 'Unknown Product (ID: ' +
+                      (item.product?._id || item.product || 'N/A' ) + ')' %>
+                  </strong></p>
+                <p>Quantity: <%= item.quantity || 'N/A' %> | Original Price: ₹<%= (item.originalPrice || 0).toFixed(2)
+                      %>
+                </p>
+                <p>Item Total: ₹<%= (item.finalPayableAmount || ((item.originalPrice || 0) * item.quantity)).toFixed(2)
+                    %>
+                </p>
+              </div>
+            </div>
+            <% }) %>
+
+              <!-- Order Summary -->
+              <h5 class="mt-4">Order Summary</h5>
+              <div class="order-summary">
+                <% let itemsTotal=order.Items.reduce((sum, item)=> sum + (item.finalPayableAmount || 0), 0); %>
+                  <p><strong>Items Total:</strong> ₹<%= itemsTotal.toFixed(2) %>
+                  </p>
+                  <% if ((order.totalOfferDiscount || 0)> 0) { %>
+                    <p><strong>Offer Discount:</strong> -₹<%= (order.totalOfferDiscount || 0).toFixed(2) %>
+                    </p>
+                    <% } %>
+                      <% if ((order.totalCouponDiscount || 0)> 0) { %>
+                        <p><strong>Coupon Discount:</strong> -₹<%= (order.totalCouponDiscount || 0).toFixed(2) %>
+                        </p>
+                        <% } %>
+                          <p><strong>Tax (0.05%):</strong> ₹<%= (order.totalTax || 0).toFixed(2) %>
+                          </p>
+                          <p><strong>Delivery Charge:</strong> ₹<%= (order.totalDeliveryCharge || 40).toFixed(2) %>
+                          </p>
+                          <p><strong>Final Total:</strong> ₹<%= (order.orderAmount || 0).toFixed(2) %>
+                          </p>
+              </div>
+        </div>
+        <% } else { %>
+          <p class="text-danger mt-3">Order details not available. Please contact support.</p>
+          <% } %>
+
+            <div class="text-center mt-4">
+
+              <button class="btn btn-primary btn-custom"
+                onclick="window.location.href='/order/<%= order?._id || '' %>'">
+                <i class="fas fa-list me-1"></i> View Order Details
+              </button>
+            </div>
+    </div>
+    <%- include('../partials/user/footer') %>
+
+      <!-- Bootstrap JS -->
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+      <script>
+        async function cancelOrder(orderId) {
+          if (!orderId) {
+            alert('Order ID not found. Please contact support.');
+            return;
+          }
+
+          if (confirm('Are you sure you want to cancel this order?')) {
+            try {
+              const response = await fetch(`/order/${orderId}/cancel`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId })
+              });
+
+              const result = await response.json();
+              if (result.success) {
+                alert('Order cancelled successfully.');
+                window.location.href = '/orders';
+              } else {
+                alert(result.message || 'Failed to cancel order. Please try again.');
+              }
+            } catch (err) {
+              console.error('Cancel order error:', err);
+              alert('Error cancelling order. Please try again.');
+            }
+          }
+        }
+      </script>
+</body>
+
+</html>

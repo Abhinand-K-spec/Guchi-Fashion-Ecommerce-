@@ -28,19 +28,19 @@
         </p>
   
         <div class="d-flex justify-content-between mt-3">
-          <a href="/profile" class="btn btn-secondary">Cancel</a>
+          <a href="/edit-profile" class="btn btn-secondary">Cancel</a>
           <button type="submit" class="btn btn-primary">Verify</button>
         </div>
       </form>
   
       <!-- ✅ Separate Resend OTP Form -->
-      <form method="POST" action="/resend-email-otp" id="resendForm" class="text-center mt-3">
+      <!-- <form method="POST" action="/resend-email-otp" id="resendForm" class="text-center mt-3">
         <button type="submit" class="btn btn-link p-0" id="resendBtn" disabled>Resend OTP</button>
-      </form>
+      </form> -->
     </div>
   </div>
   
-  <!-- ✅ Countdown Timer Script -->
+
   <script>
     let timeLeft = 60;
     const countdownEl = document.getElementById('countdown');
@@ -52,10 +52,27 @@
   
       if (timeLeft <= 0) {
         clearInterval(countdownInterval);
+
+
         countdownEl.textContent = '0';
+        
+
+        document.getElementById('timer').textContent = 'Time limit exceeded. Redirecting to profile...';
+
+
+        const verifyBtn = document.getElementById('verifyBtn');
+        if (verifyBtn) {
+            verifyBtn.setAttribute('disabled', 'disabled');
+        }
+
+
         resendBtn.removeAttribute('disabled');
-        document.getElementById('timer').textContent = '';
+        
+        
       }
+      setTimeout(() => {
+        window.location.href = '/editProfile'; 
+      }, 62000); 
     }, 1000);
   </script>
   
