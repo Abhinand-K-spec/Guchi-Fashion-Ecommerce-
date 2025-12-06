@@ -80,7 +80,10 @@ const googleCallbackHandler = async (req, res) => {
     });
   } else {
     req.session.user = req.user._id;
-    res.redirect('/');
+    req.session.save((err) => {
+      if (err) console.error('Session save error:', err);
+      res.redirect('/');
+    });
   }
 };
 
@@ -274,7 +277,10 @@ const login = async (req, res) => {
       return res.render('login', { msg: `Password didn't match` });
     }
     req.session.user = findUser._id;
-    res.redirect('/');
+    req.session.save((err) => {
+      if (err) console.error('Session save error:', err);
+      res.redirect('/');
+    });
   } catch (error) {
     console.log('error occurred while login', error);
     res.render('login', { msg: 'Login failed please try again' });
@@ -431,7 +437,10 @@ const verifyOtp = async (req, res) => {
       req.session.user = saveUserData._id;
       delete req.session.otp;
       delete req.session.userData;
-      return res.status(200).json({ success: true, message: 'OTP verified successfully.', redirect: '/login' });
+      req.session.save((err) => {
+        if (err) console.error('Session save error:', err);
+        return res.status(200).json({ success: true, message: 'OTP verified successfully.', redirect: '/login' });
+      });
     } else {
       return res.status(400).json({ success: false, message: 'Invalid OTP. Please try again.' });
     }
