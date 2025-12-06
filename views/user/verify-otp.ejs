@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -14,6 +15,7 @@
     * {
       box-sizing: border-box;
     }
+
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
@@ -23,7 +25,9 @@
       flex-direction: column;
       min-height: 100vh;
     }
-    header, footer {
+
+    header,
+    footer {
       background-color: #1e40af;
       color: white;
       padding: 16px 24px;
@@ -31,10 +35,13 @@
       align-items: center;
       justify-content: space-between;
     }
-    header .logo, footer .footer-info {
+
+    header .logo,
+    footer .footer-info {
       font-weight: 700;
       font-size: 1.25rem;
     }
+
     nav a {
       color: white;
       text-decoration: none;
@@ -43,13 +50,17 @@
       display: flex;
       align-items: center;
     }
+
     nav a .material-icons {
       font-size: 20px;
       margin-right: 4px;
     }
-    nav a:hover, nav a:focus {
+
+    nav a:hover,
+    nav a:focus {
       text-decoration: underline;
     }
+
     main {
       flex: 1;
       display: flex;
@@ -57,20 +68,23 @@
       align-items: center;
       padding: 24px;
     }
+
     .otp-card {
       background: white;
       padding: 40px 32px;
       border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
       width: 100%;
       max-width: 440px;
       text-align: center;
     }
+
     .otp-card h2 {
       font-weight: 600;
       font-size: 1.25rem;
       margin-bottom: 24px;
     }
+
     .otp-input {
       width: 100%;
       padding: 14px 16px;
@@ -81,13 +95,16 @@
       transition: border-color 0.3s ease;
       margin-bottom: 24px;
     }
+
     .otp-input:focus {
       border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.3);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
     }
+
     .otp-input.is-invalid {
       border-color: #dc2626;
     }
+
     .invalid-feedback {
       display: none;
       color: #dc2626;
@@ -95,14 +112,17 @@
       margin-top: -20px;
       margin-bottom: 20px;
     }
-    .otp-input.is-invalid ~ .invalid-feedback {
+
+    .otp-input.is-invalid~.invalid-feedback {
       display: block;
     }
+
     .timeout-text {
       font-weight: 700;
       margin-bottom: 28px;
       font-size: 1rem;
     }
+
     button.submit-btn {
       background-color: #0f4c75;
       color: white;
@@ -114,35 +134,46 @@
       cursor: pointer;
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
+
     button.submit-btn:hover,
     button.submit-btn:focus {
       background-color: #093c5a;
-      box-shadow: 0 6px 12px rgba(15,76,117,0.5);
+      box-shadow: 0 6px 12px rgba(15, 76, 117, 0.5);
       outline: none;
     }
 
     @media (max-width: 767px) {
-      header, footer {
+
+      header,
+      footer {
         flex-direction: column;
         gap: 12px;
         text-align: center;
       }
+
       nav a {
         margin-left: 0;
         margin-right: 16px;
       }
+
       .otp-card {
         padding: 32px 24px;
         max-width: 100%;
       }
     }
+
     @media (min-width: 768px) and (max-width: 1439px) {
-      header, footer {
+
+      header,
+      footer {
         padding: 16px 48px;
       }
     }
+
     @media (min-width: 1440px) {
-      header, footer {
+
+      header,
+      footer {
         max-width: 1400px;
         margin: 0 auto;
         padding: 20px 0;
@@ -150,24 +181,15 @@
     }
   </style>
 </head>
+
 <body>
   <main>
     <section class="otp-card" role="region" aria-labelledby="otp-form-title">
       <h2 id="otp-form-title">Please enter the OTP sent to your email</h2>
       <form id="otpForm" novalidate>
-        <input
-          type="text"
-          name="otp"
-          id="input-otp"
-          maxlength="6"
-          class="otp-input"
-          aria-required="true"
-          aria-label="One-time password input"
-          pattern="\d{6}"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          placeholder="Enter 6-digit OTP"
-        />
+        <input type="text" name="otp" id="input-otp" maxlength="6" class="otp-input" aria-required="true"
+          aria-label="One-time password input" pattern="\d{6}" inputmode="numeric" autocomplete="one-time-code"
+          placeholder="Enter 6-digit OTP" />
         <div class="invalid-feedback">Please enter a valid 6-digit OTP.</div>
         <p class="timeout-text">
           Please wait <span id="countdown">40</span> seconds before requesting another code.
@@ -182,24 +204,37 @@
 
   <script>
     let timeLeft = 40;
-const countdownSpan = document.getElementById('countdown');
-const timeoutText = document.querySelector('.timeout-text');
-const resendBox = document.getElementById('resendBox');
+    const countdownSpan = document.getElementById('countdown');
+    const timeoutText = document.querySelector('.timeout-text');
+    const resendBox = document.getElementById('resendBox');
 
-function startCountdown() {
-  const countdownInterval = setInterval(() => {
-    timeLeft--;
-    if (timeLeft > 0) {
-      countdownSpan.textContent = timeLeft;
-    } else {
-      clearInterval(countdownInterval);
-      timeoutText.textContent = "You can now request a new code.";
-      resendBox.style.display = 'block';   
+    function startCountdown() {
+      const timerKey = 'signupOtpTimer';
+      let timeLeft = 40;
+      const storedTime = localStorage.getItem(timerKey);
+      const now = Date.now();
+
+      if (storedTime && parseInt(storedTime) > now) {
+        timeLeft = Math.ceil((parseInt(storedTime) - now) / 1000);
+      } else {
+        const targetTime = now + 40000;
+        localStorage.setItem(timerKey, targetTime);
+      }
+
+      const countdownInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft > 0) {
+          countdownSpan.textContent = timeLeft;
+        } else {
+          clearInterval(countdownInterval);
+          timeoutText.textContent = "You can now request a new code.";
+          resendBox.style.display = 'block';
+          localStorage.removeItem(timerKey);
+        }
+      }, 1000);
     }
-  }, 1000);
-}
 
-window.onload = startCountdown;
+    window.onload = startCountdown;
 
 
     window.onload = startCountdown;
@@ -245,11 +280,11 @@ window.onload = startCountdown;
           }).then(() => {
             window.location.href = response.redirect || '/login';
           });
-        } else if(response.error){
+        } else if (response.error) {
           Swal.fire({
             icon: 'error',
             title: 'Verification Failed',
-            text: response.message|| response.error.message || response.error || 'An error occurred during verification.',
+            text: response.message || response.error.message || response.error || 'An error occurred during verification.',
           });
         }
       } catch (error) {
@@ -277,4 +312,5 @@ window.onload = startCountdown;
     });
   </script>
 </body>
+
 </html>

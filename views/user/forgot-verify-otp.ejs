@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Verify OTP & Reset Password</title>
   <link rel="stylesheet" href="/css/login.css" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -13,6 +14,7 @@
     .password-wrapper {
       position: relative;
     }
+
     .eye-icon {
       position: absolute;
       right: 12px;
@@ -23,144 +25,181 @@
       font-size: 1.2rem;
       z-index: 10;
     }
+
     .form-control {
       padding-right: 45px;
     }
   </style>
 </head>
+
 <body>
-<div class="container">
-  <div class="left">
-    <h2>Verify OTP</h2>
-    <p>We’ve sent a 6-digit OTP to your email.</p>
+  <div class="container">
+    <div class="left">
+      <h2>Verify OTP</h2>
+      <p>We’ve sent a 6-digit OTP to your email.</p>
 
-    <% if (msg) { %>
-      <div class="alert alert-info text-center mb-4"><%= msg %></div>
-    <% } %>
+      <% if (msg) { %>
+        <div class="alert alert-info text-center mb-4">
+          <%= msg %>
+        </div>
+        <% } %>
 
-    <form id="otp-password-form">
-      <label class="form-label">Enter OTP</label>
-      <input type="text" id="otp" class="form-control" maxlength="6" placeholder="Enter 6-digit OTP"  autofocus />
+          <form id="otp-password-form">
+            <label class="form-label">Enter OTP</label>
+            <input type="text" id="otp" class="form-control" maxlength="6" placeholder="Enter 6-digit OTP" autofocus />
 
-      <label class="form-label mt-3">New Password</label>
-      <div class="password-wrapper">
-        <input type="password" id="password" class="form-control" placeholder="Enter new password"  />
-        <span id="togglePassword" class="eye-icon">
-          <i class="fa fa-eye"></i>
-        </span>
-      </div>
+            <label class="form-label mt-3">New Password</label>
+            <div class="password-wrapper">
+              <input type="password" id="password" class="form-control" placeholder="Enter new password" />
+              <span id="togglePassword" class="eye-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+            </div>
 
-      <label class="form-label mt-3">Confirm Password</label>
-      <input type="password" id="confirmpassword" class="form-control" placeholder="Confirm new password"  />
+            <label class="form-label mt-3">Confirm Password</label>
+            <input type="password" id="confirmpassword" class="form-control" placeholder="Confirm new password" />
 
-      <button type="submit" class="btn btn-success w-100 mt-4">
-        Reset Password
-      </button>
-    </form>
+            <button type="submit" class="btn btn-success w-100 mt-4">
+              Reset Password
+            </button>
+          </form>
 
-    <div class="mt-3 text-center">
-      Didn't receive OTP? 
-      <a href="/resend-forgot-otp" class="text-decoration-none fw-semibold">Resend OTP</a>
+          <div class="mt-3 text-center">
+            Didn't receive OTP?
+            <a href="/resend-forgot-otp" id="resendLink" class="text-decoration-none fw-semibold"
+              style="pointer-events: none; color: gray;">Resend OTP</a>
+            <span id="timer" class="ms-2 text-muted">in 60s</span>
+          </div>
+          <div class="mt-2 text-center">
+            <a href="/forgot-password" class="text-muted small">Change Email</a>
+          </div>
     </div>
-    <div class="mt-2 text-center">
-      <a href="/forgot-password" class="text-muted small">Change Email</a>
+
+    <div class="right">
+      <img src="/img/guchi/signup.jpg" alt="Reset" class="background-img" />
     </div>
   </div>
 
-  <div class="right">
-    <img src="/img/guchi/signup.jpg" alt="Reset" class="background-img" />
-  </div>
-</div>
+  <script>
+    // Toggle password visibility
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordField = document.getElementById('password');
+    const confirmField = document.getElementById('confirmpassword');
 
-<script>
-  // Toggle password visibility
-  const togglePassword = document.getElementById('togglePassword');
-  const passwordField = document.getElementById('password');
-  const confirmField = document.getElementById('confirmpassword');
+    togglePassword.addEventListener('click', () => {
+      const type = passwordField.type === 'password' ? 'text' : 'password';
+      passwordField.type = type;
+      confirmField.type = type;
+      togglePassword.innerHTML = type === 'text'
+        ? '<i class="fa fa-eye-slash"></i>'
+        : '<i class="fa fa-eye"></i>';
+    });
 
-  togglePassword.addEventListener('click', () => {
-    const type = passwordField.type === 'password' ? 'text' : 'password';
-    passwordField.type = type;
-    confirmField.type = type;
-    togglePassword.innerHTML = type === 'text' 
-      ? '<i class="fa fa-eye-slash"></i>' 
-      : '<i class="fa fa-eye"></i>';
-  });
+    // Strict password regex
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/;
 
-  // Strict password regex
-  const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/;
+    document.getElementById('otp-password-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-  document.getElementById('otp-password-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+      const otp = document.getElementById('otp').value.trim();
+      const password = passwordField.value;
+      const confirmPassword = confirmField.value;
 
-    const otp = document.getElementById('otp').value.trim();
-    const password = passwordField.value;
-    const confirmPassword = confirmField.value;
-
-    // === Client-side validation with Swal only ===
-    if (!otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Invalid OTP',
-        text: 'Please enter a valid 6-digit code',
-      });
-      return;
-    }
-
-    if (!strongPasswordRegex.test(password)) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Weak Password',
-        text: 'Password must be 8+ characters and contain: uppercase, lowercase, number, and special character',
-        confirmButtonColor: '#3085d6'
-      });
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Passwords Don\'t Match',
-        text: 'Please make sure both passwords are the same',
-      });
-      return;
-    }
-
-    // === Submit to server ===
-    try {
-      const res = await fetch('/forgot-verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ otp, password })
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Password Reset Successful!',
-          text: 'You can now log in with your new password',
-          timer: 2000,
-          showConfirmButton: false
-        }).then(() => {
-          window.location.href = '/login';
-        });
-      } else {
+      // === Client-side validation with Swal only ===
+      if (!otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
         Swal.fire({
           icon: 'error',
-          title: 'Invalid or Expired OTP',
-          text: data.error || 'Please request a new OTP and try again',
+          title: 'Invalid OTP',
+          text: 'Please enter a valid 6-digit code',
+        });
+        return;
+      }
+
+      if (!strongPasswordRegex.test(password)) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Weak Password',
+          text: 'Password must be 8+ characters and contain: uppercase, lowercase, number, and special character',
+          confirmButtonColor: '#3085d6'
+        });
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Passwords Don\'t Match',
+          text: 'Please make sure both passwords are the same',
+        });
+        return;
+      }
+
+      // === Submit to server ===
+      try {
+        const res = await fetch('/forgot-verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ otp, password })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Password Reset Successful!',
+            text: 'You can now log in with your new password',
+            timer: 2000,
+            showConfirmButton: false
+          }).then(() => {
+            window.location.href = data.redirect || '/login';
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Invalid or Expired OTP',
+            text: data.error || 'Please request a new OTP and try again',
+          });
+        }
+      } catch (err) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Connection Failed',
+          text: 'Please check your internet connection',
         });
       }
-    } catch (err) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Connection Failed',
-        text: 'Please check your internet connection',
-      });
+    });
+
+    // Timer Logic
+    const timerKey = 'forgotOtpTimer';
+    const resendLink = document.getElementById('resendLink');
+    const timerSpan = document.getElementById('timer');
+
+    let timeLeft = 60;
+    const storedTime = localStorage.getItem(timerKey);
+    const now = Date.now();
+
+    if (storedTime && parseInt(storedTime) > now) {
+      timeLeft = Math.ceil((parseInt(storedTime) - now) / 1000);
+    } else {
+      const targetTime = now + 60000;
+      localStorage.setItem(timerKey, targetTime);
     }
-  });
-</script>
+
+    const timerId = setInterval(() => {
+      timeLeft--;
+      timerSpan.textContent = `in ${timeLeft}s`;
+
+      if (timeLeft <= 0) {
+        clearInterval(timerId);
+        timerSpan.style.display = 'none';
+        resendLink.style.pointerEvents = 'auto';
+        resendLink.style.color = '#0d6efd';
+        resendLink.style.cursor = 'pointer';
+        localStorage.removeItem(timerKey);
+      }
+    }, 1000);
+  </script>
 </body>
+
 </html>

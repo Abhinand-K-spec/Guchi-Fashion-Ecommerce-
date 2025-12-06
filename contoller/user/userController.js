@@ -591,8 +591,29 @@ const getOrders = async (req, res) => {
 
 
 
-const getForgotPasswordPage = (req, res) => {
-  res.render('forgot-password', { msg: '', error: '' });
+const getForgotPasswordPage = async (req, res) => {
+  try {
+    if (req.session.user) {
+      const user = await User.findById(req.session.user);
+      if (user) {
+        const otp = generateOtp();
+        console.log('OTP:', otp);
+        const sent = await sendVerification(user.email, otp);
+
+        if (sent) {
+          req.session.forgotEmail = user.email;
+          req.session.forgotOtp = otp;
+          req.session.otpExpiry = Date.now() + 5 * 60 * 1000;
+          req.session.isProfileReset = true;
+          return res.redirect('/forgot-verify-otp');
+        }
+      }
+    }
+    res.render('forgot-password', { msg: '', error: '' });
+  } catch (error) {
+    console.error('Error in getForgotPasswordPage:', error);
+    res.render('forgot-password', { msg: '', error: 'Something went wrong' });
+  }
 };
 
 const sendForgotOtp = async (req, res) => {
@@ -653,8 +674,13 @@ const verifyForgotOtpAndReset = async (req, res) => {
       { password: hashedPassword }
     );
 
+    const isProfileReset = req.session.isProfileReset;
     clearForgotSession(req);
-    return res.json({ success: true, message: "Password reset successfully!" });
+    if (isProfileReset) {
+      delete req.session.isProfileReset;
+      return res.json({ success: true, message: "Password reset successfully!", redirect: '/profile' });
+    }
+    return res.json({ success: true, message: "Password reset successfully!", redirect: '/login' });
 
   } catch (error) {
     console.error(error);
