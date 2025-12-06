@@ -167,15 +167,19 @@
               <select name="size" class="form-select bg-dark text-white border-secondary" id="sizeSelect"
                 class="form-control" onchange="updateVariantFields()">
                 <% if (product.Variants && product.Variants.length> 0) { %>
-                  <% product.Variants.forEach(variant=> { %>
-                    <option value="<%= variant.Size %>" <%=variant.Size===(product.selectedVariant?.Size ||
-                      product.Variants[0].Size) ? 'selected' : '' %>>
-                      <%= variant.Size %>
-                    </option>
-                    <% }) %>
-                      <% } else { %>
-                        <option disabled>No sizes available</option>
-                        <% } %>
+                  <% const seenSizes=new Set(); %>
+                    <% product.Variants.forEach(variant=> { %>
+                      <% if (variant.Size && !seenSizes.has(variant.Size)) { %>
+                        <% seenSizes.add(variant.Size); %>
+                          <option value="<%= variant.Size %>" <%=variant.Size===(product.selectedVariant?.Size ||
+                            product.Variants[0].Size) ? 'selected' : '' %>>
+                            <%= variant.Size %>
+                          </option>
+                          <% } %>
+                            <% }) %>
+                              <% } else { %>
+                                <option disabled>No sizes available</option>
+                                <% } %>
               </select>
             </div>
 
