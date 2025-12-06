@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,7 +18,8 @@
       background: url('/img/background.svg') no-repeat;
 
     }
-    a{
+
+    a {
       text-decoration: none;
     }
 
@@ -25,7 +27,7 @@
       background: #fff;
       border-radius: 10px;
       padding: 25px 30px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
       max-width: 150vh;
       margin: 40px auto;
     }
@@ -67,7 +69,7 @@
       color: #dc3545;
     }
 
-    .is-invalid + .invalid-feedback {
+    .is-invalid+.invalid-feedback {
       display: block;
     }
 
@@ -81,122 +83,129 @@
 
   <%- include('../partials/user/header') %>
 
-  <div class="edit-card">
-    <h4>Edit Address</h4>
+    <div class="edit-card">
+      <h4>Edit Address</h4>
 
-    <div id="responseMessage" class="alert text-center"></div>
+      <div id="responseMessage" class="alert text-center"></div>
 
-    <form id="editAddressForm">
-      <input type="hidden" id="addressId" value="<%= addressId %>" />
+      <form id="editAddressForm">
+        <input type="hidden" id="addressId" value="<%= addressId %>" />
 
-      <div class="row row-gap">
+        <div class="row row-gap">
 
-        <div class="col-12">
-          <label for="name">Full Name</label>
-          <input type="text" maxlength="20" class="form-control" id="name" name="name" value="<%= address.name %>">
-          <div class="invalid-feedback">Enter a valid name.</div>
+          <div class="col-12">
+            <label for="name">Full Name</label>
+            <input type="text" maxlength="20" class="form-control" id="name" name="name" value="<%= address.name %>">
+            <div class="invalid-feedback">Enter a valid name.</div>
+          </div>
+
+          <div class="col-6">
+            <label for="phone">Phone</label>
+            <input type="tel" maxlength="10" class="form-control" id="phone" name="phone" value="<%= address.phone %>">
+            <div class="invalid-feedback">Enter a valid 10-digit phone.</div>
+          </div>
+
+          <div class="col-6">
+            <label for="alternativePhone">Alternative Phone</label>
+            <input type="tel" maxlength="10" class="form-control" id="alternativePhone" name="alternativePhone"
+              value="<%= address.alternativePhone %>">
+            <div class="invalid-feedback">Enter a valid 10-digit alternative phone.</div>
+          </div>
+
+          <div class="col-6">
+            <label for="town">Town</label>
+            <input type="text" maxlength="20" class="form-control" id="town" name="town" value="<%= address.town %>">
+          </div>
+
+          <div class="col-6">
+            <label for="city">City</label>
+            <input type="text" maxlength="20" class="form-control" id="city" name="city" value="<%= address.city %>">
+          </div>
+
+          <div class="col-12">
+            <label for="postCode">Post Code</label>
+            <input type="text" maxlength="6" class="form-control" id="postCode" name="postCode"
+              value="<%= address.postCode %>">
+            <div class="invalid-feedback">Enter a valid 6-digit postal code.</div>
+          </div>
+
         </div>
 
-        <div class="col-6">
-          <label for="phone">Phone</label>
-          <input type="tel" maxlength="10" class="form-control" id="phone" name="phone" value="<%= address.phone %>">
-          <div class="invalid-feedback">Enter a valid 10-digit phone.</div>
+        <div class="d-flex justify-content-between mt-4">
+          <a href="/edit-profile" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">Update Address</button>
         </div>
 
-        <div class="col-6">
-          <label for="alternativePhone">Alternative Phone</label>
-          <input type="tel" maxlength="10" class="form-control" id="alternativePhone" name="alternativePhone" value="<%= address.alternativePhone %>">
-          <div class="invalid-feedback">Enter a valid 10-digit alternative phone.</div>
-        </div>
+      </form>
+    </div>
 
-        <div class="col-6">
-          <label for="town">Town</label>
-          <input type="text" maxlength="20" class="form-control" id="town" name="town" value="<%= address.town %>">
-        </div>
+    <%- include('../partials/user/footer') %>
 
-        <div class="col-6">
-          <label for="city">City</label>
-          <input type="text" maxlength="20" class="form-control" id="city" name="city" value="<%= address.city %>">
-        </div>
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
 
-        <div class="col-12">
-          <label for="postCode">Post Code</label>
-          <input type="text" maxlength="6" class="form-control" id="postCode" name="postCode" value="<%= address.postCode %>">
-          <div class="invalid-feedback">Enter a valid 6-digit postal code.</div>
-        </div>
+          const form = document.getElementById('editAddressForm');
+          const responseMessage = document.getElementById('responseMessage');
 
-      </div>
+          const showMessage = (msg, isError = false) => {
+            responseMessage.classList.remove('alert-success', 'alert-danger', 'd-none');
+            responseMessage.classList.add(isError ? 'alert-danger' : 'alert-success');
+            responseMessage.textContent = msg;
+            responseMessage.style.display = "block";
+            setTimeout(() => responseMessage.style.display = "none", 3000);
+          };
 
-      <div class="d-flex justify-content-between mt-4">
-        <a href="/edit-profile" class="btn btn-secondary">Cancel</a>
-        <button type="submit" class="btn btn-primary">Update Address</button>
-      </div>
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-    </form>
-  </div>
+            let valid = true;
+            form.querySelectorAll('.form-control').forEach(input => input.classList.remove('is-invalid'));
 
-  <%- include('../partials/user/footer') %>
+            const data = {
+              name: name.value.trim(),
+              phone: phone.value.trim(),
+              alternativePhone: alternativePhone.value.trim(),
+              town: town.value.trim(),
+              city: city.value.trim(),
+              postCode: postCode.value.trim()
+            };
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
+            if (!data.name || data.name.length < 3) {
+              name.classList.add('is-invalid');
+              name.nextElementSibling.textContent = "Name must be at least 3 characters long.";
+              valid = false;
+            }
+            if (!/^\d{10}$/.test(data.phone)) { phone.classList.add('is-invalid'); valid = false; }
+            if (data.alternativePhone && !/^\d{10}$/.test(data.alternativePhone)) { alternativePhone.classList.add('is-invalid'); valid = false; }
+            if (!/^\d{6}$/.test(data.postCode)) { postCode.classList.add('is-invalid'); valid = false; }
 
-    const form = document.getElementById('editAddressForm');
-    const responseMessage = document.getElementById('responseMessage');
+            if (!valid) return showMessage("Correct the highlighted fields", true);
 
-    const showMessage = (msg, isError = false) => {
-        responseMessage.classList.remove('alert-success', 'alert-danger', 'd-none');
-        responseMessage.classList.add(isError ? 'alert-danger' : 'alert-success');
-        responseMessage.textContent = msg;
-        responseMessage.style.display = "block";
-        setTimeout(() => responseMessage.style.display = "none", 3000);
-    };
-
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        let valid = true;
-        form.querySelectorAll('.form-control').forEach(input => input.classList.remove('is-invalid'));
-
-        const data = {
-            name: name.value.trim(),
-            phone: phone.value.trim(),
-            alternativePhone: alternativePhone.value.trim(),
-            town: town.value.trim(),
-            city: city.value.trim(),
-            postCode: postCode.value.trim()
-        };
-
-        if (!data.name) { name.classList.add('is-invalid'); valid = false; }
-        if (!/^\d{10}$/.test(data.phone)) { phone.classList.add('is-invalid'); valid = false; }
-        if (data.alternativePhone && !/^\d{10}$/.test(data.alternativePhone)) { alternativePhone.classList.add('is-invalid'); valid = false; }
-        if (!/^\d{6}$/.test(data.postCode)) { postCode.classList.add('is-invalid'); valid = false; }
-
-        if (!valid) return showMessage("Correct the highlighted fields", true);
-
-        try {
-            const addressId = document.getElementById('addressId').value;
-            const response = await fetch(`/edit-address/${addressId}`, {
+            try {
+              const addressId = document.getElementById('addressId').value;
+              const response = await fetch(`/edit-address/${addressId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
-            });
+              });
 
-            const result = await response.json();
+              const result = await response.json();
 
-            if (response.ok) {
+              if (response.ok) {
                 showMessage(result.message);
                 setTimeout(() => window.location.href = result.redirect, 1500);
-            } else {
+              } else {
                 showMessage(result.error || "Update failed", true);
+              }
+
+            } catch (err) {
+              showMessage("Something went wrong!", true);
             }
+          });
 
-        } catch (err) {
-            showMessage("Something went wrong!", true);
-        }
-    });
-
-});
-</script>
+        });
+      </script>
 
 </body>
+
 </html>

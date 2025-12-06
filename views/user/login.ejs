@@ -213,7 +213,7 @@
 
 
       const emailValue = email.value.trim();
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const emailPattern = /^[a-zA-Z0-9][a-zA-Z0-9._-]*@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/;
       if (!emailValue) {
         emailError.textContent = 'Email is required.';
         setInterval(() => { emailError.textContent = '' }, 2000)

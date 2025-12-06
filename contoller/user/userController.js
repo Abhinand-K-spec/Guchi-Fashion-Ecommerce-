@@ -315,6 +315,16 @@ const signup = async (req, res) => {
   try {
 
     const { name, email, password, referralCode } = req.body;
+
+    if (!name || name.trim().length < 3) {
+      return res.render('signup', { msg: 'Name must be at least 3 characters long' });
+    }
+
+    const emailPattern = /^[a-zA-Z0-9][a-zA-Z0-9._-]*@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/;
+    if (!emailPattern.test(email)) {
+      return res.render('signup', { msg: 'Invalid email format' });
+    }
+
     const findUser = await User.findOne({ email });
 
     if (findUser) {
@@ -324,7 +334,7 @@ const signup = async (req, res) => {
     console.log('Generated OTP:', otp);
     const emailSend = await sendVerification(email, otp);
     if (!emailSend) {
-      return res.json({ 'error': 'email-error' });
+      return res.render('signup', { msg: 'Failed to send verification email. Please check your email address.' });
     }
     req.session.otp = otp;
     req.session.userData = { name, email, password, referralCode };

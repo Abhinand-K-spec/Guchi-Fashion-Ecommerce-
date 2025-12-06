@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -85,7 +86,7 @@
       font-size: 0.875em;
     }
 
-    .is-invalid ~ .invalid-feedback {
+    .is-invalid~.invalid-feedback {
       display: block;
     }
   </style>
@@ -94,163 +95,169 @@
 <body>
   <%- include('../partials/user/header') %>
 
-  <div class="form-container">
-    <div class="card">
-      <h4 class="mb-4">Edit Address</h4>
+    <div class="form-container">
+      <div class="card">
+        <h4 class="mb-4">Edit Address</h4>
 
-      
 
-      <form id="editAddressForm" novalidate>
-        <input type="hidden" id="addressId" value="<%= addressId %>" />
 
-        <div class="mb-3">
-          <label for="name" class="form-label">Full Name></label>
-          <input type="text" class="form-control" id="name" name="name" value="<%= address.name %>" maxlength="30" />
-          <div class="invalid-feedback">Full name is required.</div>
-        </div>
+        <form id="editAddressForm" novalidate>
+          <input type="hidden" id="addressId" value="<%= addressId %>" />
 
-        <div class="mb-3">
-          <label for="phone" class="form-label">Phone</label>
-          <input type="tel" class="form-control" id="phone" name="phone" value="<%= address.phone %>" maxlength="10" pattern="[0-9]{10}"  />
-          <div class="invalid-feedback">Please enter a valid 10-digit phone number.</div>
-        </div>
+          <div class="mb-3">
+            <label for="name" class="form-label">Full Name></label>
+            <input type="text" class="form-control" id="name" name="name" value="<%= address.name %>" maxlength="30" />
+            <div class="invalid-feedback">Full name is required.</div>
+          </div>
 
-        <div class="mb-3">
-          <label for="alternativePhone" class="form-label">Alternative Phone</label>
-          <input type="tel" class="form-control" id="alternativePhone" name="alternativePhone" value="<%= address.alternativePhone %>" maxlength="10" pattern="[0-9]{10}" />
-          <div class="invalid-feedback">Please enter a valid 10-digit alternative phone number.</div>
-        </div>
+          <div class="mb-3">
+            <label for="phone" class="form-label">Phone</label>
+            <input type="tel" class="form-control" id="phone" name="phone" value="<%= address.phone %>" maxlength="10"
+              pattern="[0-9]{10}" />
+            <div class="invalid-feedback">Please enter a valid 10-digit phone number.</div>
+          </div>
 
-    
+          <div class="mb-3">
+            <label for="alternativePhone" class="form-label">Alternative Phone</label>
+            <input type="tel" class="form-control" id="alternativePhone" name="alternativePhone"
+              value="<%= address.alternativePhone %>" maxlength="10" pattern="[0-9]{10}" />
+            <div class="invalid-feedback">Please enter a valid 10-digit alternative phone number.</div>
+          </div>
 
-        <div class="mb-3">
-          <label for="town" class="form-label">Town</label>
-          <input type="text" class="form-control" id="town" name="town" value="<%= address.town %>" />
-        </div>
 
-        <div class="mb-3">
-          <label for="city" class="form-label">City</label>
-          <input type="text" class="form-control" id="city" name="city" value="<%= address.city %>" />
-        </div>
 
-        <div class="mb-3">
-          <label for="postCode" class="form-label">Post Code</label>
-          <input type="text" class="form-control" id="postCode" name="postCode" value="<%= address.postCode %>" maxlength="6" pattern="[0-9]{6}" required />
-          <div class="invalid-feedback">Please enter a valid 6-digit postal code.</div>
-        </div>
+          <div class="mb-3">
+            <label for="town" class="form-label">Town</label>
+            <input type="text" class="form-control" id="town" name="town" value="<%= address.town %>" />
+          </div>
 
-        <div class="d-flex justify-content-between">
-          <a href="/checkout" class="btn btn-secondary">Cancel</a>
-          <button type="submit" class="btn btn-primary">Update Address</button>
-        </div>
-       
-      </form>
-      <div id="responseMessage" class="padding-top-30px alert text-center d-none"></div>
+          <div class="mb-3">
+            <label for="city" class="form-label">City</label>
+            <input type="text" class="form-control" id="city" name="city" value="<%= address.city %>" />
+          </div>
+
+          <div class="mb-3">
+            <label for="postCode" class="form-label">Post Code</label>
+            <input type="text" class="form-control" id="postCode" name="postCode" value="<%= address.postCode %>"
+              maxlength="6" pattern="[0-9]{6}" required />
+            <div class="invalid-feedback">Please enter a valid 6-digit postal code.</div>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <a href="/checkout" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Update Address</button>
+          </div>
+
+        </form>
+        <div id="responseMessage" class="padding-top-30px alert text-center d-none"></div>
+      </div>
+
     </div>
-    
-  </div>
 
-  <%- include('../partials/user/footer') %>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('editAddressForm');
-    const responseMessage = document.getElementById('responseMessage');
+    <%- include('../partials/user/footer') %>
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          const form = document.getElementById('editAddressForm');
+          const responseMessage = document.getElementById('responseMessage');
 
-    // Function to show response message
-    const showMessage = (message, isError = false) => {
-        responseMessage.classList.remove('d-none', 'alert-success', 'alert-danger');
-        responseMessage.classList.add(isError ? 'alert-danger' : 'alert-success');
-        responseMessage.textContent = message;
-        // Auto-hide message after 5 seconds
-        setTimeout(() => {
-            responseMessage.classList.add('d-none');
-        }, 5000);
-    };
+          // Function to show response message
+          const showMessage = (message, isError = false) => {
+            responseMessage.classList.remove('d-none', 'alert-success', 'alert-danger');
+            responseMessage.classList.add(isError ? 'alert-danger' : 'alert-success');
+            responseMessage.textContent = message;
+            // Auto-hide message after 5 seconds
+            setTimeout(() => {
+              responseMessage.classList.add('d-none');
+            }, 5000);
+          };
 
-    // Form submission handler
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+          // Form submission handler
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        // Reset form validation
-        form.querySelectorAll('.is-invalid').forEach(input => {
-            input.classList.remove('is-invalid');
-        });
-
-        // Get form data
-        const addressId = document.getElementById('addressId').value;
-        const formData = {
-            name: document.getElementById('name').value.trim(),
-            phone: document.getElementById('phone').value.trim(),
-            alternativePhone: document.getElementById('alternativePhone').value.trim(),
-            town: document.getElementById('town').value.trim(),
-            city: document.getElementById('city').value.trim(),
-            postCode: document.getElementById('postCode').value.trim()
-        };
-
-        // Client-side validation
-        let isValid = true;
-        if (!formData.name) {
-            document.getElementById('name').classList.add('is-invalid');
-            isValid = false;
-        }
-        if (!formData.phone || !/^[0-9]{10}$/.test(formData.phone)) {
-            document.getElementById('phone').classList.add('is-invalid');
-            isValid = false;
-        }
-        if (formData.alternativePhone && !/^[0-9]{10}$/.test(formData.alternativePhone)) {
-            document.getElementById('alternativePhone').classList.add('is-invalid');
-            isValid = false;
-        }
-        if (!formData.postCode) {
-            document.getElementById('postCode').classList.add('is-invalid');
-            isValid = false;
-        }
-
-        if (!isValid) {
-            showMessage('Please fill all required fields correctly', true);
-            return;
-        }
-
-        try {
-            const response = await fetch(`/edit-addressCheckout/${addressId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
+            // Reset form validation
+            form.querySelectorAll('.is-invalid').forEach(input => {
+              input.classList.remove('is-invalid');
             });
 
-            const result = await response.json();
+            // Get form data
+            const addressId = document.getElementById('addressId').value;
+            const formData = {
+              name: document.getElementById('name').value.trim(),
+              phone: document.getElementById('phone').value.trim(),
+              alternativePhone: document.getElementById('alternativePhone').value.trim(),
+              town: document.getElementById('town').value.trim(),
+              city: document.getElementById('city').value.trim(),
+              postCode: document.getElementById('postCode').value.trim()
+            };
 
-            if (response.ok) {
+            // Client-side validation
+            let isValid = true;
+            if (!formData.name || formData.name.length < 3) {
+              const nameInput = document.getElementById('name');
+              nameInput.classList.add('is-invalid');
+              nameInput.nextElementSibling.textContent = "Name must be at least 3 characters long.";
+              isValid = false;
+            }
+            if (!formData.phone || !/^[0-9]{10}$/.test(formData.phone)) {
+              document.getElementById('phone').classList.add('is-invalid');
+              isValid = false;
+            }
+            if (formData.alternativePhone && !/^[0-9]{10}$/.test(formData.alternativePhone)) {
+              document.getElementById('alternativePhone').classList.add('is-invalid');
+              isValid = false;
+            }
+            if (!formData.postCode) {
+              document.getElementById('postCode').classList.add('is-invalid');
+              isValid = false;
+            }
+
+            if (!isValid) {
+              showMessage('Please fill all required fields correctly', true);
+              return;
+            }
+
+            try {
+              const response = await fetch(`/edit-addressCheckout/${addressId}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+              });
+
+              const result = await response.json();
+
+              if (response.ok) {
                 showMessage(result.message);
                 setTimeout(() => {
-                    window.location.href = '/checkout';
+                  window.location.href = '/checkout';
                 }, 2000);
-            } else {
+              } else {
                 showMessage(result.error || 'Failed to update address', true);
+              }
+            } catch (error) {
+              console.error('Error submitting form:', error);
+              showMessage('An error occurred while updating the address', true);
             }
-        } catch (error) {
-            console.error('Error submitting form:', error);
-            showMessage('An error occurred while updating the address', true);
-        }
-    });
+          });
 
-    // Real-time validation for phone and postcode fields
-    const validateInput = (input, pattern) => {
-        input.addEventListener('input', () => {
-            if (input.value && pattern && !pattern.test(input.value)) {
+          // Real-time validation for phone and postcode fields
+          const validateInput = (input, pattern) => {
+            input.addEventListener('input', () => {
+              if (input.value && pattern && !pattern.test(input.value)) {
                 input.classList.add('is-invalid');
-            } else {
+              } else {
                 input.classList.remove('is-invalid');
-            }
-        });
-    };
+              }
+            });
+          };
 
-    validateInput(document.getElementById('phone'), /^[0-9]{10}$/);
-    validateInput(document.getElementById('alternativePhone'), /^[0-9]{10}$/);
-    validateInput(document.getElementById('postCode'));
-});
-</script>
+          validateInput(document.getElementById('phone'), /^[0-9]{10}$/);
+          validateInput(document.getElementById('alternativePhone'), /^[0-9]{10}$/);
+          validateInput(document.getElementById('postCode'));
+        });
+      </script>
 </body>
+
 </html>

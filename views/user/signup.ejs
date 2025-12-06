@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -16,36 +17,40 @@
       font-weight: bold;
       text-align: center;
     }
+
     a {
       text-decoration: none;
     }
+
     .alert-danger {
       background-color: #f8d7da;
       color: #721c24;
       border: 1px solid #f5c6cb;
     }
+
     .password-wrapper {
-  position: relative;
-  width: 100%;
-}
+      position: relative;
+      width: 100%;
+    }
 
-.password-wrapper input {
-  width: 100%;
-  padding-right: 40px; /* space for the eye icon */
-}
+    .password-wrapper input {
+      width: 100%;
+      padding-right: 40px;
+      /* space for the eye icon */
+    }
 
-.toggle-eye {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #555;
-  font-size: 18px;
-}
-
+    .toggle-eye {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #555;
+      font-size: 18px;
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="left">
@@ -67,7 +72,7 @@
           </span>
         </div>
         <div id="err3" class="inputerror"></div>
-        
+
         <label for="cPassword">Confirm Password</label>
         <div class="password-wrapper">
           <input type="password" name="cPassword" id="cPassword" placeholder="Confirm your password" />
@@ -76,27 +81,28 @@
           </span>
         </div>
         <div id="err5" class="inputerror"></div>
-        
-        
+
+
 
         <label for="referralCode">Referral Code (Optional)</label>
         <input type="text" name="referralCode" id="referralCode" placeholder="Enter referral code" />
         <div id="err4" class="inputerror"></div>
 
-        <% if (locals.msg && msg.length > 0) { %>
+        <% if (locals.msg && msg.length> 0) { %>
           <div id="message" class="alert alert-danger text-center">
             <%= msg %>
           </div>
-        <% } %>  
+          <% } %>
 
-        <button type="submit">Signup</button>
+            <button type="submit">Signup</button>
       </form>
 
       <div class="divider"><span>or</span></div>
 
       <div class="google-btn">
         <a href="/auth/google" class="btn-btn-primary">
-          <img src="https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" alt="Google" width="24" height="24" />
+          <img src="https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" alt="Google"
+            width="24" height="24" />
           Sign up with Google
         </a>
       </div>
@@ -118,80 +124,85 @@
     const password = document.getElementById('password');
     const cPassword = document.getElementById('cPassword');
     const referralCode = document.getElementById('referralCode');
-  
+
     const error1 = document.getElementById('err1');
     const error2 = document.getElementById('err2');
     const error3 = document.getElementById('err3');  // password error
     const error5 = document.getElementById('err5');  // confirm password error
     const error4 = document.getElementById('err4');
-  
+
     const signform = document.getElementById('signform');
 
     // Eye Toggle for Password
-const togglePassword = document.getElementById("togglePassword");
-togglePassword.addEventListener("click", () => {
-  const type = password.type === "password" ? "text" : "password";
-  password.type = type;
+    const togglePassword = document.getElementById("togglePassword");
+    togglePassword.addEventListener("click", () => {
+      const type = password.type === "password" ? "text" : "password";
+      password.type = type;
 
-  togglePassword.innerHTML =
-    type === "password"
-      ? `<i class="fa fa-eye"></i>`
-      : `<i class="fa fa-eye-slash"></i>`;
-});
+      togglePassword.innerHTML =
+        type === "password"
+          ? `<i class="fa fa-eye"></i>`
+          : `<i class="fa fa-eye-slash"></i>`;
+    });
 
-// Eye Toggle for Confirm Password
-const toggleCPassword = document.getElementById("toggleCPassword");
-toggleCPassword.addEventListener("click", () => {
-  const type = cPassword.type === "password" ? "text" : "password";
-  cPassword.type = type;
+    // Eye Toggle for Confirm Password
+    const toggleCPassword = document.getElementById("toggleCPassword");
+    toggleCPassword.addEventListener("click", () => {
+      const type = cPassword.type === "password" ? "text" : "password";
+      cPassword.type = type;
 
-  toggleCPassword.innerHTML =
-    type === "password"
-      ? `<i class="fa fa-eye"></i>`
-      : `<i class="fa fa-eye-slash"></i>`;
-});
+      toggleCPassword.innerHTML =
+        type === "password"
+          ? `<i class="fa fa-eye"></i>`
+          : `<i class="fa fa-eye-slash"></i>`;
+    });
 
-  
-  
+
+
     function nameValidate() {
       const nameval = nameid.value.trim();
       const namepattern = /^[A-Za-z\s]+$/;
-  
+
       if (nameval === "") {
         error1.textContent = "Please input your name";
         error1.style.display = "block";
         return false;
-      } 
+      }
       if (!namepattern.test(nameval)) {
         error1.textContent = "Please enter a valid name";
         error1.style.display = "block";
         return false;
       }
-  
+      if (nameval.length < 3) {
+        error1.textContent = "Name must be at least 3 characters long";
+        error1.style.display = "block";
+        return false;
+      }
+
       error1.style.display = "none";
       return true;
     }
-  
-  
+
+
     function emailValidate() {
       const emailval = emailid.value.trim();
-      const emailpattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/;
-  
+      const emailpattern = /^[a-zA-Z0-9][a-zA-Z0-9._-]*@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/;
+
       if (!emailpattern.test(emailval)) {
         error2.textContent = "Please enter a valid email";
         error2.style.display = "block";
         return false;
       }
-  
+
       error2.style.display = "none";
       return true;
     }
-  
-  
+
+
     function passwordValidate() {
       const passval = password.value.trim();
       const passpattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
-  
+
       if (passval === "") {
         error3.textContent = "Please enter password";
         error3.style.display = "block";
@@ -202,16 +213,16 @@ toggleCPassword.addEventListener("click", () => {
         error3.style.display = "block";
         return false;
       }
-  
+
       error3.style.display = "none";
       return true;
     }
-  
-  
+
+
     function confirmPasswordValidate() {
       const passval = password.value.trim();
       const cPassVal = cPassword.value.trim();
-  
+
       if (cPassVal === "") {
         error5.textContent = "Please confirm your password";
         error5.style.display = "block";
@@ -222,40 +233,40 @@ toggleCPassword.addEventListener("click", () => {
         error5.style.display = "block";
         return false;
       }
-  
+
       error5.style.display = "none";
       return true;
     }
-  
-  
+
+
     function referralCodeValidate() {
       const referralVal = referralCode.value.trim();
       const referralPattern = /^[A-Z0-9]{8}$/;
-  
+
       if (referralVal === "") {
         error4.style.display = "none";
         return true;
       }
-  
+
       if (!referralPattern.test(referralVal)) {
         error4.textContent = "Referral code must be 8 characters (letters & numbers only)";
         error4.style.display = "block";
         return false;
       }
-  
+
       error4.style.display = "none";
       return true;
     }
-  
-  
+
+
     // Real-time remove errors
     nameid.addEventListener("input", nameValidate);
     emailid.addEventListener("input", emailValidate);
     password.addEventListener("input", passwordValidate);
     cPassword.addEventListener("input", confirmPasswordValidate);
     referralCode.addEventListener("input", referralCodeValidate);
-  
-  
+
+
     document.addEventListener("DOMContentLoaded", function () {
       signform.addEventListener("submit", function (e) {
         const isNameValid = nameValidate();
@@ -263,14 +274,15 @@ toggleCPassword.addEventListener("click", () => {
         const isPasswordValid = passwordValidate();
         const isConfirmPasswordValid = confirmPasswordValidate();
         const isReferralCodeValid = referralCodeValidate();
-  
+
         if (!isNameValid || !isEmailValid || !isPasswordValid || !isConfirmPasswordValid || !isReferralCodeValid) {
           e.preventDefault();
         }
       });
     });
   </script>
-  
-  
+
+
 </body>
+
 </html>

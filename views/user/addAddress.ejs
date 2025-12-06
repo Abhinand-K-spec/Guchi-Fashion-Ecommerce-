@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,7 +21,7 @@
       background: #fff;
       border-radius: 10px;
       padding: 25px 30px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
       max-width: 150vh;
       margin: 50px auto;
     }
@@ -52,7 +53,8 @@
       font-size: 14px;
       display: none;
     }
-    a{
+
+    a {
       text-decoration: none;
     }
   </style>
@@ -62,117 +64,120 @@
 
   <%- include('../partials/user/header') %>
 
-  <div class="address-card">
-    <h4>Add New Address</h4>
+    <div class="address-card">
+      <h4>Add New Address</h4>
 
-    <div id="message" class="alert"></div>
+      <div id="message" class="alert"></div>
 
-    <form id="addAddressForm">
+      <form id="addAddressForm">
 
-      <div class="row row-gap">
-        <div class="col-6">
-          <label class="form-label">Full Name</label>
-          <input type="text" id="name" name="name" maxlength="20" class="form-control" />
+        <div class="row row-gap">
+          <div class="col-6">
+            <label class="form-label">Full Name</label>
+            <input type="text" id="name" name="name" maxlength="20" class="form-control" />
+          </div>
+
+          <div class="col-6">
+            <label class="form-label">Phone</label>
+            <input type="tel" id="phone" name="phone" maxlength="10" class="form-control" />
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Alternative Phone</label>
+            <input type="tel" id="alternativePhone" name="alternativePhone" maxlength="10" class="form-control" />
+          </div>
+
+          <div class="col-6">
+            <label class="form-label">Town</label>
+            <input type="text" id="town" maxlength="20" name="town" class="form-control" />
+          </div>
+
+          <div class="col-6">
+            <label class="form-label">City</label>
+            <input type="text" id="city" maxlength="20" name="city" class="form-control" />
+          </div>
+
+          <div class="col-6">
+            <label class="form-label">State</label>
+            <input type="text" id="state" name="state" class="form-control" />
+          </div>
+
+          <div class="col-6">
+            <label class="form-label">Post Code</label>
+            <input type="text" id="postCode" name="postCode" maxlength="6" class="form-control" />
+          </div>
         </div>
 
-        <div class="col-6">
-          <label class="form-label">Phone</label>
-          <input type="tel" id="phone" name="phone" maxlength="10" class="form-control" />
+        <div class="d-flex justify-content-between mt-4">
+          <a href="/edit-profile" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">Save Address</button>
         </div>
 
-        <div class="col-12">
-          <label class="form-label">Alternative Phone</label>
-          <input type="tel" id="alternativePhone" name="alternativePhone" maxlength="10" class="form-control" />
-        </div>
+      </form>
+    </div>
 
-        <div class="col-6">
-          <label class="form-label">Town</label>
-          <input type="text" id="town" maxlength="20" name="town" class="form-control" />
-        </div>
+    <%- include('../partials/user/footer') %>
 
-        <div class="col-6">
-          <label class="form-label">City</label>
-          <input type="text" id="city" maxlength="20" name="city" class="form-control" />
-        </div>
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-        <div class="col-6">
-          <label class="form-label">State</label>
-          <input type="text" id="state" name="state" class="form-control" />
-        </div>
+      <script>
+        $(document).ready(function () {
+          $('#addAddressForm').on('submit', function (e) {
+            e.preventDefault();
 
-        <div class="col-6">
-          <label class="form-label">Post Code</label>
-          <input type="text" id="postCode" name="postCode" maxlength="6" class="form-control" />
-        </div>
-      </div>
+            const name = $('#name').val().trim();
+            const phone = $('#phone').val().trim();
+            const alternativePhone = $('#alternativePhone').val().trim();
+            const town = $('#town').val().trim();
+            const city = $('#city').val().trim();
+            const state = $('#state').val().trim();
+            const postCode = $('#postCode').val().trim();
 
-      <div class="d-flex justify-content-between mt-4">
-        <a href="/edit-profile" class="btn btn-secondary">Cancel</a>
-        <button type="submit" class="btn btn-primary">Save Address</button>
-      </div>
+            let isValid = true;
+            let message = '';
 
-    </form>
-  </div>
+            if (!name) {
+              message = 'Full name is required.';
+            } else if (!/^[a-zA-Z\s]+$/.test(name)) {
+              message = 'Name should contain only letters.';
+            } else if (name.length < 3) {
+              message = 'Name must be at least 3 characters long.';
+            } else if (!/^\d{10}$/.test(phone)) {
+              message = 'Enter a valid 10-digit phone number.';
+            } else if (alternativePhone && (!/^\d{10}$/.test(alternativePhone) || alternativePhone === phone)) {
+              message = 'Alternative phone must be a valid different 10-digit number.';
+            } else if (!town || !/^[a-zA-Z\s]+$/.test(town)) {
+              message = 'Enter a valid town.';
+            } else if (!city || !/^[a-zA-Z\s]+$/.test(city)) {
+              message = 'Enter a valid city.';
+            } else if (!state || !/^[a-zA-Z\s]+$/.test(state)) {
+              message = 'Enter a valid state.';
+            } else if (!/^\d{6}$/.test(postCode)) {
+              message = 'Post code must be exactly 6 digits.';
+            }
 
-  <%- include('../partials/user/footer') %>
+            if (message) {
+              $('#message').removeClass('alert-success').addClass('alert-danger').text(message).show();
+              return;
+            }
 
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-  <script>
-    $(document).ready(function () {
-      $('#addAddressForm').on('submit', function (e) {
-        e.preventDefault();
-
-        const name = $('#name').val().trim();
-        const phone = $('#phone').val().trim();
-        const alternativePhone = $('#alternativePhone').val().trim();
-        const town = $('#town').val().trim();
-        const city = $('#city').val().trim();
-        const state = $('#state').val().trim();
-        const postCode = $('#postCode').val().trim();
-
-        let isValid = true;
-        let message = '';
-
-        if (!name) {
-          message = 'Full name is required.';
-        } else if (!/^[a-zA-Z\s]+$/.test(name)) {
-          message = 'Name should contain only letters.';
-        } else if (!/^\d{10}$/.test(phone)) {
-          message = 'Enter a valid 10-digit phone number.';
-        } else if (alternativePhone && (!/^\d{10}$/.test(alternativePhone) || alternativePhone === phone)) {
-          message = 'Alternative phone must be a valid different 10-digit number.';
-        } else if (!town || !/^[a-zA-Z\s]+$/.test(town)) {
-          message = 'Enter a valid town.';
-        } else if (!city || !/^[a-zA-Z\s]+$/.test(city)) {
-          message = 'Enter a valid city.';
-        } else if (!state || !/^[a-zA-Z\s]+$/.test(state)) {
-          message = 'Enter a valid state.';
-        } else if (!/^\d{6}$/.test(postCode)) {
-          message = 'Post code must be exactly 6 digits.';
-        }
-
-        if (message) {
-          $('#message').removeClass('alert-success').addClass('alert-danger').text(message).show();
-          return;
-        }
-
-        $.ajax({
-          url: '/add-address',
-          method: 'POST',
-          data: { name, phone, alternativePhone, town, city, state, postCode },
-          success: function () {
-            $('#message').removeClass('alert-danger').addClass('alert-success').text('Address added successfully.').show();
-            setTimeout(() => window.location.href = '/edit-profile', 800);
-          },
-          error: function (xhr) {
-            const msg = xhr.responseJSON?.message || 'Something went wrong.';
-            $('#message').removeClass('alert-success').addClass('alert-danger').text(msg).show();
-          }
+            $.ajax({
+              url: '/add-address',
+              method: 'POST',
+              data: { name, phone, alternativePhone, town, city, state, postCode },
+              success: function () {
+                $('#message').removeClass('alert-danger').addClass('alert-success').text('Address added successfully.').show();
+                setTimeout(() => window.location.href = '/edit-profile', 800);
+              },
+              error: function (xhr) {
+                const msg = xhr.responseJSON?.message || 'Something went wrong.';
+                $('#message').removeClass('alert-success').addClass('alert-danger').text(msg).show();
+              }
+            });
+          });
         });
-      });
-    });
-  </script>
+      </script>
 
 </body>
+
 </html>
