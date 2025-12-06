@@ -115,6 +115,8 @@ const cart = async (req, res) => {
       const isProductListed = product.IsListed;
       const isCategoryListed = product.Category && product.Category.isListed;
 
+      console.log(`Cart Item: ${product.productName}, Variant: ${variantIndex}, Offer: ${offer ? offer.Discount : 'None'}, Price: ${price}, Orig: ${variant?.Price}`);
+
       cartItems.push({
         _id: product._id,
         name: product.productName,
@@ -125,7 +127,9 @@ const cart = async (req, res) => {
         itemTotal,
         offer: offer ? offer.Discount : null,
         variantIndex: variantIndex,
-        isListed: isProductListed && isCategoryListed
+        isListed: isProductListed && isCategoryListed,
+        size: variant?.Size || '',
+        originalPrice: variant?.Price || 0
       });
 
       if (variant?.Stock >= item.quantity && isProductListed && isCategoryListed) {
@@ -207,7 +211,12 @@ const getCartData = async (req, res) => {
         stock: variant?.Stock || 0,
         itemTotal,
         variantIndex: variantIndex,
-        isListed: isProductListed && isCategoryListed
+        itemTotal,
+        variantIndex: variantIndex,
+        isListed: isProductListed && isCategoryListed,
+        size: variant?.Size || '',
+        originalPrice: variant?.Price || 0,
+        offer: offer ? offer.Discount : null
       };
     }));
 
