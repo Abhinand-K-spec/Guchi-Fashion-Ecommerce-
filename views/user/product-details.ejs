@@ -350,8 +350,8 @@
         const addToCartBtn = document.getElementById('addToCartBtn');
 
         // Parse variants from server
-        const variants = <% - JSON.stringify(product.Variants || []) %>;
-        const productOffer = <% - JSON.stringify(product.offer || null) %>;
+        const variants = <%- JSON.stringify(product.Variants || []) %>;
+        const productOffer = <%- JSON.stringify(product.offer || null) %>;
         console.log('Product Details Variants:', variants);
 
         // Remember previous selection
@@ -441,7 +441,7 @@
             const selectedSize = sizeSelector ? sizeSelector.value : '';
 
             // Find variant index based on selected size
-            const variants = <% - JSON.stringify(product.Variants) %>;
+            const variants = <%- JSON.stringify(product.Variants) %>;
             const variantIndex = variants.findIndex(v => v.Size && v.Size.trim() === selectedSize.trim());
             const finalVariantIndex = variantIndex >= 0 ? variantIndex : 0;
 
