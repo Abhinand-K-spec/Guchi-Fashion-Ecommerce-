@@ -108,9 +108,13 @@ const approveReturn = async (req, res) => {
     if (!item) return res.status(404).send('Item not found in order');
     if (item.returnStatus !== 'Return Requested') return res.status(400).send('Item return not requested');
 
+    const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+    const updateQuery = {};
+    updateQuery[`Variants.${variantIndex}.Stock`] = item.quantity;
+
     await Product.updateOne(
-      { _id: item.product, 'Variants.0': { $exists: true } },
-      { $inc: { 'Variants.0.Stock': item.quantity } }
+      { _id: item.product },
+      { $inc: updateQuery }
     );
 
     item.returnStatus = 'Request Approved';

@@ -41,17 +41,17 @@ const addProducts = async (req, res) => {
 
     const Colour = 'Default';
 
-    if(/[^A-Za-z]g/.test(productName)){
+    if (/[^A-Za-z]g/.test(productName)) {
       req.flash('msg', 'Product name should not contain special characters or numbers');
-      return  res.redirect('/admin/addProducts');
+      return res.redirect('/admin/addProducts');
     }
 
-    if(productName.trim() == '' ){
+    if (productName.trim() == '') {
       req.flash('msg', 'Product name cannot be empty');
-      return  res.redirect('/admin/addProducts');
+      return res.redirect('/admin/addProducts');
     }
 
-    if (!productName || !size || !price || !stock || !description || !category ) {
+    if (!productName || !size || !price || !stock || !description || !category) {
       req.flash('msg', 'All fields are required');
       return res.redirect('/admin/addProducts');
     }
@@ -145,7 +145,7 @@ const getAllProducts = async (req, res) => {
 
     const products = await Product.find(filter)
       .populate('Category')
-      .sort({UpdatedAt:-1})
+      .sort({ UpdatedAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();
@@ -212,13 +212,13 @@ const list = async (req, res) => {
 const getEditProductPage = async (req, res) => {
   try {
     const productId = req.params.productId;
-    const products = await Product.find({isListed:true}).lean();
+    const products = await Product.find({ isListed: true }).lean();
     const product = await Product.findById(productId).populate('Category').lean();
     const categories = await Category.find({ isListed: true }).lean();
 
     if (!product) return res.status(404).render('page-404');
 
-    res.render('edit-product', { product, categories ,products });
+    res.render('edit-product', { product, categories, products });
   } catch (error) {
     console.error('Error in getEditProductPage:', error);
     res.redirect('/pageNotFound');
@@ -250,10 +250,27 @@ const postEditProduct = async (req, res) => {
     if (!categoryDoc) return res.status(400).send('Invalid category');
     product.Category = categoryDoc._id;
 
-    if (product.Variants.length === 0) product.Variants.push({});
-    product.Variants[0].Size = size;
-    product.Variants[0].Price = parseFloat(price);
-    product.Variants[0].Stock = parseInt(stock);
+    if (product.Variants.length === 0) {
+      product.Variants.push({
+        Size: size,
+        Price: parseFloat(price),
+        Stock: parseInt(stock)
+      });
+    } else {
+      const variantIndex = product.Variants.findIndex(v => v.Size === size);
+      if (variantIndex !== -1) {
+        product.Variants[variantIndex].Price = parseFloat(price);
+        product.Variants[variantIndex].Stock = parseInt(stock);
+      } else {
+        // Optional: Handle case where size doesn't exist (maybe add it?)
+        // For now, let's assume we only edit existing variants or add if empty
+        product.Variants.push({
+          Size: size,
+          Price: parseFloat(price),
+          Stock: parseInt(stock)
+        });
+      }
+    }
 
     const newImages = [croppedImage1, croppedImage2, croppedImage3];
     const updatedImages = [];

@@ -342,60 +342,74 @@
       <% } %>
   </div>
   <%- include('../partials/user/footer') %>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const sizeSelector = document.getElementById('sizeSelector');
-      const priceDisplay = document.getElementById('priceDisplay');
-      const stockDisplay = document.getElementById('stockDisplay');
-      const addToCartBtn = document.getElementById('addToCartBtn');
-      
-      // Parse variants from server
-      const variants = <% - JSON.stringify(product.Variants) %>;
-      const productOffer = <% - JSON.stringify(product.offer || null) %>;
-      
-      // Remember previous selection
-      const savedSize = localStorage.getItem('selectedSize_<%= product._id %>');
-      if (savedSize) {
-        sizeSelector.value = savedSize;
-      }
-      
-      function updateVariant(selectedSize) {
-        const variant = variants.find(v => v.Size && v.Size.trim() === selectedSize.trim());
-        
-        
-        if (!variant) {
-          priceDisplay.textContent = "₹0.00";
-          stockDisplay.innerHTML = `<strong>Stock:</strong> 0 available`;
-          addToCartBtn.disabled = true;
-          addToCartBtn.textContent = "Out of Stock";
-          return;
-        }
-        
-        // If offer available, use salePrice and show both prices
-        let priceHTML = "";
-        if (productOffer) {
-          priceHTML = `₹${parseFloat(variant.salePrice || variant.Price).toFixed(2)} 
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const sizeSelector = document.getElementById('sizeSelector');
+        const priceDisplay = document.getElementById('priceDisplay');
+        const stockDisplay = document.getElementById('stockDisplay');
+        const addToCartBtn = document.getElementById('addToCartBtn');
+
+        // Parse variants from server
+        const variants = <% - JSON.stringify(product.Variants || []) %>;
+        const productOffer = <% - JSON.stringify(product.offer || null) %>;
+        console.log('Product Details Variants:', variants);
+
+        // Remember previous selection
+        const savedSize = localStorage.getItem('selectedSize_<%= product._id %>');
+        console.log('Product Details Saved Size:', savedSize);
+
+        setTimeout(() => {
+          if (savedSize) {
+            // Verify if saved size exists in variants
+            const exists = variants.some(v => v.Size && v.Size.trim() === savedSize.trim());
+            if (exists) {
+              sizeSelector.value = savedSize;
+              updateVariant(savedSize);
+            }
+          }
+          // Run once at page load (with saved or first variant if no saved size or saved size invalid)
+          const initialSize = sizeSelector.value || (variants[0] ? variants[0].Size : '');
+          if (initialSize && !savedSize) updateVariant(initialSize); // Only update if no valid saved size was applied
+        }, 100);
+
+        function updateVariant(selectedSize) {
+          console.log('Updating variant for size:', selectedSize);
+          const variant = variants.find(v => v.Size && v.Size.trim() === selectedSize.trim());
+          console.log('Found Variant:', variant);
+
+          if (!variant) {
+            priceDisplay.textContent = "₹0.00";
+            stockDisplay.innerHTML = `<strong>Stock:</strong> 0 available`;
+            addToCartBtn.disabled = true;
+            addToCartBtn.textContent = "Out of Stock";
+            return;
+          }
+
+          // If offer available, use salePrice and show both prices
+          let priceHTML = "";
+          if (productOffer) {
+            priceHTML = `₹${parseFloat(variant.salePrice || variant.Price).toFixed(2)} 
           <span class="offer-percentage">${productOffer.Discount}% OFF</span>
           <span class="regular-price">₹${parseFloat(variant.Price).toFixed(2)}</span>`;
-        } else {
-          priceHTML = `₹${parseFloat(variant.Price).toFixed(2)}`;
+          } else {
+            priceHTML = `₹${parseFloat(variant.Price).toFixed(2)}`;
           }
-          
+
           priceDisplay.innerHTML = priceHTML;
-          
+
           // Update stock
           const stock = parseInt(variant.Stock || 0);
           stockDisplay.innerHTML = `<strong>Stock:</strong> ${stock} available`;
-          
+
           // Update cart button
           addToCartBtn.disabled = stock <= 0;
           addToCartBtn.textContent = stock > 0 ? "Add to Cart" : "Out of Stock";
         }
-        
+
         // Run once at page load (with saved or first variant)
-        const initialSize = sizeSelector.value || variants[0]?.Size;
+        const initialSize = sizeSelector.value || (variants[0] ? variants[0].Size : '');
         if (initialSize) updateVariant(initialSize);
-        
+
         // Listen for change
         sizeSelector.addEventListener('change', (e) => {
           const selectedSize = e.target.value;
@@ -403,102 +417,102 @@
           updateVariant(selectedSize);
         });
       });
-      </script>
-      <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const addToCartBtn = document.getElementById('addToCartBtn');
-    const notification = document.getElementById('notification');
+    </script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        const notification = document.getElementById('notification');
 
-    // Utility function to show success/error
-    function showNotification(type, message) {
-      notification.textContent = message;
-      notification.className = `notification ${type}`;
-      notification.style.display = 'block';
-      setTimeout(() => {
-        notification.style.display = 'none';
-      }, 2500);
-    }
-
-    if (addToCartBtn) {
-      addToCartBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const productId = addToCartBtn.dataset.productId;
-        const sizeSelector = document.getElementById('sizeSelector');
-        const selectedSize = sizeSelector ? sizeSelector.value : '';
-        
-        // Find variant index based on selected size
-        const variants = <%- JSON.stringify(product.Variants) %>;
-        const variantIndex = variants.findIndex(v => v.Size && v.Size.trim() === selectedSize.trim());
-        const finalVariantIndex = variantIndex >= 0 ? variantIndex : 0;
-
-        // Disable button while request runs
-        addToCartBtn.disabled = true;
-        addToCartBtn.textContent = 'Adding...';
-
-        try {
-          const response = await fetch(`/addToCart/${productId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ variantIndex: finalVariantIndex })
-          });
-
-          const result = await response.json();
-          
-        if (result.error === "LOGIN_REQUIRED") {
-          window.location.href = '/login';
-          return;
+        // Utility function to show success/error
+        function showNotification(type, message) {
+          notification.textContent = message;
+          notification.className = `notification ${type}`;
+          notification.style.display = 'block';
+          setTimeout(() => {
+            notification.style.display = 'none';
+          }, 2500);
         }
-          if (response.ok && result.success) {
-            showNotification('success', result.success || result.message || 'Product added to cart successfully!');
-          }else {
-            showNotification('error', result.message || result.error  || 'Failed to add product to cart.');
-          }
-        } catch (err) {
-          console.error('Add to cart error:', err);
-          showNotification('error', 'Something went wrong. Please try again.');
-        } finally {
-          addToCartBtn.disabled = false;
-          addToCartBtn.textContent = 'Add to Cart';
+
+        if (addToCartBtn) {
+          addToCartBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const productId = addToCartBtn.dataset.productId;
+            const sizeSelector = document.getElementById('sizeSelector');
+            const selectedSize = sizeSelector ? sizeSelector.value : '';
+
+            // Find variant index based on selected size
+            const variants = <% - JSON.stringify(product.Variants) %>;
+            const variantIndex = variants.findIndex(v => v.Size && v.Size.trim() === selectedSize.trim());
+            const finalVariantIndex = variantIndex >= 0 ? variantIndex : 0;
+
+            // Disable button while request runs
+            addToCartBtn.disabled = true;
+            addToCartBtn.textContent = 'Adding...';
+
+            try {
+              const response = await fetch(`/addToCart/${productId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ variantIndex: finalVariantIndex })
+              });
+
+              const result = await response.json();
+
+              if (result.error === "LOGIN_REQUIRED") {
+                window.location.href = '/login';
+                return;
+              }
+              if (response.ok && result.success) {
+                showNotification('success', result.success || result.message || 'Product added to cart successfully!');
+              } else {
+                showNotification('error', result.message || result.error || 'Failed to add product to cart.');
+              }
+            } catch (err) {
+              console.error('Add to cart error:', err);
+              showNotification('error', 'Something went wrong. Please try again.');
+            } finally {
+              addToCartBtn.disabled = false;
+              addToCartBtn.textContent = 'Add to Cart';
+            }
+          });
         }
       });
-    }
-  });
-</script>
-        <script>
-          document.addEventListener('DOMContentLoaded', () => {
-            const wishlistBtn = document.getElementById('addToWishlistBtn');
-            const notification = document.getElementById('notification');
-            
-            // Use the same notification function as Add to Cart
-            function showNotification(type, message) {
-              notification.textContent = message;
-              notification.className = `notification ${type}`;
-              notification.style.display = 'block';
-              setTimeout(() => {
-                notification.style.display = 'none';
-              }, 2500);
-            }
-            
-            if (wishlistBtn) {
-              wishlistBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                const productId = wishlistBtn.dataset.productId;
-                
-                wishlistBtn.disabled = true;
-                wishlistBtn.textContent = 'Adding...';
-                
-                try {
-                  const response = await fetch(`/add-to-wishlist/${productId}`, {
-                    method: 'GET'
-                  });
-                  
-                  const result = await response.json();
-                  
-                  if (response.ok && result.success) {
-                    showNotification('success', result.message || 'Added to wishlist successfully!');
-                  } else {
-                    showNotification('error', result.message || result.error || 'Failed to add to wishlist.');
-                  }
+    </script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const wishlistBtn = document.getElementById('addToWishlistBtn');
+        const notification = document.getElementById('notification');
+
+        // Use the same notification function as Add to Cart
+        function showNotification(type, message) {
+          notification.textContent = message;
+          notification.className = `notification ${type}`;
+          notification.style.display = 'block';
+          setTimeout(() => {
+            notification.style.display = 'none';
+          }, 2500);
+        }
+
+        if (wishlistBtn) {
+          wishlistBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const productId = wishlistBtn.dataset.productId;
+
+            wishlistBtn.disabled = true;
+            wishlistBtn.textContent = 'Adding...';
+
+            try {
+              const response = await fetch(`/add-to-wishlist/${productId}`, {
+                method: 'GET'
+              });
+
+              const result = await response.json();
+
+              if (response.ok && result.success) {
+                showNotification('success', result.message || 'Added to wishlist successfully!');
+              } else {
+                showNotification('error', result.message || result.error || 'Failed to add to wishlist.');
+              }
             } catch (err) {
               console.error('Wishlist error:', err);
               showNotification('error', 'Something went wrong while adding to wishlist.');
@@ -509,129 +523,129 @@
           });
         }
       });
-      </script>
-      <script>
-        // Image Zoom Script
-        function imageZoom(imgID, resultID) {
-          var img, lens, result, cx, cy;
-          img = document.getElementById(imgID);
-          result = document.getElementById(resultID);
-  
-          /* Create lens: */
-          lens = document.createElement("DIV");
-          lens.setAttribute("class", "img-zoom-lens");
-  
-          /* Insert lens: */
-          img.parentElement.insertBefore(lens, img);
-  
-          /* Calculate the ratio between result DIV and lens: */
-          cx = result.offsetWidth / lens.offsetWidth;
-          cy = result.offsetHeight / lens.offsetHeight;
-  
-          /* Set background properties for the result DIV */
+    </script>
+    <script>
+      // Image Zoom Script
+      function imageZoom(imgID, resultID) {
+        var img, lens, result, cx, cy;
+        img = document.getElementById(imgID);
+        result = document.getElementById(resultID);
+
+        /* Create lens: */
+        lens = document.createElement("DIV");
+        lens.setAttribute("class", "img-zoom-lens");
+
+        /* Insert lens: */
+        img.parentElement.insertBefore(lens, img);
+
+        /* Calculate the ratio between result DIV and lens: */
+        cx = result.offsetWidth / lens.offsetWidth;
+        cy = result.offsetHeight / lens.offsetHeight;
+
+        /* Set background properties for the result DIV */
+        result.style.backgroundImage = "url('" + img.src + "')";
+        result.style.backgroundSize = (img.offsetWidth * cx) + "px " + (img.offsetHeight * cy) + "px";
+
+        /* Execute a function when someone moves the cursor over the image, or the lens: */
+        /* Use container for events to prevent flickering when mouse enters lens */
+        const container = img.parentElement;
+
+        container.addEventListener("mousemove", moveLens);
+        container.addEventListener("touchmove", moveLens);
+
+        /* Show result and lens on mouse enter */
+        container.addEventListener("mouseenter", function () {
+          result.style.display = "block";
+          lens.style.display = "block";
+
+          // Force reflow to ensure dimensions are available
+          let lensW = lens.offsetWidth;
+          let lensH = lens.offsetHeight;
+
+          // Fallback if dimensions are 0 (shouldn't happen with display:block)
+          if (lensW === 0) lensW = 100;
+          if (lensH === 0) lensH = 100;
+
+          // Recalculate ratios
+          cx = result.offsetWidth / lensW;
+          cy = result.offsetHeight / lensH;
+
           result.style.backgroundImage = "url('" + img.src + "')";
           result.style.backgroundSize = (img.offsetWidth * cx) + "px " + (img.offsetHeight * cy) + "px";
-  
-          /* Execute a function when someone moves the cursor over the image, or the lens: */
-          /* Use container for events to prevent flickering when mouse enters lens */
-          const container = img.parentElement;
-  
-          container.addEventListener("mousemove", moveLens);
-          container.addEventListener("touchmove", moveLens);
-  
-          /* Show result and lens on mouse enter */
-          container.addEventListener("mouseenter", function () {
-            result.style.display = "block";
-            lens.style.display = "block";
-  
-            // Force reflow to ensure dimensions are available
-            let lensW = lens.offsetWidth;
-            let lensH = lens.offsetHeight;
-  
-            // Fallback if dimensions are 0 (shouldn't happen with display:block)
-            if (lensW === 0) lensW = 100;
-            if (lensH === 0) lensH = 100;
-  
-            // Recalculate ratios
-            cx = result.offsetWidth / lensW;
-            cy = result.offsetHeight / lensH;
-  
-            result.style.backgroundImage = "url('" + img.src + "')";
-            result.style.backgroundSize = (img.offsetWidth * cx) + "px " + (img.offsetHeight * cy) + "px";
-          });
-  
-          /* Hide result and lens on mouse leave */
-          container.addEventListener("mouseleave", function () {
-            result.style.display = "none";
-            lens.style.display = "none";
-          });
-  
-          function moveLens(e) {
-            var pos, x, y;
-            /* Prevent any other actions that may occur when moving over the image */
-            e.preventDefault();
-            /* Get the cursor's x and y positions: */
-            pos = getCursorPos(e);
-            /* Calculate the position of the lens: */
-            x = pos.x - (lens.offsetWidth / 2);
-            y = pos.y - (lens.offsetHeight / 2);
-            /* Prevent the lens from being positioned outside the image: */
-            if (x > img.offsetWidth - lens.offsetWidth) { x = img.offsetWidth - lens.offsetWidth; }
-            if (x < 0) { x = 0; }
-            if (y > img.offsetHeight - lens.offsetHeight) { y = img.offsetHeight - lens.offsetHeight; }
-            if (y < 0) { y = 0; }
-            /* Set the position of the lens: */
-            lens.style.left = x + "px";
-            lens.style.top = y + "px";
-            /* Display what the lens "sees": */
-            result.style.backgroundPosition = "-" + (x * cx) + "px -" + (y * cy) + "px";
-          }
-  
-          function getCursorPos(e) {
-            var a, x = 0, y = 0;
-            e = e || window.event;
-            /* Get the x and y positions of the image: */
-            a = img.getBoundingClientRect();
-            /* Calculate the cursor's x and y coordinates, relative to the image: */
-            x = e.clientX - a.left;
-            y = e.clientY - a.top;
-            /* Consider any page scrolling: */
-            return { x: x, y: y };
-          }
-        }
-  
-        // Initialize zoom
-        document.addEventListener('DOMContentLoaded', function () {
-          const img = document.getElementById("mainProductImage");
-  
-          function init() {
-            imageZoom("mainProductImage", "zoom-result");
-          }
-  
-          if (img.complete) {
-            init();
-          } else {
-            img.onload = init;
-          }
         });
-  
-        // Define the swapImage function
-        function swapImage(thumbnailElement) {
-          const mainImage = document.getElementById('mainProductImage');
-          const result = document.getElementById('zoom-result');
-  
-          const newImageUrl = thumbnailElement.src;
-          const currentMainImageUrl = mainImage.src;
-  
-          mainImage.src = newImageUrl;
-          thumbnailElement.src = currentMainImageUrl;
-  
-          // Update zoom background image
-          if (result) {
-            result.style.backgroundImage = "url('" + newImageUrl + "')";
-          }
+
+        /* Hide result and lens on mouse leave */
+        container.addEventListener("mouseleave", function () {
+          result.style.display = "none";
+          lens.style.display = "none";
+        });
+
+        function moveLens(e) {
+          var pos, x, y;
+          /* Prevent any other actions that may occur when moving over the image */
+          e.preventDefault();
+          /* Get the cursor's x and y positions: */
+          pos = getCursorPos(e);
+          /* Calculate the position of the lens: */
+          x = pos.x - (lens.offsetWidth / 2);
+          y = pos.y - (lens.offsetHeight / 2);
+          /* Prevent the lens from being positioned outside the image: */
+          if (x > img.offsetWidth - lens.offsetWidth) { x = img.offsetWidth - lens.offsetWidth; }
+          if (x < 0) { x = 0; }
+          if (y > img.offsetHeight - lens.offsetHeight) { y = img.offsetHeight - lens.offsetHeight; }
+          if (y < 0) { y = 0; }
+          /* Set the position of the lens: */
+          lens.style.left = x + "px";
+          lens.style.top = y + "px";
+          /* Display what the lens "sees": */
+          result.style.backgroundPosition = "-" + (x * cx) + "px -" + (y * cy) + "px";
         }
-      </script>
+
+        function getCursorPos(e) {
+          var a, x = 0, y = 0;
+          e = e || window.event;
+          /* Get the x and y positions of the image: */
+          a = img.getBoundingClientRect();
+          /* Calculate the cursor's x and y coordinates, relative to the image: */
+          x = e.clientX - a.left;
+          y = e.clientY - a.top;
+          /* Consider any page scrolling: */
+          return { x: x, y: y };
+        }
+      }
+
+      // Initialize zoom
+      document.addEventListener('DOMContentLoaded', function () {
+        const img = document.getElementById("mainProductImage");
+
+        function init() {
+          imageZoom("mainProductImage", "zoom-result");
+        }
+
+        if (img.complete) {
+          init();
+        } else {
+          img.onload = init;
+        }
+      });
+
+      // Define the swapImage function
+      function swapImage(thumbnailElement) {
+        const mainImage = document.getElementById('mainProductImage');
+        const result = document.getElementById('zoom-result');
+
+        const newImageUrl = thumbnailElement.src;
+        const currentMainImageUrl = mainImage.src;
+
+        mainImage.src = newImageUrl;
+        thumbnailElement.src = currentMainImageUrl;
+
+        // Update zoom background image
+        if (result) {
+          result.style.backgroundImage = "url('" + newImageUrl + "')";
+        }
+      }
+    </script>
 
 
 

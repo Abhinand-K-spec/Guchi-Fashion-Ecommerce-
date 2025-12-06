@@ -277,29 +277,47 @@
       }
 
 
-      const variants = <% - JSON.stringify(product.Variants) %>;
+      const variants = <% - JSON.stringify(product.Variants || []) %>;
+      console.log('Loaded Variants:', variants);
+
       const sizeSelect = document.getElementById('sizeSelect');
       const priceInput = document.getElementById('priceInput');
       const stockInput = document.getElementById('stockInput');
+      const productId = '<%= product._id.toString() %>';
 
+      // Use product-specific key for localStorage
+      const storageKey = `selectedSize_${productId}`;
 
-      const lastSize = localStorage.getItem('selectedSize');
-      if (lastSize && variants.find(v => v.Size === lastSize)) {
-        sizeSelect.value = lastSize;
-        updateVariantFields();
-      }
+      // Delay restoration to ensure DOM is ready and override browser defaults
+      setTimeout(() => {
+        const lastSize = localStorage.getItem(storageKey);
+        console.log('Last Size from Storage:', lastSize);
+
+        if (lastSize) {
+          const matchingVariant = variants.find(v => v.Size && v.Size.trim() === lastSize.trim());
+          if (matchingVariant) {
+            console.log('Restoring size:', lastSize);
+            sizeSelect.value = matchingVariant.Size;
+            updateVariantFields();
+          }
+        }
+      }, 100);
 
       function updateVariantFields() {
         const selectedSize = sizeSelect.value;
-        const selectedVariant = variants.find(v => v.Size === selectedSize);
+        console.log('Selected Size:', selectedSize);
+
+        const selectedVariant = variants.find(v => v.Size && v.Size.trim() === selectedSize.trim());
+        console.log('Selected Variant:', selectedVariant);
 
         if (selectedVariant) {
           priceInput.value = selectedVariant.Price;
           stockInput.value = selectedVariant.Stock;
         }
 
-
-        localStorage.setItem('selectedSize', selectedSize);
+        if (selectedSize) {
+          localStorage.setItem(storageKey, selectedSize);
+        }
       }
 
       // Add loading indicator to form submission
