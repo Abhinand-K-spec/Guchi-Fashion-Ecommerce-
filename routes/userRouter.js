@@ -29,7 +29,7 @@ router.post('/login', userController.login);
 
 router.get('/forgot-password', userController.getForgotPasswordPage);
 router.post('/forgot-password', userController.sendForgotOtp);
-router.get('/forgot-verify-otp', userController.getForgotOtpPage); 
+router.get('/forgot-verify-otp', userController.getForgotOtpPage);
 router.post('/forgot-password', userController.handleForgotPassword);
 router.get('/change-password', userAuth, userController.getChangePassword);
 router.post('/change-password', userAuth, userController.changePassword);
@@ -49,7 +49,7 @@ router.post('/profile/update-username', userAuth, profileController.updateUserna
 
 // address management------------------------------------------------------------------------------------->
 router.get('/add-address', userAuth, addressController.getAddAddress);
-router.get('/add-addressCheckout',userAuth,addressController.getAddAddressFromCheckout);
+router.get('/add-addressCheckout', userAuth, addressController.getAddAddressFromCheckout);
 router.post('/add-address', userAuth, addressController.addAddress);
 router.get('/edit-address/:id', userAuth, addressController.getEditAddress);
 router.get('/edit-addressCheckout/:id', userAuth, addressController.getEditAddressCheckout);
@@ -65,7 +65,7 @@ router.get('/resend-forgot-otp', userController.resendForgotOtp);
 
 router.get('/auth/google', passport.authenticate('google', {
   scope: ['profile', 'email'],
-  prompt: 'select_account'  
+  prompt: 'select_account'
 }));
 
 router.get(
@@ -88,15 +88,15 @@ router.get('/shopnow', productController.getShopPage);
 router.get('/shop', productController.getShopPage);
 
 router.get('/checkout', userAuth, cartController.checkout);
-router.post('/place-order', userAuth, orderController.placeOrder); 
+router.post('/place-order', userAuth, orderController.placeOrder);
 router.post('/validate-coupon', couponController.validateCoupon);
 
 router.post('/verify-payment', userAuth, paymentController.verifyPayment);
 router.get('/order-confirmation/:orderId', userAuth, userController.getOrderSuccess);
-router.get('/payment-success/:orderId', userAuth, paymentController.getPaymentSuccess); 
+router.get('/payment-success/:orderId', userAuth, paymentController.getPaymentSuccess);
 router.get('/payment-failure/:orderId', userAuth, paymentController.getPaymentFailure);
-router.post('/retry-payment', userAuth,paymentController.retryPayment);
-router.post('/verify-retry-payment', userAuth,paymentController.verifyRetryPayment);
+router.post('/retry-payment', userAuth, paymentController.retryPayment);
+router.post('/verify-retry-payment', userAuth, paymentController.verifyRetryPayment);
 
 
 // order management------------------------------------------------------------------------------------->
@@ -120,11 +120,11 @@ router.post('/wallet-pay', userAuth, walletController.payWithWallet);
 
 
 
-router.get('/wishlist',userAuth,wishlistController.getWishlist);
-router.post('/wishlist/add-to-cart', userAuth,wishlistController.addToCartFromWishlist);
+router.get('/wishlist', userAuth, wishlistController.getWishlist);
+router.post('/wishlist/add-to-cart', userAuth, wishlistController.addToCartFromWishlist);
 router.post('/wishlist/remove', wishlistController.removeFromWishlist);
-router.post('/add', wishlistController.addToWishlist);
-router.get('/add-to-wishlist/:productId',userAuth,wishlistController.addToWishlist);
+router.post('/add', userAuth, wishlistController.addToWishlist);
+router.get('/add-to-wishlist/:productId', wishlistController.addToWishlist);
 
 
 module.exports = router;

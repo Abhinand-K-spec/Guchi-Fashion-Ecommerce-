@@ -102,7 +102,7 @@ const addToCartFromWishlist = async (req, res) => {
 
 const removeFromWishlist = async (req, res) => {
   try {
-    const {  wishlistId } = req.body;
+    const { wishlistId } = req.body;
     const userId = req.session.user;
     if (!userId || !wishlistId) {
       return res.status(400).json({ success: false, message: 'User ID and Wishlist ID are required' });
@@ -127,12 +127,16 @@ const removeFromWishlist = async (req, res) => {
 
 const addToWishlist = async (req, res) => {
   try {
-    
+
     const userId = req.session.user;
     const { productId } = req.params;
 
+    if (!userId) {
+      return res.status(401).json({ error: 'LOGIN_REQUIRED' });
+    }
+
     if (!productId) {
-      return res.status(400).json({error: 'User ID and Product ID are required' });
+      return res.status(400).json({ error: 'User ID and Product ID are required' });
     }
 
     const exists = await Wishlist.findOne({ UserId: userId, ProductId: productId });
@@ -156,9 +160,9 @@ const addToWishlist = async (req, res) => {
 
 
 
-module.exports = { 
+module.exports = {
   getWishlist,
   addToCartFromWishlist,
   removeFromWishlist,
   addToWishlist
- };
+};

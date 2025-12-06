@@ -261,10 +261,12 @@ const addToCart = async (req, res) => {
     );
 
     if (index >= 0) {
-      if (cart.Items[index].quantity < selectedVariant.Stock && cart.Items[index].quantity < 5) {
-        cart.Items[index].quantity += 1;
-      } else {
+      if (cart.Items[index].quantity >= 5) {
+        return res.status(400).json({ error: 'You cannot add more than 5 items of this product.' });
+      } else if (cart.Items[index].quantity >= selectedVariant.Stock) {
         return res.status(400).json({ error: 'Not enough stock available' });
+      } else {
+        cart.Items[index].quantity += 1;
       }
     } else {
       cart.Items.push({ product: productId, quantity: 1, variantIndex: validVariantIndex });
