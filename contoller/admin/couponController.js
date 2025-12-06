@@ -37,7 +37,7 @@ const addCoupon = async (req, res) => {
             CouponName,
             CouponCode,
             Discount,
-            UsageLimit,
+            // UsageLimit, // Removed from form
             StartDate,
             EndDate,
             MinCartValue,
@@ -85,7 +85,7 @@ const addCoupon = async (req, res) => {
             CouponName,
             CouponCode: CouponCode.toUpperCase(),
             Discount: discountValue,
-            UsageLimit,
+            UsageLimit: 1000000, // Default to high number for "unlimited"
             StartDate: start,
             ExpiryDate: end,
             MinCartValue: MinCartValue || 0,
