@@ -143,7 +143,21 @@ const addProductOffer = async (req, res) => {
     });
 
     await newOffer.save();
-    res.redirect(`/admin/products?page=${req.query.page || 1}`);
+    await newOffer.save();
+
+    // Calculate new price/details for UI update
+    const variant = product.Variants[0] || {};
+    const regularPrice = variant.Price || 0;
+    // Calculate sale price with new discount
+    const newSalePrice = Math.round(variant.Price * (1 - Discount / 100));
+
+    res.json({
+      success: true,
+      message: 'Offer added successfully',
+      offer: newOffer,
+      regularPrice,
+      salePrice: newSalePrice
+    });
   } catch (error) {
     console.error('Error in addProductOffer:', error);
     res.status(500).json({ error: 'Server error' });
@@ -167,7 +181,18 @@ const removeProductOffer = async (req, res) => {
     }
 
     await Offers.findByIdAndDelete(offerId);
-    res.redirect(`/admin/products?page=${req.query.page || 1}`);
+
+    // Calculate new prices to return
+    const variant = product.Variants[0] || {};
+    const regularPrice = variant.Price || 0;
+    const salePrice = variant.OfferPrice || variant.Price || 0;
+
+    res.json({
+      success: true,
+      message: 'Offer removed successfully',
+      regularPrice,
+      salePrice
+    });
   } catch (error) {
     console.error('Error in removeProductOffer:', error);
     res.status(500).json({ error: 'Server error' });

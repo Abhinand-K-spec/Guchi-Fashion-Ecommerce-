@@ -417,7 +417,6 @@
                         </td>
                       </tr>
                       <% }) %>
-                        <% } %>
                   </tbody>
                 </table>
               </div>
@@ -451,6 +450,7 @@
                   </div>
                 </div>
               </div>
+              <% } %>
         </div>
       </div>
     </div>
@@ -503,6 +503,10 @@
     }
 
     function updateCartUI(cartItems, totalPrice) {
+      if (cartItems.length === 0) {
+        window.location.reload();
+        return;
+      }
       const tbody = document.querySelector('.cart__table tbody');
       const subtotalEl = document.querySelector('.cart__total .subtotal');
       const proceedBtn = document.querySelector('.cart__total .primary-btn');
