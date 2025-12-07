@@ -56,33 +56,9 @@ const addProducts = async (req, res) => {
       return res.redirect('/admin/addProducts');
     }
 
-    if (productName.length > 40) {
-      req.flash('msg', 'Product name must be max 40 characters');
-      return res.redirect('/admin/addProducts');
-    }
-
     const sizes = Array.isArray(size) ? size : [size];
     const prices = Array.isArray(price) ? price : [price];
     const stocks = Array.isArray(stock) ? stock : [stock];
-
-    for (let i = 0; i < prices.length; i++) {
-      if (parseFloat(prices[i]) < 0 || parseInt(stocks[i]) < 0) {
-        req.flash('msg', 'Price and Stock cannot be negative');
-        return res.redirect('/admin/addProducts');
-      }
-      if (parseFloat(prices[i]) < 100) {
-        req.flash('msg', 'Price must be at least 100');
-        return res.redirect('/admin/addProducts');
-      }
-      if (parseFloat(prices[i]) > 99999) {
-        req.flash('msg', 'Price cannot exceed 99999');
-        return res.redirect('/admin/addProducts');
-      }
-      if (parseInt(stocks[i]) > 999) {
-        req.flash('msg', 'Stock cannot exceed 999');
-        return res.redirect('/admin/addProducts');
-      }
-    }
 
     const existingProduct = await Product.findOne({ productName });
     if (existingProduct) {
@@ -260,43 +236,6 @@ const postEditProduct = async (req, res) => {
     const product = await Product.findById(productId);
     if (!product) return res.status(404).render('page-404');
 
-    if (productName.length > 15) {
-      // Assuming you have a way to show error in edit page, or just redirect back
-      // Since specific error handling for edit isn't fully detailed in previous context, 
-      // I'll assume similar flash or just reject. Ideally we should flash.
-      // But postEditProduct usually redirects to products list on success or 404/500 on error.
-      // Let's redirect to edit page with error if possible, but the route signature implies just redirect.
-      // I'll check if flash is used in edit.
-      // For now, let's use a basic return or similar handling to addProducts.
-      // Actually, looking at the code, it has no flash handling visible in postEditProduct snippet.
-      // I will add the check and if it fails, maybe redirect back to edit with query param or just simple response.
-      // Wait, let's check validation first.
-    }
-
-    // Let's implement the check inside the logic. 
-    // Since I can't easily see if flash is set up for edit view from here (it often is),
-    // I will return a 400 status or similar if I can't flash.
-    // However, consistency with addProducts suggests redirect.
-    // Let's try to find if `req.flash` is available. `addProducts` uses it. `postEditProduct` likely has access.
-
-    // REVISING CHUNK:
-    // I will add the checks properly.
-    if (productName.length > 40) {
-      // Ideally Flash message here
-      // But I don't see error handling in view for edit yet (user didn't ask for that part explicitly but validity is needed)
-      // I'll just prevent saving for now.
-      return res.redirect(`/admin/editProduct/${productId}?error=Name too long`);
-    }
-
-    // Actually, let's look at the method again.
-    // It's `postEditProduct`. 
-    // I will insert:
-    if (productName.length > 15) return res.status(400).send('Product name must be max 15 characters');
-    if (parseFloat(price) > 99999) return res.status(400).send('Price cannot exceed 99999');
-    if (parseInt(stock) > 999) return res.status(400).send('Stock cannot exceed 999');
-
-    // Wait, `res.send` is abrupt. Ideally we redirect.
-    // Let's check the code snippet provided earlier. It has `res.redirect('/admin/products')` on success.
 
     product.productName = productName;
     product.Description = description;
@@ -317,8 +256,6 @@ const postEditProduct = async (req, res) => {
         product.Variants[variantIndex].Price = parseFloat(price);
         product.Variants[variantIndex].Stock = parseInt(stock);
       } else {
-        // Optional: Handle case where size doesn't exist (maybe add it?)
-        // For now, let's assume we only edit existing variants or add if empty
         product.Variants.push({
           Size: size,
           Price: parseFloat(price),

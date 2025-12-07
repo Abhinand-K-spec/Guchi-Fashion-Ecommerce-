@@ -57,16 +57,16 @@
       <h2>Get Started Now</h2>
       <form id="signform" method="post" action="/signup">
         <label for="name">Name</label>
-        <input type="text" name="name" id="name" placeholder="Enter your name" />
+        <input type="text" name="name" id="name" placeholder="Enter your name" maxlength="15" minlength="3"/>
         <div id="err1" class="inputerror"></div>
 
         <label for="email">Email address</label>
-        <input type="text" name="email" id="email" placeholder="Enter your email" />
+        <input type="text" name="email" id="email" placeholder="Enter your email" maxlength="20"/>
         <div id="err2" class="inputerror"></div>
 
         <label for="password">Password</label>
         <div class="password-wrapper">
-          <input type="password" name="password" id="password" placeholder="Enter your password" />
+          <input type="password" name="password" id="password" placeholder="Enter your password" maxlength="15"/>
           <span class="toggle-eye" id="togglePassword">
             <i class="fa fa-eye"></i>
           </span>
@@ -85,7 +85,7 @@
 
 
         <label for="referralCode">Referral Code (Optional)</label>
-        <input type="text" name="referralCode" id="referralCode" placeholder="Enter referral code" />
+        <input type="text" name="referralCode" id="referralCode" placeholder="Enter referral code" maxlength="10"/>
         <div id="err4" class="inputerror"></div>
 
         <% if (locals.msg && msg.length> 0) { %>
@@ -235,26 +235,6 @@
       }
 
       error5.style.display = "none";
-      return true;
-    }
-
-
-    function referralCodeValidate() {
-      const referralVal = referralCode.value.trim();
-      const referralPattern = /^[A-Z0-9]{8}$/;
-
-      if (referralVal === "") {
-        error4.style.display = "none";
-        return true;
-      }
-
-      if (!referralPattern.test(referralVal)) {
-        error4.textContent = "Referral code must be 8 characters (letters & numbers only)";
-        error4.style.display = "block";
-        return false;
-      }
-
-      error4.style.display = "none";
       return true;
     }
 
