@@ -1,10 +1,11 @@
 const Wishlist = require('../../model/wishlistSchema');
 const Cart = require('../../model/cartSchema');
 const Product = require('../../model/productSchema');
-
+const User = require('../../model/userSchema');
 const getWishlist = async (req, res) => {
   try {
     const userId = req.session.user;
+    const user = await User.findById(userId).lean();
     if (!userId) {
       return res.redirect('/login');
     }
@@ -23,6 +24,7 @@ const getWishlist = async (req, res) => {
 
     res.render('wishlist', {
       wishlistItems: formattedItems,
+      user,
       userId,
       activePage: 'wishlist',
       pageTitle: 'Wishlist'

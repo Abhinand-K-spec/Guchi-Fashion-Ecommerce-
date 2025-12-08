@@ -226,7 +226,7 @@ const retryPayment = async (req, res) => {
       if (variant.Stock < item.quantity) {
         return res.status(400).json({
           success: false,
-          message: `Insufficient stock for ${product.productName} (${variant.Color}/${variant.Size}). Available: ${variant.Stock}`
+          message: `Insufficient stock . Available: ${variant.Stock}`
         });
       }
     }
