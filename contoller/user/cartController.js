@@ -158,7 +158,7 @@ const cart = async (req, res) => {
 const getCartData = async (req, res) => {
   try {
     const userId = req.session.user;
-    if (!userId) return res.json({ success: false, message: 'User not logged in' });
+    if (!userId) {return res.json({ success: false, message: 'User not logged in' });}
 
     const cartData = await Cart.findOne({ user: userId })
       .populate({
@@ -237,7 +237,7 @@ const addToCart = async (req, res) => {
     }
 
     const product = await Products.findById(productId);
-    if (!product) return res.redirect('/shop');
+    if (!product) {return res.redirect('/shop');}
 
     // Validate variant index
     const validVariantIndex = Math.max(0, Math.min(variantIndex, (product.Variants?.length || 1) - 1));

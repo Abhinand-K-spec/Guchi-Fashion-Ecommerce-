@@ -68,7 +68,7 @@ const listOrders = async (req, res) => {
 const orderDetails = async (req, res) => {
   try {
     const userId = req.session.user;
-    if (!userId) return res.redirect('/login');
+    if (!userId) {return res.redirect('/login');}
 
     const order = await Orders.findById(req.params.id)
       .populate({
@@ -78,7 +78,7 @@ const orderDetails = async (req, res) => {
       .populate('UserId', 'name email')
       .lean();
 
-    if (!order) return res.render('page-404');
+    if (!order) {return res.render('page-404');}
 
     order.Items = order.Items.filter(item => item.product);
 
@@ -288,7 +288,7 @@ const downloadInvoice = async (req, res) => {
       .populate('Address')
       .lean();
 
-    if (!order) return res.render('page-404');
+    if (!order) {return res.render('page-404');}
 
     const doc = new PDFDocument({ margin: 50 });
 

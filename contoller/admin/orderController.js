@@ -87,7 +87,7 @@ const getOrderDetails = async (req, res) => {
       .populate('UserId', 'name email')
       .populate('Items.product')
       .lean();
-    if (!order) return res.status(404).render('page-404');
+    if (!order) {return res.status(404).render('page-404');}
 
     res.render('order-details-manage', { order, activePage: 'order' });
   } catch (err) {
@@ -102,11 +102,11 @@ const approveReturn = async (req, res) => {
     const { productId } = req.query;
 
     const order = await Orders.findById(orderId).populate('Items.product');
-    if (!order) return res.status(404).send('Order not found');
+    if (!order) {return res.status(404).send('Order not found');}
 
     const item = order.Items.find(item => item.product?._id.toString() === productId);
-    if (!item) return res.status(404).send('Item not found in order');
-    if (item.returnStatus !== 'Return Requested') return res.status(400).send('Item return not requested');
+    if (!item) {return res.status(404).send('Item not found in order');}
+    if (item.returnStatus !== 'Return Requested') {return res.status(400).send('Item return not requested');}
 
     const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
     const updateQuery = {};
@@ -168,11 +168,11 @@ const rejectReturn = async (req, res) => {
     const { productId } = req.query;
 
     const order = await Orders.findById(orderId);
-    if (!order) return res.status(404).send('Order not found');
+    if (!order) {return res.status(404).send('Order not found');}
 
     const item = order.Items.find(item => item.product?._id.toString() === productId);
-    if (!item) return res.status(404).send('Item not found in order');
-    if (item.returnStatus !== 'Return Requested') return res.status(400).send('Item return not requested');
+    if (!item) {return res.status(404).send('Item not found in order');}
+    if (item.returnStatus !== 'Return Requested') {return res.status(400).send('Item return not requested');}
 
     item.returnStatus = 'Request Denied';
     item.status = 'Delivered';

@@ -52,7 +52,7 @@ const profile = async (req, res) => {
     }
 
     const userData = await User.findById(userId).lean();
-    if (!userData) return res.status(400).render(page - 404);
+    if (!userData) {return res.status(400).render(page - 404);}
 
     const userAddresses = await Address.find({ userId }).lean();
 
@@ -168,7 +168,7 @@ const uploadProfileImage = async (req, res) => {
   try {
     const userId = req.session.user;
 
-    if (!userId || !req.file) return res.redirect('/profile');
+    if (!userId || !req.file) {return res.redirect('/profile');}
 
     const cloudinaryUrl = req.file.path;
     const publicId = req.file.filename;

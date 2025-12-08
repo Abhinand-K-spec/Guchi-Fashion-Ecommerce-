@@ -209,7 +209,7 @@ const getEditProductPage = async (req, res) => {
     const product = await Product.findById(productId).populate('Category').lean();
     const categories = await Category.find({ isListed: true }).lean();
 
-    if (!product) return res.status(404).render('page-404');
+    if (!product) {return res.status(404).render('page-404');}
 
     res.render('edit-product', { product, categories, products });
   } catch (error) {
@@ -234,14 +234,14 @@ const postEditProduct = async (req, res) => {
     } = req.body;
 
     const product = await Product.findById(productId);
-    if (!product) return res.status(404).render('page-404');
+    if (!product) {return res.status(404).render('page-404');}
 
 
     product.productName = productName;
     product.Description = description;
 
     const categoryDoc = await Category.findOne({ categoryName: category });
-    if (!categoryDoc) return res.status(400).send('Invalid category');
+    if (!categoryDoc) {return res.status(400).send('Invalid category');}
     product.Category = categoryDoc._id;
 
     if (product.Variants.length === 0) {

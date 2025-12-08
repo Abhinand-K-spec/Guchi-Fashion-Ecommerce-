@@ -1,5 +1,4 @@
 const User = require('../../model/userSchema');
-const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const Orders = require('../../model/ordersSchema');
 const Products = require('../../model/productSchema');
@@ -174,8 +173,8 @@ const loadDashboard = async (req, res) => {
 
     monthWeekAgg.forEach(e => {
       let w = e._id.week - baseWeekNumber + 1;
-      if (w < 1) w = 1;
-      if (w > 4) w = 4;
+      if (w < 1) {w = 1;}
+      if (w > 4) {w = 4;}
       monthlyWeekValues[w - 1] += e.revenue;
     });
 
