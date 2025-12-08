@@ -624,6 +624,13 @@ const placeOrder = async (req, res) => {
 
     await order.save();
 
+    // Reserve Stock Immediately for all payment methods
+    for (const item of order.Items) {
+      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      await Products.findByIdAndUpdate(item.product, {
+        $inc: { [`Variants.${variantIndex}.Stock`]: -item.quantity }
+      });
+    }
 
     if (paymentMethod === 'Wallet') {
       let wallet = await Wallet.findOne({ UserId: userId });
@@ -633,6 +640,15 @@ const placeOrder = async (req, res) => {
       }
       if (wallet.Balance < orderAmount) {
         console.log('Insufficient wallet balance:', { Balance: wallet.Balance, required: orderAmount });
+
+        // Revert Stock
+        for (const item of order.Items) {
+          const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+          await Products.findByIdAndUpdate(item.product, {
+            $inc: { [`Variants.${variantIndex}.Stock`]: item.quantity }
+          });
+        }
+
         await Orders.findByIdAndDelete(order._id);
         return res.status(400).json({ success: false, message: 'Insufficient wallet balance.' });
       }
@@ -655,21 +671,26 @@ const placeOrder = async (req, res) => {
         receipt: truncatedReceipt,
         notes: { userId, coupon, selectedAddressId, orderId: order._id }
       };
-      const razorpayOrder = await razorpay.orders.create(options);
-      return res.status(200).json({
-        success: true,
-        order: razorpayOrder,
-        orderId: order._id,
-        message: 'Proceed to Razorpay checkout.'
-      });
-    }
 
-
-    for (const item of order.Items) {
-      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
-      await Products.findByIdAndUpdate(item.product, {
-        $inc: { [`Variants.${variantIndex}.Stock`]: -item.quantity }
-      });
+      try {
+        const razorpayOrder = await razorpay.orders.create(options);
+        return res.status(200).json({
+          success: true,
+          order: razorpayOrder,
+          orderId: order._id,
+          message: 'Proceed to Razorpay checkout.'
+        });
+      } catch (error) {
+        // Revert Stock on Razorpay creation failure
+        for (const item of order.Items) {
+          const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+          await Products.findByIdAndUpdate(item.product, {
+            $inc: { [`Variants.${variantIndex}.Stock`]: item.quantity }
+          });
+        }
+        await Orders.findByIdAndDelete(order._id);
+        throw error;
+      }
     }
 
 

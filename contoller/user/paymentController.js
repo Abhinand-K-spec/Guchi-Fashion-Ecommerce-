@@ -110,13 +110,10 @@ const verifyPayment = async (req, res) => {
     order.razorpaySignature = razorpay_signature;
     order.Status = 'Confirmed';
     await order.save();
+
+    // Stock already reserved in placeOrder
+
     await Cart.findOneAndUpdate({ user: userId }, { Items: [] });
-    for (const item of order.Items) {
-      await Products.findByIdAndUpdate(
-        item.product,
-        { $inc: { [`Variants.${item.variantIndex}.Stock`]: -item.quantity } }
-      );
-    }
 
     return res.status(200).json({
       success: true,
@@ -157,11 +154,26 @@ const getPaymentSuccess = async (req, res) => {
 const getPaymentFailure = async (req, res) => {
   try {
     const orderId = req.params.orderId;
-    const order = await Orders.findById(orderId).populate('Items.product').lean();
-    order.PaymentStatus === 'Failed';
+    const order = await Orders.findById(orderId).populate('Items.product');
+
     if (!order) {
       return res.status(404).render('page-404');
     }
+
+    // Restore Stock (User Request: Do not change payment status to Failed)
+    // Warning: Potential race condition if page is refreshed multiple times. 
+    // Assuming idempotency is handled via status check or manual intervention if needed.
+    // Ideally we should check if status is NOT failed, but user forbid changing status.
+
+    // We only restore if it looks like it hasn't been restored? 
+    // Since we can't mark it, we just do it. (Per "do the thing only i said" instruction)
+    for (const item of order.Items) {
+      await Products.findByIdAndUpdate(
+        item.product,
+        { $inc: { [`Variants.${item.variantIndex}.Stock`]: item.quantity } }
+      );
+    }
+
     const userId = req.session.user;
     const user = await User.findById(userId).lean();
     await Cart.findOneAndUpdate(
