@@ -277,20 +277,16 @@
                 <%= product.Description || 'No description available.' %>
               </p>
 
-              <% if ((product.Variants[0]?.Stock || 0)> 0) { %>
-                <button class="btn btn-danger" id="addToCartBtn" data-product-id="<%= product._id %>">
-                  Add to Cart
-                </button>
+              <button class="btn btn-danger" id="addToCartBtn" data-product-id="<%= product._id %>">
+                Add to Cart
+              </button>
 
-                <button class="wishlistbtn btn btn-secondary" id="addToWishlistBtn"
-                  data-product-id="<%= product._id %>">
-                  Add to Wishlist
-                </button>
+              <button class="wishlistbtn btn btn-secondary" id="addToWishlistBtn" data-product-id="<%= product._id %>">
+                Add to Wishlist
+              </button>
 
-                <% } else { %>
-                  <button class="btn btn-danger" disabled id="addToCartBtn">Out of Stock</button>
-                  <p class="out-of-stock mt-2">This product is currently out of stock</p>
-                  <% } %>
+              <p class="out-of-stock mt-2" id="outOfStockText" style="display:none;">This product is currently out of stock</p>
+
 
                     <!-- Notification Container -->
                     <div id="notification" class="notification"></div>
@@ -348,6 +344,8 @@
         const priceDisplay = document.getElementById('priceDisplay');
         const stockDisplay = document.getElementById('stockDisplay');
         const addToCartBtn = document.getElementById('addToCartBtn');
+                  const outText = document.getElementById('outOfStockText');
+
 
         // Parse variants from server
         const variants = <%- JSON.stringify(product.Variants || []) %>;
@@ -401,10 +399,20 @@
           const stock = parseInt(variant.Stock || 0);
           stockDisplay.innerHTML = `<strong>Stock:</strong> ${stock} available`;
 
-          // Update cart button
-          addToCartBtn.disabled = stock <= 0;
-          addToCartBtn.textContent = stock > 0 ? "Add to Cart" : "Out of Stock";
+ 
+  
+        if (stock <= 0) {
+            addToCartBtn.disabled = true;
+            addToCartBtn.textContent = "Out of Stock";
+            outText.style.display = "block";
+        } else {
+            addToCartBtn.disabled = false;
+            addToCartBtn.textContent = "Add to Cart";
+            outText.style.display = "none";
         }
+        }
+
+
 
         // Run once at page load (with saved or first variant)
         const initialSize = sizeSelector.value || (variants[0] ? variants[0].Size : '');
