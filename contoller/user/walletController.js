@@ -107,8 +107,6 @@ const verifyWalletPayment = async (req, res) => {
     wallet.UpdatedAt = new Date();
     await wallet.save();
 
-    console.log('Wallet updated:', { userId, newBalance: wallet.Balance });
-
     return res.status(200).json({
       success: true,
       message: 'Funds added successfully.'

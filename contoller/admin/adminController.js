@@ -34,7 +34,6 @@ const loadDashboard = async (req, res) => {
     const totalOrders = (await orders).length;
 
 
-    // Calculate total revenue from completed orders
     const [totalsalesPrice] = await Orders.aggregate([
       { $match: { PaymentStatus: "Completed" } },
       {
@@ -253,7 +252,6 @@ const loadDashboard = async (req, res) => {
     const topProducts = await Orders.aggregate([
       { $unwind: "$Items" },
 
-      // Fetch product details
       {
         $lookup: {
           from: "products",

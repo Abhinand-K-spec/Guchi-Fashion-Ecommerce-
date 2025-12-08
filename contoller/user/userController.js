@@ -397,7 +397,6 @@ const verifyOtp = async (req, res) => {
             $set: { referals: saveUserData._id }
           });
 
-          // Create 50% discount for referring new user
           const referrerCoupon = new Coupon({
             CouponCode: `REF-${referrer._id}-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
             CouponName: `${referrer.name}'s 50% Referral Reward`,
@@ -429,7 +428,6 @@ const verifyOtp = async (req, res) => {
           });
           await newUserCoupon.save();
 
-          console.log(`Referral coupons created: 50% for ${referrer._id}, 20% for ${saveUserData._id}`);
         }
       }
 
@@ -527,9 +525,6 @@ const changePassword = async (req, res) => {
     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
     const { currentPassword, newPassword, confirmPassword } = req.body;
 
-
-    console.log('Raw req.body:', { currentPassword, newPassword, confirmPassword });
-
     if (!currentPassword || !newPassword || !confirmPassword) {
       return res.json({ success: false, message: 'All fields are required' });
     }
@@ -542,20 +537,17 @@ const changePassword = async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-    console.log('bcrypt.compare result:', isMatch);
 
     if (!isMatch) {
       return res.json({ success: false, message: 'Current password is incorrect' });
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    console.log('New hashed password:', hashedPassword);
 
     user.password = hashedPassword;
     await user.save();
 
 
     const updatedUser = await User.findById(userId);
-    console.log('After save, stored password:', updatedUser.password);
 
     return res.json({ success: true });
   } catch (error) {
@@ -635,7 +627,7 @@ const sendForgotOtp = async (req, res) => {
 
     req.session.forgotEmail = email;
     req.session.forgotOtp = otp;
-    req.session.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 min expiry
+    req.session.otpExpiry = Date.now() + 5 * 60 * 1000;
 
     res.redirect('/forgot-verify-otp');
   } catch (err) {

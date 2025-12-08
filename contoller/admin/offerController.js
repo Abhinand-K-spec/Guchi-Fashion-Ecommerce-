@@ -2,7 +2,6 @@ const Offers = require('../../model/offersSchema');
 const Category = require('../../model/categorySchema');
 const Product = require('../../model/productSchema');
 
-// Add category offer
 const addCategoryOffer = async (req, res) => {
   try {
     const { id } = req.params;
@@ -145,10 +144,8 @@ const addProductOffer = async (req, res) => {
     await newOffer.save();
     await newOffer.save();
 
-    // Calculate new price/details for UI update
     const variant = product.Variants[0] || {};
     const regularPrice = variant.Price || 0;
-    // Calculate sale price with new discount
     const newSalePrice = Math.round(variant.Price * (1 - Discount / 100));
 
     res.json({
@@ -182,7 +179,6 @@ const removeProductOffer = async (req, res) => {
 
     await Offers.findByIdAndDelete(offerId);
 
-    // Calculate new prices to return
     const variant = product.Variants[0] || {};
     const regularPrice = variant.Price || 0;
     const salePrice = variant.OfferPrice || variant.Price || 0;

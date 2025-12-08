@@ -11,7 +11,6 @@ const getAdminOrders = async (req, res) => {
     const search = req.query.search || '';
     const statusFilter = req.query.status || '';
 
-    // Basic search filter
     const filter = {};
     if (search) {
       filter.OrderId = { $regex: search, $options: 'i' };
@@ -23,9 +22,7 @@ const getAdminOrders = async (req, res) => {
       .populate('Items.product')
       .lean();
 
-    // --------------------------
-    // COMPUTE STATUS FOR EACH ORDER
-    // --------------------------
+
     orders = orders.map(order => {
       const statuses = order.Items.map(i => i.status);
 
@@ -52,16 +49,12 @@ const getAdminOrders = async (req, res) => {
       return { ...order, computedStatus };
     });
 
-    // --------------------------
-    // FILTER BY COMPUTED STATUS
-    // --------------------------
+
     if (statusFilter && statusFilter.trim() !== "") {
       orders = orders.filter(o => o.computedStatus === statusFilter);
     }
 
-    // --------------------------
-    // PAGINATION AFTER FILTERING
-    // --------------------------
+
     const totalOrders = orders.length;
     const paginatedOrders = orders.slice((page - 1) * limit, page * limit);
 
@@ -122,10 +115,8 @@ const approveReturn = async (req, res) => {
 
     const delivery = order.totalDeliveryCharge || 40;
 
-    // Item return refund calculation
     let refundAmount = item.finalPayableAmount || ((item.originalPrice || item.price || 0) * item.quantity);
 
-    // Check if ALL items are now returned - if so, add delivery charge
     const allReturned = order.Items.every(i => i.status === 'Returned' || (i.product?._id.toString() === productId && i.returnStatus === 'Return Requested'));
     if (allReturned) {
       refundAmount += delivery;
@@ -215,10 +206,8 @@ const cancelSingleItem = async (req, res) => {
 
     const delivery = order.totalDeliveryCharge || 40;
 
-    // Item cancellation refund calculation
     let refundAmount = item.finalPayableAmount || ((item.originalPrice || item.price || 0) * item.quantity);
 
-    // Check if ALL items will be cancelled after this - if so, add delivery charge
     const allItemsCancelled = order.Items.every(i => i.status === 'Cancelled' || i._id.toString() === itemId);
     if (allItemsCancelled) {
       refundAmount += delivery;
@@ -329,10 +318,8 @@ const updateItemStatus = async (req, res) => {
 
       const delivery = order.totalDeliveryCharge || 40;
 
-      // Status update to cancelled - refund calculation
       let refundAmount = item.finalPayableAmount || ((item.originalPrice || item.price || 0) * item.quantity);
 
-      // Check if ALL items will be cancelled - if so, add delivery charge
       const allItemsCancelled = order.Items.every(i => i.status === 'Cancelled' || i._id.toString() === itemId);
       if (allItemsCancelled) {
         refundAmount += delivery;

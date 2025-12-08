@@ -178,7 +178,6 @@ const uploadProfileImage = async (req, res) => {
       profileImagePublicId: publicId
     });
 
-    console.log("Updated user with image:", updateResult);
     res.redirect('/editProfile');
 
   } catch (err) {
@@ -196,7 +195,7 @@ const saveProfile = async (req, res) => {
     return res.redirect('/profile');
   } catch (error) {
     res.render('page-404');
-    console.log('Error :', error.message);
+    console.error('Error :', error.message);
   }
 };
 

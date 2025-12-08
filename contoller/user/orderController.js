@@ -122,7 +122,6 @@ const cancelOrder = async (req, res) => {
     const overallDiscount = order.Items.reduce((sum, item) => sum + (item.offerDiscountAmount || 0) + (item.couponDiscountAmount || 0), 0);
     const tax = order.totalTax || 0;
 
-    // Full order cancellation - refund the entire order amount
     refundAmount = order.orderAmount || (totalOrderAmountBeforeDiscount - overallDiscount + tax + (order.totalDeliveryCharge || 40));
 
 
@@ -195,10 +194,8 @@ const cancelItem = async (req, res) => {
 
     const delivery = order.totalDeliveryCharge || 40;
 
-    // Item-level refund calculation
     let refundAmount = item.finalPayableAmount || ((item.originalPrice || 0) * item.quantity);
 
-    // Check if ALL items are now cancelled - if so, add delivery charge
     const allItemsCancelled = order.Items.every(i => i.status === 'Cancelled' || i._id.toString() === itemId);
     if (allItemsCancelled) {
       refundAmount += delivery;
@@ -245,13 +242,13 @@ const requestReturnItem = async (req, res) => {
 
     const order = await Orders.findOne({ _id: orderId, UserId: userId }).populate('Items.product');
     if (!order) {
-      console.log('Order not found or not authorized:', { orderId, userId });
+      console.error('Order not found or not authorized:', { orderId, userId });
       return res.status(404).json({ success: false, message: 'Order not found or not authorized' });
     }
 
     const item = order.Items.find(i => i._id.toString() === itemId);
     if (!item) {
-      console.log('Item not found in order:', { itemId });
+      console.error('Item not found in order:', { itemId });
       return res.status(404).json({ success: false, message: 'Item not found in order' });
     }
     if (item.status === 'Cancelled') {
@@ -546,7 +543,6 @@ const placeOrder = async (req, res) => {
         }
         couponDiscount = Math.round(couponDiscount * 100) / 100;
 
-        // Distribute coupon discount proportionally across items
         const totalItemTotal = orderItems.reduce((sum, item) => sum + ((item.originalPrice - item.offerDiscountAmount / item.quantity) * item.quantity), 0);
         orderItems.forEach(item => {
           const itemSubtotal = (item.originalPrice - item.offerDiscountAmount / item.quantity) * item.quantity;
@@ -557,10 +553,8 @@ const placeOrder = async (req, res) => {
     }
 
 
-    // Calculate tax (0.05% of subtotal after all discounts)
     const totalTax = Math.round(((subtotal - couponDiscount) * 0.05) / 100 * 100) / 100;
 
-    // Distribute tax proportionally across items
     const subtotalAfterCoupon = subtotal - couponDiscount;
     orderItems.forEach(item => {
       const itemSubtotalAfterDiscounts = (item.originalPrice * item.quantity) - item.offerDiscountAmount - item.couponDiscountAmount;
@@ -568,12 +562,10 @@ const placeOrder = async (req, res) => {
       item.taxAmount = Math.round((totalTax * itemRatio) * 100) / 100;
     });
 
-    // Calculate final payable amount per item
     orderItems.forEach(item => {
       item.finalPayableAmount = (item.originalPrice * item.quantity) - item.offerDiscountAmount - item.couponDiscountAmount + item.taxAmount;
     });
 
-    // Calculate order totals
     const totalOfferDiscount = totalItemDiscount;
     const totalCouponDiscount = couponDiscount;
     const deliveryCharge = 40;
@@ -583,11 +575,10 @@ const placeOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Order amount must be at least ₹1.00 after discounts.' });
     }
 
-    // Validate that the backend calculated amount matches the frontend displayed amount
     if (finalTotal !== undefined && finalTotal !== null) {
       const frontendTotal = parseFloat(finalTotal);
       if (Math.abs(orderAmount - frontendTotal) > 1.0) {
-        console.warn(`Price mismatch detected: Backend=${orderAmount}, Frontend=${frontendTotal}`);
+        console.error(`Price mismatch detected: Backend=${orderAmount}, Frontend=${frontendTotal}`);
         return res.status(400).json({
           success: false,
           message: 'The price of one or more items in your cart has changed. Please refresh the page to get the updated price.'
@@ -624,7 +615,6 @@ const placeOrder = async (req, res) => {
 
     await order.save();
 
-    // Reserve Stock Immediately for all payment methods
     for (const item of order.Items) {
       const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
       await Products.findByIdAndUpdate(item.product, {
@@ -639,9 +629,7 @@ const placeOrder = async (req, res) => {
         await wallet.save();
       }
       if (wallet.Balance < orderAmount) {
-        console.log('Insufficient wallet balance:', { Balance: wallet.Balance, required: orderAmount });
 
-        // Revert Stock
         for (const item of order.Items) {
           const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
           await Products.findByIdAndUpdate(item.product, {
@@ -681,7 +669,6 @@ const placeOrder = async (req, res) => {
           message: 'Proceed to Razorpay checkout.'
         });
       } catch (error) {
-        // Revert Stock on Razorpay creation failure
         for (const item of order.Items) {
           const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
           await Products.findByIdAndUpdate(item.product, {

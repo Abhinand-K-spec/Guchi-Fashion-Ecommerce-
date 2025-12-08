@@ -13,7 +13,6 @@ const downloadSalesReportExcel = async (req, res) => {
   try {
     const { period, range, startDate, endDate } = req.query;
 
-    // ---------------- SAME FILTER LOGIC AS PDF ----------------
     let filter = {};
     const now = new Date();
     now.setHours(23, 59, 59, 999);
@@ -55,26 +54,22 @@ const downloadSalesReportExcel = async (req, res) => {
       .sort({ OrderDate: -1 })
       .lean();
 
-    // ---------------- PREPARE EXCEL CONTENT ----------------
     const rows = [];
 
-    // Blank row at top for spacing
     rows.push([""]);
 
-    // Title (like PDF)
     rows.push(["Guchi Men's Fashion — Sales Report"]);
     rows.push([""]);
 
-    // Period text
     const periodText =
       period === "custom"
         ? `Period: ${startDate} to ${endDate}`
         : `Period: ${range} (${new Date(filter.OrderDate.$gte).toLocaleDateString()} - ${now.toLocaleDateString()})`;
 
     rows.push([periodText]);
-    rows.push([""]); // Extra space
+    rows.push([""]);
 
-    // Table header
+
     rows.push([
       "Order ID",
       "Order Date",
@@ -84,7 +79,6 @@ const downloadSalesReportExcel = async (req, res) => {
       "Net Amount (₹)"
     ]);
 
-    // Data rows
     for (const order of orders) {
       const totalAmount = order.Items?.reduce(
         (sum, item) => sum + (item.finalPayableAmount || 0),
@@ -94,7 +88,6 @@ const downloadSalesReportExcel = async (req, res) => {
       const totalDiscount = (order.totalOfferDiscount || 0) + (order.totalCouponDiscount || 0);
       const netAmount = order.orderAmount || 0;
 
-      // Last 4 characters formatting like PDF
       const id = order.OrderId.toString();
       const displayId = `ORD-${id.slice(-4)}`;
 
@@ -108,10 +101,10 @@ const downloadSalesReportExcel = async (req, res) => {
       ]);
     }
 
-    rows.push([""]); // Spacing
-    rows.push([""]); // Spacing
+    rows.push([""]); 
+    rows.push([""]); 
 
-    // Summary like PDF
+
     const totalAmount = orders.reduce(
       (sum, order) =>
         sum +
@@ -131,10 +124,10 @@ const downloadSalesReportExcel = async (req, res) => {
     rows.push([`Overall Order Amount: ₹${totalAmount.toFixed(2)}`]);
     rows.push([`Overall Discount: ₹${discountTotal.toFixed(2)}`]);
 
-    // ---------------- CREATE WORKBOOK ----------------
+
     const ws = XLSX.utils.aoa_to_sheet(rows);
 
-    // Auto column width
+
     const maxWidths = [];
     rows.forEach(row => {
       row.forEach((cell, i) => {
@@ -145,7 +138,7 @@ const downloadSalesReportExcel = async (req, res) => {
 
     ws['!cols'] = maxWidths.map(w => ({ wch: w + 5 }));
 
-    // Workbook
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sales Report");
 
@@ -314,7 +307,7 @@ const downloadSalesReport = async (req, res) => {
 
 
 
-    // Add content
+
     doc.addPage();
     const logoPath = path.join(__dirname, '../../public/guchi-logo.png');
     if (fs.existsSync(logoPath)) {
@@ -341,11 +334,11 @@ const downloadSalesReport = async (req, res) => {
       customer: 240,
       amount: 330,
       discount: 420,
-      netAmount: 500 // Adjusted to fit within page width
+      netAmount: 500
     };
-    const columnWidth = 80; // Reduced to prevent overflow
+    const columnWidth = 80; 
 
-    // Debug: Log column positions
+
 
 
     doc.font('Helvetica-Bold')
@@ -365,11 +358,10 @@ const downloadSalesReport = async (req, res) => {
         const netAmount = order.orderAmount || 0;
 
         if (!order.OrderId || !order.OrderDate || !order.Items) {
-          console.warn('Skipping invalid order:', order._id);
           continue;
         }
 
-        // Extract last 4 characters of OrderId and add prefix
+
         const orderIdStr = order.OrderId ? String(order.OrderId) : '';
         const lastFourChars = orderIdStr.length >= 4 ? orderIdStr.slice(-4) : orderIdStr.padStart(4, '0');
         const displayOrderId = `ORD-${lastFourChars}`;
@@ -425,7 +417,7 @@ const downloadSalesReport = async (req, res) => {
     if (!res.headersSent) {
       res.status(500).json({ success: false, message: 'Error generating PDF report. Check server logs for details.' });
     } else {
-      doc?.end(); // Safely end if headers sent
+      doc?.end();
       writeStream?.end();
       res.end();
     }

@@ -177,7 +177,6 @@ const getCartData = async (req, res) => {
       const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
       const variant = product?.Variants?.[variantIndex];
 
-      // Get offer price
       const { offer, salePrice } = await getProductOffer(product, variantIndex);
       const price = salePrice || variant?.Price || 0;
 
@@ -239,7 +238,6 @@ const addToCart = async (req, res) => {
     const product = await Products.findById(productId);
     if (!product) {return res.redirect('/shop');}
 
-    // Validate variant index
     const validVariantIndex = Math.max(0, Math.min(variantIndex, (product.Variants?.length || 1) - 1));
     const selectedVariant = product.Variants[validVariantIndex];
 
@@ -253,7 +251,6 @@ const addToCart = async (req, res) => {
       cart = new Cart({ user: userId, Items: [] });
     }
 
-    // Check if same product with same variant already exists in cart
     const index = cart.Items.findIndex(item =>
       item.product.toString() === productId && item.variantIndex === validVariantIndex
     );
@@ -298,7 +295,6 @@ const updateCartQuantity = async (req, res) => {
       return res.json({ success: false, message: 'Cart not found.' });
     }
 
-    // Find item by both productId and variantIndex
     const item = cart.Items.find(i =>
       String(i.product._id) === String(productId) &&
       (variantIndex !== undefined ? i.variantIndex === Number(variantIndex) : true)
@@ -314,12 +310,10 @@ const updateCartQuantity = async (req, res) => {
       const isProductListed = item.product.IsListed;
       const isCategoryListed = item.product.Category && item.product.Category.isListed;
 
-      // Check if product/category is unlisted
       if (!isProductListed || !isCategoryListed) {
         return res.json({ success: false, message: 'This item is currently unavailable.' });
       }
 
-      // Check quantity limits before incrementing
       if (item.quantity >= 5) {
         return res.json({ success: false, message: 'You cannot add more than 5 items.' });
       }
@@ -327,7 +321,6 @@ const updateCartQuantity = async (req, res) => {
         return res.json({ success: false, message: `Only ${stock} items are available.` });
       }
 
-      // All checks passed, increment quantity
       item.quantity += 1;
     } else if (action === 'decrement') {
       if (item.quantity <= 1) {
@@ -338,12 +331,10 @@ const updateCartQuantity = async (req, res) => {
       return res.json({ success: false, message: 'Invalid action.' });
     }
 
-    // Final safeguard: ensure quantity is within valid bounds before saving
     if (action === 'increment') {
       const itemVariantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
       const stock = item.product?.Variants?.[itemVariantIndex]?.Stock || 0;
 
-      // Cap at maximum allowed values
       if (item.quantity > 5) {
         item.quantity = 5;
       }
@@ -351,7 +342,6 @@ const updateCartQuantity = async (req, res) => {
         item.quantity = stock;
       }
     } else if (action === 'decrement') {
-      // Ensure quantity doesn't go below 1
       if (item.quantity < 1) {
         item.quantity = 1;
       }
@@ -365,7 +355,7 @@ const updateCartQuantity = async (req, res) => {
       const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
       const variant = product?.Variants?.[variantIndex];
 
-      // Get offer price
+
       const { offer, salePrice } = await getProductOffer(product, variantIndex);
       const price = salePrice || variant?.Price || 0;
 
@@ -412,7 +402,7 @@ const removeFromCart = async (req, res) => {
   try {
     const userId = req.session.user;
     const productId = req.params.id;
-    const { variantIndex } = req.body;  // receive variantIndex
+    const { variantIndex } = req.body;
 
     if (!userId) {
       return res.json({ success: false, message: 'User not logged in' });
@@ -499,7 +489,6 @@ const checkout = async (req, res) => {
       const isCategoryListed = product.Category && product.Category.isListed;
 
       if (!isProductListed || !isCategoryListed) {
-        // Skip unlisted products/categories from checkout calculation
         continue;
       }
 

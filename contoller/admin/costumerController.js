@@ -42,16 +42,12 @@ const customerinfo = async (req, res) => {
 
 const costumerBlocked = async (req, res) => {
   try {
-    console.log(`Reached costumerBlocked endpoint for URL: ${req.originalUrl}, body: ${JSON.stringify(req.body)}`);
     const { id } = req.body;
-    console.log(`Blocking user with ID: ${id}`);
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      console.log(`Invalid ObjectId: ${id}`);
       return res.status(400).json({ success: false, message: 'Invalid user ID' });
     }
     const user = await User.findById(id);
     if (!user) {
-      console.log(`User not found for ID: ${id}`);
       return res.status(404).json({ success: false, message: 'User not found' });
     }
     if (user.isBlocked) {
@@ -63,7 +59,6 @@ const costumerBlocked = async (req, res) => {
       console.log(`Failed to block user: ${id}`);
       return res.status(500).json({ success: false, message: 'Failed to block user' });
     }
-    console.log(`User blocked successfully: ${id}`);
     res.json({ success: true, message: 'User blocked successfully' });
   } catch (error) {
     console.error(`Error in costumerBlocked for ID: ${req.body.id}`, error);
@@ -73,9 +68,7 @@ const costumerBlocked = async (req, res) => {
 
 const costumerUnBlocked = async (req, res) => {
   try {
-    console.log(`Reached costumerUnBlocked endpoint for URL: ${req.originalUrl}, body: ${JSON.stringify(req.body)}`);
     const { id } = req.body;
-    console.log(`Unblocking user with ID: ${id}`);
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       console.log(`Invalid ObjectId: ${id}`);
       return res.status(400).json({ success: false, message: 'Invalid user ID' });
@@ -85,9 +78,7 @@ const costumerUnBlocked = async (req, res) => {
       console.log(`User not found for ID: ${id}`);
       return res.status(404).json({ success: false, message: 'User not found' });
     }
-    console.log(`User isBlocked status: ${user.isBlocked}`);
     if (!user.isBlocked) {
-      console.log(`User already unblocked: ${id}`);
       return res.status(400).json({ success: false, message: 'User is already unblocked' });
     }
     const result = await User.updateOne({ _id: id }, { $set: { isBlocked: false } });
@@ -95,7 +86,6 @@ const costumerUnBlocked = async (req, res) => {
       console.log(`Failed to unblock user: ${id}`);
       return res.status(500).json({ success: false, message: 'Failed to unblock user' });
     }
-    console.log(`User unblocked successfully: ${id}`);
     res.json({ success: true, message: 'User unblocked successfully' });
   } catch (error) {
     console.error(`Error in costumerUnBlocked for ID: ${req.body.id}`, error);

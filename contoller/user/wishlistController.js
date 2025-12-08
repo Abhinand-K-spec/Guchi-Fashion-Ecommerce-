@@ -38,11 +38,8 @@ const getWishlist = async (req, res) => {
 
 const addToCartFromWishlist = async (req, res) => {
   try {
-    console.log('addToCart came');
     const { productId } = req.body;
     const userId = req.session.user;
-
-    console.log('userId:', userId, 'productId:', productId);
 
     if (!userId || !productId) {
       return res.status(400).json({ success: false, message: 'User ID and Product ID are required' });
@@ -64,21 +61,17 @@ const addToCartFromWishlist = async (req, res) => {
     const existingItem = cart.Items.find(item => item.product.toString() === productId);
 
     if (existingItem) {
-      // MAX LIMIT CHECK — cannot exceed 5
       if (existingItem.quantity >= 5) {
         return res.status(400).json({ success: false, message: 'Maximum quantity limit reached (5)' });
       }
 
-      // STOCK CHECK
       if (existingItem.quantity + 1 > variant.Stock) {
         return res.status(400).json({ success: false, message: 'Not enough stock available' });
       }
 
-      // Increase by 1
       existingItem.quantity += 1;
 
     } else {
-      // Add first time → always 1 but check stock
       if (variant.Stock < 1) {
         return res.status(400).json({ success: false, message: 'Product is out of stock' });
       }
@@ -88,7 +81,6 @@ const addToCartFromWishlist = async (req, res) => {
 
     await cart.save();
 
-    // Remove from wishlist
     await Wishlist.deleteOne({ UserId: userId, ProductId: productId });
 
     return res.json({ success: true, message: 'Product added to cart' });

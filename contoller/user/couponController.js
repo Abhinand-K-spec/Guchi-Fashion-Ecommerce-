@@ -39,7 +39,7 @@ const validateCoupon = async (req, res) => {
       }).lean();
   
       if (!coupon) {
-        console.log('Coupon not found or invalid:', couponCode);
+        console.error('Coupon not found or invalid:', couponCode);
         return res.status(400).json({
           success: false,
           valid: false,
@@ -60,7 +60,7 @@ const validateCoupon = async (req, res) => {
 
       const usageCount = await Orders.countDocuments({ Coupon: coupon._id });
       if (usageCount >= coupon.UsageLimit) {
-        console.log('Coupon usage limit reached:', { couponCode, usageCount, limit: coupon.UsageLimit });
+        console.error('Coupon usage limit reached:', { couponCode, usageCount, limit: coupon.UsageLimit });
         return res.status(400).json({
           success: false,
           valid: false,
@@ -79,7 +79,7 @@ const validateCoupon = async (req, res) => {
         });
       }
   
-      // Calculate discount
+
       let discountAmount = cartTotal * (discountPercentage / 100);
       if (coupon.MaxDiscount && Number.isFinite(coupon.MaxDiscount)) {
         discountAmount = Math.min(discountAmount, coupon.MaxDiscount);

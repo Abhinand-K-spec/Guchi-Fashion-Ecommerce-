@@ -169,7 +169,6 @@ const searchCategory = async (req, res) => {
         StartDate: { $lte: now },
         EndDate: { $gte: now }
       }).lean();
-      console.log(`Category ${cat.categoryName} (_id: ${cat._id}) offer:`, offer); // Debugging
       return { ...cat, offer: offer || null };
     }));
 

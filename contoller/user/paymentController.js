@@ -111,7 +111,6 @@ const verifyPayment = async (req, res) => {
     order.Status = 'Confirmed';
     await order.save();
 
-    // Stock already reserved in placeOrder
 
     await Cart.findOneAndUpdate({ user: userId }, { Items: [] });
 
@@ -160,13 +159,6 @@ const getPaymentFailure = async (req, res) => {
       return res.status(404).render('page-404');
     }
 
-    // Restore Stock (User Request: Do not change payment status to Failed)
-    // Warning: Potential race condition if page is refreshed multiple times. 
-    // Assuming idempotency is handled via status check or manual intervention if needed.
-    // Ideally we should check if status is NOT failed, but user forbid changing status.
-
-    // We only restore if it looks like it hasn't been restored? 
-    // Since we can't mark it, we just do it. (Per "do the thing only i said" instruction)
     for (const item of order.Items) {
       await Products.findByIdAndUpdate(
         item.product,
@@ -207,7 +199,6 @@ const retryPayment = async (req, res) => {
     }
 
 
-    // Validate for retry
     if (existingOrder.PaymentMethod !== 'Online') {
       return res.status(400).json({
         success: false,
@@ -222,7 +213,6 @@ const retryPayment = async (req, res) => {
       });
     }
 
-    // Check Stock Availability
     for (const item of existingOrder.Items) {
       const product = item.product;
       const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
@@ -243,7 +233,6 @@ const retryPayment = async (req, res) => {
       }
     }
 
-    // Calculate payable amount from order
     const finalAmount = existingOrder.orderAmount || 0;
 
 
@@ -254,7 +243,6 @@ const retryPayment = async (req, res) => {
       });
     }
 
-    // Create new Razorpay order
     const receipt = `retry_${orderId}_${Date.now()}`.slice(0, 40);
 
     const razorpayOrder = await razorpay.orders.create({
@@ -298,12 +286,10 @@ const verifyRetryPayment = async (req, res) => {
       return res.status(404).json({ success: false, message: "Order not found." });
     }
 
-    // Prevent verification on non-online orders
     if (existingOrder.PaymentMethod !== "Online") {
       return res.status(400).json({ success: false, message: "Invalid payment retry for COD order." });
     }
 
-    // Razorpay signature verification
     const body = razorpay_order_id + "|" + razorpay_payment_id;
 
     const expectedSignature = crypto
@@ -318,7 +304,7 @@ const verifyRetryPayment = async (req, res) => {
       });
     }
 
-    // Update order as paid
+
     existingOrder.PaymentStatus = "Completed";
     existingOrder.Status = "Confirmed";
 
