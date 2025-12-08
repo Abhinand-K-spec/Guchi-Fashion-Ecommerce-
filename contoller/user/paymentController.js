@@ -189,7 +189,7 @@ const retryPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Order ID missing.' });
     }
 
-    const existingOrder = await Orders.findById(orderId).lean();
+    const existingOrder = await Orders.findById(orderId).populate('Items.product').lean();
     if (!existingOrder) {
       return res.status(404).json({ success: false, message: 'Order not found.' });
     }
@@ -208,6 +208,27 @@ const retryPayment = async (req, res) => {
         success: false,
         message: 'Payment is already completed.'
       });
+    }
+
+    // Check Stock Availability
+    for (const item of existingOrder.Items) {
+      const product = item.product;
+      const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+      const variant = product?.Variants?.[variantIndex];
+
+      if (!product || !variant) {
+        return res.status(400).json({
+          success: false,
+          message: `Product info missing for item ${item.product?._id || ''}`
+        });
+      }
+
+      if (variant.Stock < item.quantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient stock for ${product.productName} (${variant.Color}/${variant.Size}). Available: ${variant.Stock}`
+        });
+      }
     }
 
     // Calculate payable amount from order

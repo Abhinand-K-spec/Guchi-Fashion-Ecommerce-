@@ -68,7 +68,7 @@ const listOrders = async (req, res) => {
 const orderDetails = async (req, res) => {
   try {
     const userId = req.session.user;
-    if (!userId) {return res.redirect('/login');}
+    if (!userId) { return res.redirect('/login'); }
 
     const order = await Orders.findById(req.params.id)
       .populate({
@@ -78,7 +78,7 @@ const orderDetails = async (req, res) => {
       .populate('UserId', 'name email')
       .lean();
 
-    if (!order) {return res.render('page-404');}
+    if (!order) { return res.render('page-404'); }
 
     order.Items = order.Items.filter(item => item.product);
 
@@ -288,7 +288,7 @@ const downloadInvoice = async (req, res) => {
       .populate('Address')
       .lean();
 
-    if (!order) {return res.render('page-404');}
+    if (!order) { return res.render('page-404'); }
 
     const doc = new PDFDocument({ margin: 50 });
 
@@ -442,7 +442,7 @@ const placeOrder = async (req, res) => {
 
   try {
 
-    const { selectedAddressId, coupon, paymentMethod } = req.body;
+    const { selectedAddressId, coupon, paymentMethod, finalTotal } = req.body;
     const userId = req.session.user;
 
 
@@ -506,9 +506,9 @@ const placeOrder = async (req, res) => {
         quantity,
         originalPrice,
         offerDiscountAmount,
-        couponDiscountAmount: 0, 
-        taxAmount: 0, 
-        finalPayableAmount: 0, 
+        couponDiscountAmount: 0,
+        taxAmount: 0,
+        finalPayableAmount: 0,
         status: 'Pending',
         variantIndex: variantIndex
       });
@@ -581,6 +581,18 @@ const placeOrder = async (req, res) => {
 
     if (orderAmount < 1) {
       return res.status(400).json({ success: false, message: 'Order amount must be at least ₹1.00 after discounts.' });
+    }
+
+    // Validate that the backend calculated amount matches the frontend displayed amount
+    if (finalTotal !== undefined && finalTotal !== null) {
+      const frontendTotal = parseFloat(finalTotal);
+      if (Math.abs(orderAmount - frontendTotal) > 1.0) {
+        console.warn(`Price mismatch detected: Backend=${orderAmount}, Frontend=${frontendTotal}`);
+        return res.status(400).json({
+          success: false,
+          message: 'The price of one or more items in your cart has changed. Please refresh the page to get the updated price.'
+        });
+      }
     }
 
     const order = new Orders({
