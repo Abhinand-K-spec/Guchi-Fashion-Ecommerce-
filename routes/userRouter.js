@@ -11,7 +11,7 @@ const walletController = require('../contoller/user/walletController');
 const couponController = require('../contoller/user/couponController');
 const productController = require('../contoller/user/productController');
 const paymentController = require('../contoller/user/paymentController');
-const { userAuth, adminAuth } = require('../middlewares/auth');
+const { userAuth } = require('../middlewares/auth');
 
 const upload = require('../middlewares/cloudinaryUpload');
 

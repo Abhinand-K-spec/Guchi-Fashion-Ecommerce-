@@ -1,77 +1,90 @@
-import { defineConfig } from "eslint/config";
+import js from "@eslint/js";
 import jsonc from "eslint-plugin-jsonc";
 import markdown from "eslint-plugin-markdown";
 import globals from "globals";
 import parser from "jsonc-eslint-parser";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import js from "@eslint/js";
-import { FlatCompat } from "@eslint/eslintrc";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-    baseDirectory: __dirname,
-    recommendedConfig: js.configs.recommended,
-    allConfig: js.configs.all
-});
+export default [
 
-export default defineConfig([{
-    extends: compat.extends(
-        "eslint:recommended",
-        "plugin:jsonc/recommended-with-json",
-        "plugin:jsonc/recommended-with-jsonc",
-        "plugin:jsonc/recommended-with-json5",
-        "plugin:markdown/recommended",
-    ),
+    // ============================================
+    // Base JavaScript Configuration
+    // ============================================
+    {
+        files: ["**/*.js"],
+        ignores: ["node_modules/"],
 
-    plugins: {
-        jsonc,
-        markdown,
-    },
+        languageOptions: {
+            ecmaVersion: "latest",
+            sourceType: "module",
 
-    languageOptions: {
-        globals: {
-            ...globals.node,
-            ...globals.browser,
+            globals: {
+                ...globals.node,
+                ...globals.browser,
+            },
         },
 
-        ecmaVersion: 12,
-        sourceType: "commonjs",
-    },
-
-    rules: {
-        "no-console": ["warn", {
-            allow: ["error"],
-        }],
-
-        "no-unused-vars": ["error", {
-            argsIgnorePattern: "^(req|res|next)$",
-        }],
-
-        eqeqeq: "error",
-        curly: "error",
-        "jsonc/sort-keys": "error",
-    },
-}, {
-    files: ["**/*.json", "**/*.json5", "**/*.jsonc"],
-
-    languageOptions: {
-        parser: parser,
-    },
-}, {
-    files: ["**/*.md"],
-    processor: "markdown/markdown",
-}, {
-    files: ["public/js/*.js"],
-
-    languageOptions: {
-        globals: {
-            ...globals.browser,
-            ...globals.node,
+        plugins: {
+            jsonc,
+            markdown,
         },
 
-        ecmaVersion: 5,
-        sourceType: "module",
+        rules: {
+            ...js.configs.recommended.rules,
+
+            "no-console": ["warn", { allow: ["error"] }],
+            "no-unused-vars": ["error", { argsIgnorePattern: "^(req|res|next)$" }],
+            eqeqeq: "error",
+            curly: "error",
+        },
     },
-}]);
+
+    // ============================================
+    // JSON / JSONC / JSON5 config
+    // ============================================
+    {
+        files: ["**/*.json", "**/*.json5", "**/*.jsonc"],
+
+        languageOptions: {
+            parser,
+        },
+
+        plugins: {
+            jsonc,
+        },
+
+        rules: {
+            ...jsonc.configs["recommended-with-json"].rules,
+            "jsonc/sort-keys": "error",
+        },
+    },
+
+    // ============================================
+    // Markdown linting
+    // ============================================
+    {
+        files: ["**/*.md"],
+
+        plugins: {
+            markdown,
+        },
+
+        processor: "markdown/markdown",
+    },
+
+    // ============================================
+    // Public folder JS (ES5, frontend only)
+    // ============================================
+    {
+        files: ["public/js/*.js"],
+
+        languageOptions: {
+            ecmaVersion: 5,
+            sourceType: "module",
+
+            globals: {
+                ...globals.browser,
+                ...globals.node,
+            },
+        },
+    },
+];

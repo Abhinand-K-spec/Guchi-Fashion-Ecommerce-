@@ -8,7 +8,7 @@ const orderController = require('../contoller/admin/orderController');
 const couponController = require('../contoller/admin/couponController');
 const offerController = require('../contoller/admin/offerController');
 const salesController = require('../contoller/admin/salesController');
-const { userAuth, adminAuth } = require('../middlewares/auth');
+const {adminAuth } = require('../middlewares/auth');
 const upload = require('../middlewares/multer');
 
 router.get('/pageNotFound', adminController.pageNotFound);
