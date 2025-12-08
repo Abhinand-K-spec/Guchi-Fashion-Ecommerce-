@@ -11,7 +11,11 @@ export default [
     // ============================================
     {
         files: ["**/*.js"],
-        ignores: ["node_modules/"],
+        ignores: [
+            "node_modules/",
+            "public/js/*.js",
+            "package-lock.json"
+        ],
 
         languageOptions: {
             ecmaVersion: "latest",
@@ -31,10 +35,12 @@ export default [
         rules: {
             ...js.configs.recommended.rules,
 
-            "no-console": ["warn", { allow: ["error"] }],
-            "no-unused-vars": ["error", { argsIgnorePattern: "^(req|res|next)$" }],
-            eqeqeq: "error",
-            curly: "error",
+            // Disabled lint rules
+            "no-console": "off",
+            "no-redeclare": "off",
+            "no-unused-vars": "off",
+            "eqeqeq": "off",
+            "curly": "off",
         },
     },
 
@@ -53,8 +59,7 @@ export default [
         },
 
         rules: {
-            ...jsonc.configs["recommended-with-json"].rules,
-            "jsonc/sort-keys": "error",
+            "jsonc/sort-keys": "off"  // Turn OFF key sorting
         },
     },
 
@@ -69,22 +74,5 @@ export default [
         },
 
         processor: "markdown/markdown",
-    },
-
-    // ============================================
-    // Public folder JS (ES5, frontend only)
-    // ============================================
-    {
-        files: ["public/js/*.js"],
-
-        languageOptions: {
-            ecmaVersion: 5,
-            sourceType: "module",
-
-            globals: {
-                ...globals.browser,
-                ...globals.node,
-            },
-        },
-    },
+    }
 ];

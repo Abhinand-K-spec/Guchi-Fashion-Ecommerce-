@@ -52,7 +52,7 @@ const profile = async (req, res) => {
     }
 
     const userData = await User.findById(userId).lean();
-    if (!userData) {return res.status(400).render(page - 404);}
+    if (!userData) {return res.status(400).render('page - 404');}
 
     const userAddresses = await Address.find({ userId }).lean();
 
@@ -93,7 +93,7 @@ const getEditProfile = async (req, res) => {
   } catch (error) {
 
     console.log('error while loading editProfile page', error.message);
-    res.status(400).render(page - 404);
+    res.status(400).render('page - 404');
 
   }
 };

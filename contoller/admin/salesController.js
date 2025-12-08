@@ -417,8 +417,6 @@ const downloadSalesReport = async (req, res) => {
     if (!res.headersSent) {
       res.status(500).json({ success: false, message: 'Error generating PDF report. Check server logs for details.' });
     } else {
-      doc?.end();
-      writeStream?.end();
       res.end();
     }
   }

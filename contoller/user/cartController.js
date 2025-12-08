@@ -208,8 +208,6 @@ const getCartData = async (req, res) => {
         stock: variant?.Stock || 0,
         itemTotal,
         variantIndex: variantIndex,
-        itemTotal,
-        variantIndex: variantIndex,
         isListed: isProductListed && isCategoryListed,
         size: variant?.Size || '',
         originalPrice: variant?.Price || 0,

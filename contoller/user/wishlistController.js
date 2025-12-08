@@ -14,8 +14,7 @@ const getWishlist = async (req, res) => {
       .populate('ProductId')
       .lean();
 
-    if (!wishlistItems || wishlistItems.length === 0) {
-    }
+
 
     const formattedItems = wishlistItems.map(item => ({
       ...item,

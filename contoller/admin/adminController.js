@@ -128,7 +128,7 @@ const loadDashboard = async (req, res) => {
 
     last7Agg.forEach(entry => {
       const dateKey = entry._id;
-      if (last7DaysMap.hasOwnProperty(dateKey)) {
+      if (Object.hasOwn(last7DaysMap, dateKey)) {
         last7DaysMap[dateKey] += entry.revenue;
       }
     });
@@ -137,9 +137,6 @@ const loadDashboard = async (req, res) => {
     const last7DaysValues = Object.values(last7DaysMap);
 
 
-    /* ======================================
-          MONTHLY → Week1–Week4
-    ====================================== */
 
     function getWeekNumber(date) {
       const firstDay = new Date(date.getFullYear(), 0, 1);
@@ -178,9 +175,6 @@ const loadDashboard = async (req, res) => {
     });
 
 
-    /* ======================================
-          YEARLY → Jan to Current Month
-    ====================================== */
 
     const yearStart = new Date(today.getFullYear(), 0, 1);
 
@@ -212,9 +206,7 @@ const loadDashboard = async (req, res) => {
     }
 
 
-    /* ======================================
-       CATEGORY BASED SALES
-    ====================================== */
+
 
     const categorySold = await Orders.aggregate([
       { $unwind: "$Items" },
