@@ -171,7 +171,6 @@
   </div>
 
   <script>
-    // Check for error message in URL query parameters
     const urlParams = new URLSearchParams(window.location.search);
     const errorMsg = urlParams.get('error');
     if (errorMsg) {
@@ -182,7 +181,6 @@
         emailError.style.fontSize = '1rem';
         emailError.style.fontWeight = 'bold';
         emailError.style.marginBottom = '10px';
-        // Clear URL parameter after displaying
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }

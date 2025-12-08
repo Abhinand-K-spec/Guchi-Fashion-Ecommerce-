@@ -95,7 +95,8 @@ const getProductDetails = async (req, res) => {
     res.render('product-details', {
       activePage: 'shopnow',
       product: formattedProduct,
-      recommendedProducts
+      recommendedProducts,
+      user
     });
   } catch (error) {
     console.error('Error in getProductDetails:', error);

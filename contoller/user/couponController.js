@@ -14,7 +14,6 @@ const mongoose = require('mongoose');
 const validateCoupon = async (req, res) => {
     try {
       const { couponCode, subtotal } = req.body;
-      console.log("here aplying coupons",req.body)
       const cartTotal = parseFloat(subtotal);
       const userId = req.session.user; 
 
@@ -28,7 +27,6 @@ const validateCoupon = async (req, res) => {
         });
       }
   
-      console.log('Validating coupon:', { couponCode, cartTotal });
   
 
       const coupon = await Coupon.findOne({
@@ -88,7 +86,6 @@ const validateCoupon = async (req, res) => {
       }
       discountAmount = Math.round(discountAmount * 100) / 100;
   
-      console.log('Coupon applied before :', { couponCode, discountPercentage, discountAmount });
   
       return res.status(200).json({
         success: true,

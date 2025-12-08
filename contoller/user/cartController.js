@@ -115,8 +115,6 @@ const cart = async (req, res) => {
       const isProductListed = product.IsListed;
       const isCategoryListed = product.Category && product.Category.isListed;
 
-      console.log(`Cart Item: ${product.productName}, Variant: ${variantIndex}, Offer: ${offer ? offer.Discount : 'None'}, Price: ${price}, Orig: ${variant?.Price}`);
-
       cartItems.push({
         _id: product._id,
         name: product.productName,

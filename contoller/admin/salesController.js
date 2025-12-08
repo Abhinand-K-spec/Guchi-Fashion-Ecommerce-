@@ -45,6 +45,11 @@ const downloadSalesReportExcel = async (req, res) => {
       filter.OrderDate = { $gte: startDateFilter, $lte: now };
     }
 
+    filter.$or = [
+      { PaymentMethod: 'Online', PaymentStatus: 'Completed' },
+      { PaymentMethod: { $ne: 'Online' } }
+    ];
+
     const orders = await Orders.find(filter)
       .populate("UserId", "name")
       .sort({ OrderDate: -1 })
@@ -201,6 +206,11 @@ const getSalesReport = async (req, res) => {
       filter.OrderDate = { $gte: startDateFilter, $lte: now };
     }
 
+    filter.$or = [
+      { PaymentMethod: 'Online', PaymentStatus: 'Completed' },
+      { PaymentMethod: { $ne: 'Online' } }
+    ];
+
     const page = parseInt(req.query.page) || 1;
     const limit = 8;
     const startIndex = (page - 1) * limit;
@@ -284,6 +294,11 @@ const downloadSalesReport = async (req, res) => {
       }
       filter.OrderDate = { $gte: startDateFilter, $lte: now };
     }
+
+    filter.$or = [
+      { PaymentMethod: 'Online', PaymentStatus: 'Completed' },
+      { PaymentMethod: { $ne: 'Online' } }
+    ];
 
     const orders = await Orders.find(filter)
       .populate('UserId', 'name')

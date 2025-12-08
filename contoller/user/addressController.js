@@ -213,7 +213,6 @@ const deleteAddress = async (req, res) => {
 const setDefaultAddress = async (req, res) => {
   try {
     const userId = req.session.user;
-    console.log(userId);
 
     const { addressId } = req.body;
 
@@ -221,19 +220,16 @@ const setDefaultAddress = async (req, res) => {
       return res.json({ success: false, message: "Invalid request" });
     }
 
-    // Verify the address belongs to this user
     const address = await Address.findOne({ _id: addressId, userId });
     if (!address) {
       return res.json({ success: false, message: "Address not found" });
     }
 
-    // Remove default from all user's addresses
     await Address.updateMany(
       { userId },
       { $set: { isDefault: false } }
     );
 
-    // Set the selected one as default
     address.isDefault = true;
     await address.save();
 

@@ -266,7 +266,6 @@ const requestReturnItem = async (req, res) => {
     const deliveryDate = order.deliveryDate || new Date();
     const daysSinceDelivery = (new Date() - deliveryDate) / (1000 * 60 * 60 * 24);
     if (daysSinceDelivery > 7) {
-      console.log('Return window expired:', { daysSinceDelivery });
       return res.status(400).json({ success: false, message: 'Return window has expired' });
     }
 
@@ -507,9 +506,9 @@ const placeOrder = async (req, res) => {
         quantity,
         originalPrice,
         offerDiscountAmount,
-        couponDiscountAmount: 0, // Will be calculated later
-        taxAmount: 0, // Will be calculated later
-        finalPayableAmount: 0, // Will be calculated later
+        couponDiscountAmount: 0, 
+        taxAmount: 0, 
+        finalPayableAmount: 0, 
         status: 'Pending',
         variantIndex: variantIndex
       });
@@ -579,8 +578,6 @@ const placeOrder = async (req, res) => {
     const totalCouponDiscount = couponDiscount;
     const deliveryCharge = 40;
     const orderAmount = orderItems.reduce((sum, item) => sum + item.finalPayableAmount, 0) + deliveryCharge;
-
-    console.log("Order calculation:", { subtotal, totalOfferDiscount, totalCouponDiscount, totalTax, deliveryCharge, orderAmount });
 
     if (orderAmount < 1) {
       return res.status(400).json({ success: false, message: 'Order amount must be at least ₹1.00 after discounts.' });
