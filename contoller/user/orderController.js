@@ -78,7 +78,7 @@ const orderDetails = async (req, res) => {
       .populate('UserId', 'name email')
       .lean();
 
-    if (!order) { return res.render('page-404'); }
+    if (!order) { return res.status(404).render('page-404'); }
 
     order.Items = order.Items.filter(item => item.product);
 
@@ -147,7 +147,7 @@ const cancelOrder = async (req, res) => {
     }
 
     await order.save();
-    return res.json({ success: true, message: 'Order cancelled successfully', orderStatus: order.Status });
+    return res.status(200).json({ success: true, message: 'Order cancelled successfully', orderStatus: order.Status });
   } catch (err) {
     console.error("Cancel Order Error:", err);
     return res.status(500).json({ success: false, message: 'An error occurred while cancelling the order' });
@@ -285,7 +285,7 @@ const downloadInvoice = async (req, res) => {
       .populate('Address')
       .lean();
 
-    if (!order) { return res.render('page-404'); }
+    if (!order) { return res.status(404).render('page-404'); }
 
     const doc = new PDFDocument({ margin: 50 });
 

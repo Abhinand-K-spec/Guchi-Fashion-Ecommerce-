@@ -11,7 +11,7 @@ const productsinfo = async (req, res) => {
     return res.render('products');
   } catch (error) {
     console.error('Error in productsinfo:', error);
-    res.redirect('/page-404');
+    res.status(500).render('page-404');
   }
 };
 
@@ -21,7 +21,7 @@ const getAddProductPage = async (req, res) => {
     res.render('add-products', { cat: categories });
   } catch (error) {
     console.error('Error in getAddProductPage:', error);
-    res.redirect('/page-404');
+    res.status(500).render('page-404');
   }
 };
 
@@ -176,7 +176,7 @@ const getAllProducts = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in getAllProducts:', error);
-    res.redirect('/page-404');
+    res.status(500).render('page-404');
   }
 };
 
@@ -187,7 +187,7 @@ const unlist = async (req, res) => {
     res.redirect('/admin/products');
   } catch (error) {
     console.error('Error in unlist:', error);
-    res.redirect('/page-404');
+    res.status(500).render('page-404');
   }
 };
 
@@ -198,7 +198,7 @@ const list = async (req, res) => {
     res.redirect('/admin/products');
   } catch (error) {
     console.error('Error in list:', error);
-    res.redirect('/page-404');
+    res.status(500).render('page-404');
   }
 };
 
@@ -209,12 +209,12 @@ const getEditProductPage = async (req, res) => {
     const product = await Product.findById(productId).populate('Category').lean();
     const categories = await Category.find({ isListed: true }).lean();
 
-    if (!product) {return res.status(404).render('page-404');}
+    if (!product) { return res.status(404).render('page-404'); }
 
     res.render('edit-product', { product, categories, products });
   } catch (error) {
     console.error('Error in getEditProductPage:', error);
-    res.redirect('/pageNotFound');
+    res.status(500).render('page-404');
   }
 };
 
@@ -234,14 +234,14 @@ const postEditProduct = async (req, res) => {
     } = req.body;
 
     const product = await Product.findById(productId);
-    if (!product) {return res.status(404).render('page-404');}
+    if (!product) { return res.status(404).render('page-404'); }
 
 
     product.productName = productName;
     product.Description = description;
 
     const categoryDoc = await Category.findOne({ categoryName: category });
-    if (!categoryDoc) {return res.status(400).send('Invalid category');}
+    if (!categoryDoc) { return res.status(400).send('Invalid category'); }
     product.Category = categoryDoc._id;
 
     if (product.Variants.length === 0) {

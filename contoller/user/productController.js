@@ -57,7 +57,7 @@ const getProductDetails = async (req, res) => {
     const user = await User.findById(userId);
     const productId = req.params.id;
     const product = await Products.findById(productId).populate('Category').lean();
-    if (!product) {return res.status(404).render('page-404');}
+    if (!product) { return res.status(404).render('page-404'); }
     if (!product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
       return res.render('product-details', {
         product: {
@@ -137,8 +137,8 @@ const getShopPage = async (req, res) => {
       matchStage['Variants.0.Price'] = {};
       const min = parseFloat(minPrice);
       const max = parseFloat(maxPrice);
-      if (!isNaN(min)) {matchStage['Variants.0.Price'].$gte = min;}
-      if (!isNaN(max)) {matchStage['Variants.0.Price'].$lte = max;}
+      if (!isNaN(min)) { matchStage['Variants.0.Price'].$gte = min; }
+      if (!isNaN(max)) { matchStage['Variants.0.Price'].$lte = max; }
     }
 
 
@@ -229,7 +229,7 @@ const getShopPage = async (req, res) => {
 
   } catch (err) {
     console.error('Shop page error:', err);
-    res.status(500).send('Something went wrong');
+    res.status(500).render('page-404');
   }
 };
 

@@ -66,7 +66,7 @@ function generateReferralCode() {
 
 const pageNotFound = async (req, res) => {
   try {
-    return res.render('page-404');
+    return res.status(404).render('page-404');
   } catch (error) {
     res.redirect('/pageNotFound');
   }
@@ -136,7 +136,7 @@ const verifyForgotOtp = async (req, res) => {
 
 
     if (req.session.otp !== otp) {
-      return res.json({ error: 'Please enter a valid OTP' });
+      return res.status(400).json({ error: 'Please enter a valid OTP' });
     }
 
     const email = req.session.email;
@@ -159,7 +159,7 @@ const verifyForgotOtp = async (req, res) => {
 
   } catch (error) {
     console.log(error);
-    return res.json({ error: 'Something went wrong' });
+    return res.status(500).json({ error: 'Something went wrong' });
   }
 };
 
@@ -247,7 +247,7 @@ const loadHomePage = async (req, res) => {
     });
   } catch (error) {
     console.log('Home page error:', error);
-    res.json({ 'error': 'Server error' });
+    res.status(500).json({ 'error': 'Server error' });
   }
 };
 
@@ -257,7 +257,7 @@ const logout = async (req, res) => {
     res.redirect('/login')
   } catch (error) {
     console.log('error session destroy user');
-    res.render('page-404');
+    res.status(500).render('page-404');
   }
 };
 
@@ -266,7 +266,7 @@ const loadSignup = async (req, res) => {
     return res.render('signup');
   } catch (err) {
     console.log('error occurred');
-    res.json({ 'error': 'Server error' });
+    res.status(500).json({ 'error': 'Server error' });
   }
 };
 
@@ -341,7 +341,7 @@ const signup = async (req, res) => {
     console.log('OTP sent:', otp);
   } catch (error) {
     console.error('Error signing up:', error);
-    res.render('page-404');
+    res.status(500).render('page-404');
   }
 };
 
@@ -353,11 +353,11 @@ const verifyOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please enter a valid 6-digit OTP.' });
     }
     if (!req.session.userData || !req.session.otp) {
-      return res.json({ error: 'Session expired. Please sign up again.' });
+      return res.status(400).json({ error: 'Session expired. Please sign up again.' });
     }
 
     if (req.session.otp !== req.body.otp) {
-      return res.json({ error: 'Invalid OTP. Please try again.' });
+      return res.status(400).json({ error: 'Invalid OTP. Please try again.' });
     }
 
     if (userOtp === req.session.otp) {
@@ -519,20 +519,20 @@ const changePassword = async (req, res) => {
     const { currentPassword, newPassword, confirmPassword } = req.body;
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      return res.json({ success: false, message: 'All fields are required' });
+      return res.status(400).json({ success: false, message: 'All fields are required' });
     }
     if (newPassword !== confirmPassword) {
-      return res.json({ success: false, message: 'New password and confirm password do not match' });
+      return res.status(400).json({ success: false, message: 'New password and confirm password do not match' });
     }
     const user = await User.findById(userId);
     if (!user) {
-      return res.json({ success: false, message: 'User not found' });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
 
     if (!isMatch) {
-      return res.json({ success: false, message: 'Current password is incorrect' });
+      return res.status(400).json({ success: false, message: 'Current password is incorrect' });
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -542,7 +542,7 @@ const changePassword = async (req, res) => {
 
     const updatedUser = await User.findById(userId);
 
-    return res.json({ success: true });
+    return res.status(200).json({ success: true });
   } catch (error) {
     console.error('Password change error:', error);
     return res.status(500).json({ success: false, message: 'Server error' });
@@ -640,16 +640,16 @@ const verifyForgotOtpAndReset = async (req, res) => {
     const { otp, password } = req.body;
 
     if (!req.session.forgotOtp || !req.session.forgotEmail) {
-      return res.json({ error: "Session expired. Please try again." });
+      return res.status(400).json({ error: "Session expired. Please try again." });
     }
 
     if (Date.now() > req.session.otpExpiry) {
       clearForgotSession(req);
-      return res.json({ error: "OTP expired. Please request a new one." });
+      return res.status(400).json({ error: "OTP expired. Please request a new one." });
     }
 
     if (otp !== req.session.forgotOtp) {
-      return res.json({ error: "Invalid OTP" });
+      return res.status(400).json({ error: "Invalid OTP" });
     }
 
     const hashedPassword = await securePassword(password);
@@ -662,13 +662,13 @@ const verifyForgotOtpAndReset = async (req, res) => {
     clearForgotSession(req);
     if (isProfileReset) {
       delete req.session.isProfileReset;
-      return res.json({ success: true, message: "Password reset successfully!", redirect: '/profile' });
+      return res.status(200).json({ success: true, message: "Password reset successfully!", redirect: '/profile' });
     }
-    return res.json({ success: true, message: "Password reset successfully!", redirect: '/login' });
+    return res.status(200).json({ success: true, message: "Password reset successfully!", redirect: '/login' });
 
   } catch (error) {
     console.error(error);
-    return res.json({ error: "Something went wrong" });
+    return res.status(500).json({ error: "Something went wrong" });
   }
 };
 

@@ -7,7 +7,7 @@ const { last } = require('lodash');
 
 const pageNotFound = async (req, res) => {
   try {
-    return res.render('page-404');
+    return res.status(404).render('page-404');
   } catch (error) {
     res.redirect('/pageNotFound');
   }
@@ -169,8 +169,8 @@ const loadDashboard = async (req, res) => {
 
     monthWeekAgg.forEach(e => {
       let w = e._id.week - baseWeekNumber + 1;
-      if (w < 1) {w = 1;}
-      if (w > 4) {w = 4;}
+      if (w < 1) { w = 1; }
+      if (w > 4) { w = 4; }
       monthlyWeekValues[w - 1] += e.revenue;
     });
 
@@ -296,7 +296,7 @@ const loadDashboard = async (req, res) => {
 
   } catch (error) {
     console.log("error in dashboard:", error.message);
-    res.render("page-404");
+    res.status(500).render("page-404");
   }
 };
 
@@ -313,11 +313,11 @@ const login = async (req, res) => {
     const admin = await User.findOne({ email: email, isAdmin: true });
 
     if (!admin) {
-      return res.render('admin-login', { msg: 'Admin not found' });
+      return res.status(401).render('admin-login', { msg: 'Admin not found' });
     }
 
     if (!admin.password) {
-      return res.render('admin-login', { msg: 'Password is missing for this admin' });
+      return res.status(401).render('admin-login', { msg: 'Password is missing for this admin' });
     }
 
     const passwordMatch = await bcrypt.compare(password, admin.password);
@@ -326,7 +326,7 @@ const login = async (req, res) => {
       req.session.admin = true;
       return res.redirect('/admin');
     } else {
-      return res.render('admin-login', { msg: 'Password not matching' });
+      return res.status(401).render('admin-login', { msg: 'Password not matching' });
     }
 
   } catch (error) {
@@ -343,7 +343,7 @@ const logout = async (req, res) => {
 
   } catch (error) {
     console.log('error destroying admin session');
-    res.render('page-404');
+    res.status(500).render('page-404');
   }
 };
 

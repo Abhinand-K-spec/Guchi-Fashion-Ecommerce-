@@ -172,7 +172,7 @@ const cart = async (req, res) => {
 const getCartData = async (req, res) => {
   try {
     const userId = req.session.user;
-    if (!userId) { return res.json({ success: false, message: 'User not logged in' }); }
+    if (!userId) { return res.status(401).json({ success: false, message: 'User not logged in' }); }
 
     const cartData = await Cart.findOne({ user: userId })
       .populate({
@@ -229,10 +229,10 @@ const getCartData = async (req, res) => {
       };
     }));
 
-    res.json({ success: true, cartItems, totalPrice });
+    res.status(200).json({ success: true, cartItems, totalPrice });
   } catch (err) {
     console.error('Get cart data error:', err);
-    res.json({ success: false, message: 'Error fetching cart data' });
+    res.status(500).json({ success: false, message: 'Error fetching cart data' });
   }
 };
 
@@ -280,7 +280,7 @@ const addToCart = async (req, res) => {
     }
 
     await cart.save();
-    return res.json({ success: 'Successfully added to cart' })
+    return res.status(200).json({ success: 'Successfully added to cart' })
   } catch (err) {
     console.error('Add to cart error:', err);
     res.redirect('/shop');
@@ -294,7 +294,7 @@ const updateCartQuantity = async (req, res) => {
     const { action, variantIndex } = req.body;
 
     if (!userId || !productId || !action) {
-      return res.json({ success: false, message: 'Invalid request data.' });
+      return res.status(400).json({ success: false, message: 'Invalid request data.' });
     }
 
     const cart = await Cart.findOne({ user: userId })
@@ -304,7 +304,7 @@ const updateCartQuantity = async (req, res) => {
       });
 
     if (!cart) {
-      return res.json({ success: false, message: 'Cart not found.' });
+      return res.status(404).json({ success: false, message: 'Cart not found.' });
     }
 
     const item = cart.Items.find(i =>
@@ -313,7 +313,7 @@ const updateCartQuantity = async (req, res) => {
     );
 
     if (!item) {
-      return res.json({ success: false, message: 'Item not found in cart.' });
+      return res.status(404).json({ success: false, message: 'Item not found in cart.' });
     }
 
     if (action === 'increment') {
@@ -323,24 +323,24 @@ const updateCartQuantity = async (req, res) => {
       const isCategoryListed = item.product.Category && item.product.Category.isListed;
 
       if (!isProductListed || !isCategoryListed) {
-        return res.json({ success: false, message: 'This item is currently unavailable.' });
+        return res.status(400).json({ success: false, message: 'This item is currently unavailable.' });
       }
 
       if (item.quantity >= 5) {
-        return res.json({ success: false, message: 'You cannot add more than 5 items.' });
+        return res.status(400).json({ success: false, message: 'You cannot add more than 5 items.' });
       }
       if (item.quantity >= stock) {
-        return res.json({ success: false, message: `Only ${stock} items are available.` });
+        return res.status(400).json({ success: false, message: `Only ${stock} items are available.` });
       }
 
       item.quantity += 1;
     } else if (action === 'decrement') {
       if (item.quantity <= 1) {
-        return res.json({ success: false, message: 'Quantity cannot be less than 1.' });
+        return res.status(400).json({ success: false, message: 'Quantity cannot be less than 1.' });
       }
       item.quantity -= 1;
     } else {
-      return res.json({ success: false, message: 'Invalid action.' });
+      return res.status(400).json({ success: false, message: 'Invalid action.' });
     }
 
     let stockMessage = null;
@@ -409,10 +409,10 @@ const updateCartQuantity = async (req, res) => {
       };
     }));
 
-    res.json({ success: true, cartItems, totalPrice, message: stockMessage });
+    res.status(200).json({ success: true, cartItems, totalPrice, message: stockMessage });
   } catch (err) {
     console.error('Update quantity error:', err);
-    res.json({ success: false, message: 'Error updating quantity' });
+    res.status(500).json({ success: false, message: 'Error updating quantity' });
   }
 };
 
@@ -423,11 +423,11 @@ const removeFromCart = async (req, res) => {
     const { variantIndex } = req.body;
 
     if (!userId) {
-      return res.json({ success: false, message: 'User not logged in' });
+      return res.status(401).json({ success: false, message: 'User not logged in' });
     }
 
     if (variantIndex === undefined) {
-      return res.json({ success: false, message: 'Variant index missing.' });
+      return res.status(400).json({ success: false, message: 'Variant index missing.' });
     }
 
     const result = await Cart.findOneAndUpdate(
@@ -437,14 +437,14 @@ const removeFromCart = async (req, res) => {
     ).lean();
 
     if (!result) {
-      return res.json({ success: false, message: 'Cart not found or item already removed.' });
+      return res.status(404).json({ success: false, message: 'Cart not found or item already removed.' });
     }
 
-    return res.json({ success: true, message: 'Variant successfully removed from cart.' });
+    return res.status(200).json({ success: true, message: 'Variant successfully removed from cart.' });
 
   } catch (err) {
     console.error('Remove cart error:', err);
-    return res.json({ success: false, message: 'Error removing item from cart' });
+    return res.status(500).json({ success: false, message: 'Error removing item from cart' });
   }
 };
 
