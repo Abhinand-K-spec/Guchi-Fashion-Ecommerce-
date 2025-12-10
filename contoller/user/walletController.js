@@ -3,6 +3,7 @@ const Razorpay = require('razorpay');
 const User = require('../../model/userSchema');
 const crypto = require('crypto');
 const Order = require('../../model/ordersSchema');
+const HttpStatus = require('../../config/httpStatus');
 
 
 const razorpay = new Razorpay({
@@ -37,7 +38,7 @@ const getWallet = async (req, res) => {
     });
   } catch (err) {
     console.error('Get wallet error:', err);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -46,7 +47,7 @@ const addFunds = async (req, res) => {
     const { userId, amount } = req.body;
     if (!userId || !amount || amount <= 0) {
       console.error('Invalid input:', { userId, amount });
-      return res.status(400).json({ success: false, message: 'User ID and valid amount are required.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'User ID and valid amount are required.' });
     }
 
     const wallet = await Wallet.findOne({ UserId: userId });
@@ -54,15 +55,15 @@ const addFunds = async (req, res) => {
       await Wallet.create({ UserId: userId, Balance: 0, Transaction: [] });
     }
 
-    const shortId = userId.toString().slice(-6); 
+    const shortId = userId.toString().slice(-6);
     const razorpayOrder = await razorpay.orders.create({
       amount: Math.round(amount * 100),
       currency: 'INR',
-      receipt: `WAL${shortId}_${Date.now().toString().slice(-6)}` 
+      receipt: `WAL${shortId}_${Date.now().toString().slice(-6)}`
     });
 
 
-    return res.status(200).json({
+    return res.status(HttpStatus.OK).json({
       success: true,
       order: {
         id: razorpayOrder.id,
@@ -72,7 +73,7 @@ const addFunds = async (req, res) => {
     });
   } catch (err) {
     console.error('Add funds error:', err);
-    return res.status(500).json({ success: false, message: 'Error initiating fund addition.' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Error initiating fund addition.' });
   }
 };
 
@@ -81,7 +82,7 @@ const verifyWalletPayment = async (req, res) => {
     const { razorpay_payment_id, razorpay_order_id, razorpay_signature, userId, amount } = req.body;
     if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature || !userId || !amount) {
       console.error('Missing payment verification fields');
-      return res.status(400).json({ success: false, message: 'Payment verification details are required.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Payment verification details are required.' });
     }
 
     const generatedSignature = crypto
@@ -91,7 +92,7 @@ const verifyWalletPayment = async (req, res) => {
 
     if (generatedSignature !== razorpay_signature) {
       console.error('Invalid Razorpay signature');
-      return res.status(400).json({ success: false, message: 'Invalid payment signature.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Invalid payment signature.' });
     }
 
     let wallet = await Wallet.findOne({ UserId: userId });
@@ -108,13 +109,13 @@ const verifyWalletPayment = async (req, res) => {
     wallet.UpdatedAt = new Date();
     await wallet.save();
 
-    return res.status(200).json({
+    return res.status(HttpStatus.OK).json({
       success: true,
       message: 'Funds added successfully.'
     });
   } catch (err) {
     console.error('Verify wallet payment error:', err);
-    return res.status(500).json({ success: false, message: 'Error verifying payment.' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Error verifying payment.' });
   }
 };
 
@@ -125,18 +126,18 @@ const payWithWallet = async (req, res) => {
     const { userId, orderId, amount } = req.body;
 
     if (!userId || !orderId || !amount || amount <= 0) {
-      return res.status(400).json({ success: false, message: 'Invalid payment details.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Invalid payment details.' });
     }
 
 
     const wallet = await Wallet.findOne({ UserId: userId });
     if (!wallet) {
-      return res.status(404).json({ success: false, message: 'Wallet not found.' });
+      return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'Wallet not found.' });
     }
 
 
     if (wallet.Balance < amount) {
-      return res.status(400).json({ success: false, message: 'Insufficient wallet balance.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Insufficient wallet balance.' });
     }
 
 
@@ -152,7 +153,7 @@ const payWithWallet = async (req, res) => {
 
     const order = await Order.findById(orderId);
     if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found.' });
+      return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'Order not found.' });
     }
 
     order.paymentMethod = 'Wallet';
@@ -160,22 +161,22 @@ const payWithWallet = async (req, res) => {
     order.paymentStatus = 'Completed';
     await order.save();
 
- 
 
-    return res.status(200).json({
+
+    return res.status(HttpStatus.OK).json({
       success: true,
       message: 'Payment successful via wallet.',
       newBalance: wallet.Balance
     });
   } catch (err) {
     console.error('Wallet payment error:', err);
-    return res.status(500).json({ success: false, message: 'Error processing wallet payment.' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Error processing wallet payment.' });
   }
 };
 
 module.exports = {
-   getWallet,
-   addFunds,
-   verifyWalletPayment,
-   payWithWallet
+  getWallet,
+  addFunds,
+  verifyWalletPayment,
+  payWithWallet
 };

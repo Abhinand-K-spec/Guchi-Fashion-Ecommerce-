@@ -1,6 +1,7 @@
 const User = require('../../model/userSchema');
 const Address = require('../../model/addressSchema');
 const nodemailer = require('nodemailer');
+const HttpStatus = require('../../config/httpStatus');
 
 
 
@@ -52,7 +53,7 @@ const profile = async (req, res) => {
     }
 
     const userData = await User.findById(userId).lean();
-    if (!userData) {return res.status(400).render('page - 404');}
+    if (!userData) { return res.status(HttpStatus.BAD_REQUEST).render('page - 404'); }
 
     const userAddresses = await Address.find({ userId }).lean();
 
@@ -66,7 +67,7 @@ const profile = async (req, res) => {
   } catch (error) {
 
     console.log('error while loading profile', error.message);
-    res.status(400).render('page-404');
+    res.status(HttpStatus.BAD_REQUEST).render('page-404');
 
   }
 };
@@ -93,7 +94,7 @@ const getEditProfile = async (req, res) => {
   } catch (error) {
 
     console.log('error while loading editProfile page', error.message);
-    res.status(400).render('page - 404');
+    res.status(HttpStatus.BAD_REQUEST).render('page - 404');
 
   }
 };
@@ -139,7 +140,7 @@ const getVerifyEmailOtpPage = async (req, res) => {
     });
   } catch (err) {
     console.error('Error loading OTP verification page:', err);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -168,7 +169,7 @@ const uploadProfileImage = async (req, res) => {
   try {
     const userId = req.session.user;
 
-    if (!userId || !req.file) {return res.redirect('/profile');}
+    if (!userId || !req.file) { return res.redirect('/profile'); }
 
     const cloudinaryUrl = req.file.path;
     const publicId = req.file.filename;
@@ -182,7 +183,7 @@ const uploadProfileImage = async (req, res) => {
 
   } catch (err) {
     console.error('Profile image upload failed:', err);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -210,7 +211,7 @@ const updateUsername = async (req, res) => {
     const { username } = req.body;
 
     if (!username || username.trim().length < 3) {
-      return res.status(400).json({ error: 'Username must be at least 3 characters long' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Username must be at least 3 characters long' });
     }
 
 
@@ -223,10 +224,10 @@ const updateUsername = async (req, res) => {
     req.session.user = updatedUser._id;
 
 
-    res.status(200).json({ message: 'Username updated successfully' });
+    res.status(HttpStatus.OK).json({ message: 'Username updated successfully' });
   } catch (error) {
     console.error('Error updating username:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
   }
 };
 

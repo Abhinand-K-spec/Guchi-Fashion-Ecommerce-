@@ -7,6 +7,7 @@ const Coupon = require('../../model/couponsSchema');
 const Offers = require('../../model/offersSchema');
 const Wallet = require('../../model/walletSchema');
 const mongoose = require('mongoose');
+const HttpStatus = require('../../config/httpStatus');
 
 
 
@@ -163,7 +164,7 @@ const cart = async (req, res) => {
     });
   } catch (error) {
     console.error('Error rendering cart page:', error);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -172,7 +173,7 @@ const cart = async (req, res) => {
 const getCartData = async (req, res) => {
   try {
     const userId = req.session.user;
-    if (!userId) { return res.status(401).json({ success: false, message: 'User not logged in' }); }
+    if (!userId) { return res.status(HttpStatus.UNAUTHORIZED).json({ success: false, message: 'User not logged in' }); }
 
     const cartData = await Cart.findOne({ user: userId })
       .populate({
@@ -229,10 +230,10 @@ const getCartData = async (req, res) => {
       };
     }));
 
-    res.status(200).json({ success: true, cartItems, totalPrice });
+    res.status(HttpStatus.OK).json({ success: true, cartItems, totalPrice });
   } catch (err) {
     console.error('Get cart data error:', err);
-    res.status(500).json({ success: false, message: 'Error fetching cart data' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Error fetching cart data' });
   }
 };
 
@@ -244,7 +245,7 @@ const addToCart = async (req, res) => {
     const { variantIndex = 0 } = req.body;
 
     if (!req.session.user) {
-      return res.status(401).json({ error: "LOGIN_REQUIRED" });
+      return res.status(HttpStatus.UNAUTHORIZED).json({ error: "LOGIN_REQUIRED" });
     }
 
     const product = await Products.findById(productId);
@@ -254,7 +255,7 @@ const addToCart = async (req, res) => {
     const selectedVariant = product.Variants[validVariantIndex];
 
     if (!selectedVariant || selectedVariant.Stock <= 0) {
-      return res.status(400).json({ error: 'This product variant is currently out of stock' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'This product variant is currently out of stock' });
     }
 
     let cart = await Cart.findOne({ user: userId });
@@ -269,9 +270,9 @@ const addToCart = async (req, res) => {
 
     if (index >= 0) {
       if (cart.Items[index].quantity >= 5) {
-        return res.status(400).json({ error: 'You cannot add more than 5 items of this product.' });
+        return res.status(HttpStatus.BAD_REQUEST).json({ error: 'You cannot add more than 5 items of this product.' });
       } else if (cart.Items[index].quantity >= selectedVariant.Stock) {
-        return res.status(400).json({ error: 'Not enough stock available' });
+        return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Not enough stock available' });
       } else {
         cart.Items[index].quantity += 1;
       }
@@ -280,7 +281,7 @@ const addToCart = async (req, res) => {
     }
 
     await cart.save();
-    return res.status(200).json({ success: 'Successfully added to cart' })
+    return res.status(HttpStatus.OK).json({ success: 'Successfully added to cart' })
   } catch (err) {
     console.error('Add to cart error:', err);
     res.redirect('/shop');
@@ -294,7 +295,7 @@ const updateCartQuantity = async (req, res) => {
     const { action, variantIndex } = req.body;
 
     if (!userId || !productId || !action) {
-      return res.status(400).json({ success: false, message: 'Invalid request data.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Invalid request data.' });
     }
 
     const cart = await Cart.findOne({ user: userId })
@@ -304,7 +305,7 @@ const updateCartQuantity = async (req, res) => {
       });
 
     if (!cart) {
-      return res.status(404).json({ success: false, message: 'Cart not found.' });
+      return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'Cart not found.' });
     }
 
     const item = cart.Items.find(i =>
@@ -313,7 +314,7 @@ const updateCartQuantity = async (req, res) => {
     );
 
     if (!item) {
-      return res.status(404).json({ success: false, message: 'Item not found in cart.' });
+      return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'Item not found in cart.' });
     }
 
     if (action === 'increment') {
@@ -323,24 +324,24 @@ const updateCartQuantity = async (req, res) => {
       const isCategoryListed = item.product.Category && item.product.Category.isListed;
 
       if (!isProductListed || !isCategoryListed) {
-        return res.status(400).json({ success: false, message: 'This item is currently unavailable.' });
+        return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'This item is currently unavailable.' });
       }
 
       if (item.quantity >= 5) {
-        return res.status(400).json({ success: false, message: 'You cannot add more than 5 items.' });
+        return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'You cannot add more than 5 items.' });
       }
       if (item.quantity >= stock) {
-        return res.status(400).json({ success: false, message: `Only ${stock} items are available.` });
+        return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: `Only ${stock} items are available.` });
       }
 
       item.quantity += 1;
     } else if (action === 'decrement') {
       if (item.quantity <= 1) {
-        return res.status(400).json({ success: false, message: 'Quantity cannot be less than 1.' });
+        return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Quantity cannot be less than 1.' });
       }
       item.quantity -= 1;
     } else {
-      return res.status(400).json({ success: false, message: 'Invalid action.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Invalid action.' });
     }
 
     let stockMessage = null;
@@ -409,10 +410,10 @@ const updateCartQuantity = async (req, res) => {
       };
     }));
 
-    res.status(200).json({ success: true, cartItems, totalPrice, message: stockMessage });
+    res.status(HttpStatus.OK).json({ success: true, cartItems, totalPrice, message: stockMessage });
   } catch (err) {
     console.error('Update quantity error:', err);
-    res.status(500).json({ success: false, message: 'Error updating quantity' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Error updating quantity' });
   }
 };
 
@@ -423,11 +424,11 @@ const removeFromCart = async (req, res) => {
     const { variantIndex } = req.body;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: 'User not logged in' });
+      return res.status(HttpStatus.UNAUTHORIZED).json({ success: false, message: 'User not logged in' });
     }
 
     if (variantIndex === undefined) {
-      return res.status(400).json({ success: false, message: 'Variant index missing.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Variant index missing.' });
     }
 
     const result = await Cart.findOneAndUpdate(
@@ -437,14 +438,14 @@ const removeFromCart = async (req, res) => {
     ).lean();
 
     if (!result) {
-      return res.status(404).json({ success: false, message: 'Cart not found or item already removed.' });
+      return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'Cart not found or item already removed.' });
     }
 
-    return res.status(200).json({ success: true, message: 'Variant successfully removed from cart.' });
+    return res.status(HttpStatus.OK).json({ success: true, message: 'Variant successfully removed from cart.' });
 
   } catch (err) {
     console.error('Remove cart error:', err);
-    return res.status(500).json({ success: false, message: 'Error removing item from cart' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Error removing item from cart' });
   }
 };
 
@@ -562,7 +563,7 @@ const checkout = async (req, res) => {
     });
   } catch (err) {
     console.error("Checkout error:", err);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 

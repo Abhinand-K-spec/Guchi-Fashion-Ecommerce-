@@ -3,6 +3,7 @@ const PDFDocument = require('pdfkit');
 const XLSX = require("xlsx");
 const fs = require('fs');
 const path = require('path');
+const HttpStatus = require('../../config/httpStatus');
 
 
 
@@ -101,8 +102,8 @@ const downloadSalesReportExcel = async (req, res) => {
       ]);
     }
 
-    rows.push([""]); 
-    rows.push([""]); 
+    rows.push([""]);
+    rows.push([""]);
 
 
     const totalAmount = orders.reduce(
@@ -158,7 +159,7 @@ const downloadSalesReportExcel = async (req, res) => {
 
   } catch (err) {
     console.error("Excel download error:", err);
-    res.status(500).json({ error: "Error generating Excel report" });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: "Error generating Excel report" });
   }
 };
 
@@ -247,7 +248,7 @@ const getSalesReport = async (req, res) => {
     });
   } catch (err) {
     console.error('Error generating sales report:', err);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -336,7 +337,7 @@ const downloadSalesReport = async (req, res) => {
       discount: 420,
       netAmount: 500
     };
-    const columnWidth = 80; 
+    const columnWidth = 80;
 
 
 
@@ -415,7 +416,7 @@ const downloadSalesReport = async (req, res) => {
   } catch (err) {
     console.error('Critical error downloading sales report:', err);
     if (!res.headersSent) {
-      res.status(500).json({ success: false, message: 'Error generating PDF report. Check server logs for details.' });
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Error generating PDF report. Check server logs for details.' });
     } else {
       res.end();
     }

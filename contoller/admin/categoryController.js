@@ -1,12 +1,13 @@
 const Category = require('../../model/categorySchema');
 const Offers = require('../../model/offersSchema');
+const HttpStatus = require('../../config/httpStatus');
 
 const categoryinfo = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 3;
     const skip = (page - 1) * limit;
-    const now = new Date(); 
+    const now = new Date();
 
     const categorydata = await Category
       .find({})
@@ -15,14 +16,14 @@ const categoryinfo = async (req, res) => {
       .limit(limit)
       .lean();
 
-    
+
     const categoriesWithOffers = await Promise.all(categorydata.map(async (cat) => {
       const offer = await Offers.findOne({
         Category: cat._id,
         StartDate: { $lte: now },
         EndDate: { $gte: now }
       }).lean();
-      
+
       return { ...cat, offer: offer || null };
     }));
 
@@ -37,7 +38,7 @@ const categoryinfo = async (req, res) => {
     });
   } catch (error) {
     console.log('Error in categoryinfo:', error);
-    res.render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -49,7 +50,7 @@ const addCategory = async (req, res) => {
     });
 
     if (existingCategory) {
-      return res.status(400).json({ error: 'Category already exists' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Category already exists' });
     }
 
     const newCategory = new Category({
@@ -59,10 +60,10 @@ const addCategory = async (req, res) => {
     });
 
     await newCategory.save();
-    return res.json({ message: 'Category added successfully' });
+    return res.status(HttpStatus.OK).json({ message: 'Category added successfully' });
   } catch (error) {
     console.log('Error in addCategory:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
   }
 };
 
@@ -71,12 +72,12 @@ const unlist = async (req, res) => {
     const categoryId = req.query.id;
     const category = await Category.findByIdAndUpdate(categoryId, { isListed: false });
     if (!category) {
-      return res.render('page-404');
+      return res.status(HttpStatus.NOT_FOUND).render('page-404');
     }
     res.redirect(`/admin/category?page=${req.query.page || 1}`);
   } catch (error) {
     console.error('Error unlisting category:', error);
-    res.render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -85,12 +86,12 @@ const list = async (req, res) => {
     const categoryId = req.query.id;
     const category = await Category.findByIdAndUpdate(categoryId, { isListed: true });
     if (!category) {
-      return res.render('page-404');
+      return res.status(HttpStatus.NOT_FOUND).render('page-404');
     }
     res.redirect(`/admin/category?page=${req.query.page || 1}`);
   } catch (error) {
     console.error('Error listing category:', error);
-    res.render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -100,13 +101,13 @@ const getEditCategory = async (req, res) => {
     const categoryData = await Category.findById(id);
 
     if (!categoryData) {
-      return res.render('page-404');
+      return res.status(HttpStatus.NOT_FOUND).render('page-404');
     }
 
     res.render('edit-category', { category: categoryData });
   } catch (error) {
     console.log('Error in getEditCategory:', error);
-    res.render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -136,11 +137,11 @@ const editCategory = async (req, res) => {
     if (updatedCategory) {
       res.redirect(`/admin/category?page=${req.query.page || 1}`);
     } else {
-      res.status(404).render('page-404');
+      res.status(HttpStatus.NOT_FOUND).render('page-404');
     }
   } catch (error) {
     console.error('Error updating category:', error);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -150,7 +151,7 @@ const searchCategory = async (req, res) => {
     const limit = 4;
     const skip = (page - 1) * limit;
     const search = req.query.search || '';
-    const now = new Date(); 
+    const now = new Date();
 
     const query = {
       categoryName: { $regex: new RegExp(search, 'i') }
@@ -184,7 +185,7 @@ const searchCategory = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in searchCategory:', error);
-    res.render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -193,7 +194,7 @@ const clearSearch = async (req, res) => {
     res.redirect('/admin/category');
   } catch (error) {
     console.error('Error in clearSearch:', error);
-    res.render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 

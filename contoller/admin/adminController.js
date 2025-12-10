@@ -4,10 +4,11 @@ const Orders = require('../../model/ordersSchema');
 const Products = require('../../model/productSchema');
 const Category = require('../../model/categorySchema');
 const { last } = require('lodash');
+const HttpStatus = require('../../config/httpStatus');
 
 const pageNotFound = async (req, res) => {
   try {
-    return res.status(404).render('page-404');
+    return res.status(HttpStatus.NOT_FOUND).render('page-404');
   } catch (error) {
     res.redirect('/pageNotFound');
   }
@@ -296,7 +297,8 @@ const loadDashboard = async (req, res) => {
 
   } catch (error) {
     console.log("error in dashboard:", error.message);
-    res.status(500).render("page-404");
+    console.log("error in dashboard:", error.message);
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render("page-404");
   }
 };
 
@@ -313,11 +315,11 @@ const login = async (req, res) => {
     const admin = await User.findOne({ email: email, isAdmin: true });
 
     if (!admin) {
-      return res.status(401).render('admin-login', { msg: 'Admin not found' });
+      return res.status(HttpStatus.UNAUTHORIZED).render('admin-login', { msg: 'Admin not found' });
     }
 
     if (!admin.password) {
-      return res.status(401).render('admin-login', { msg: 'Password is missing for this admin' });
+      return res.status(HttpStatus.UNAUTHORIZED).render('admin-login', { msg: 'Password is missing for this admin' });
     }
 
     const passwordMatch = await bcrypt.compare(password, admin.password);
@@ -326,12 +328,12 @@ const login = async (req, res) => {
       req.session.admin = true;
       return res.redirect('/admin');
     } else {
-      return res.status(401).render('admin-login', { msg: 'Password not matching' });
+      return res.status(HttpStatus.UNAUTHORIZED).render('admin-login', { msg: 'Password not matching' });
     }
 
   } catch (error) {
     console.error('Error during admin login:', error);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -343,7 +345,7 @@ const logout = async (req, res) => {
 
   } catch (error) {
     console.log('error destroying admin session');
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 

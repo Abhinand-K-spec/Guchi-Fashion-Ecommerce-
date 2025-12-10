@@ -2,6 +2,7 @@ const Orders = require('../../model/ordersSchema');
 const User = require('../../model/userSchema');
 const Product = require('../../model/productSchema');
 const Wallet = require('../../model/walletSchema');
+const HttpStatus = require('../../config/httpStatus');
 const { after } = require('lodash');
 
 const getAdminOrders = async (req, res) => {
@@ -68,7 +69,7 @@ const getAdminOrders = async (req, res) => {
 
   } catch (err) {
     console.error('Error loading orders:', err);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -80,12 +81,12 @@ const getOrderDetails = async (req, res) => {
       .populate('UserId', 'name email')
       .populate('Items.product')
       .lean();
-    if (!order) {return res.status(404).render('page-404');}
+    if (!order) { return res.status(HttpStatus.NOT_FOUND).render('page-404'); }
 
     res.render('order-details-manage', { order, activePage: 'order' });
   } catch (err) {
     console.error('Error loading order details:', err);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -95,11 +96,11 @@ const approveReturn = async (req, res) => {
     const { productId } = req.query;
 
     const order = await Orders.findById(orderId).populate('Items.product');
-    if (!order) {return res.status(404).send('Order not found');}
+    if (!order) { return res.status(HttpStatus.NOT_FOUND).send('Order not found'); }
 
     const item = order.Items.find(item => item.product?._id.toString() === productId);
-    if (!item) {return res.status(404).send('Item not found in order');}
-    if (item.returnStatus !== 'Return Requested') {return res.status(400).send('Item return not requested');}
+    if (!item) { return res.status(HttpStatus.NOT_FOUND).send('Item not found in order'); }
+    if (item.returnStatus !== 'Return Requested') { return res.status(HttpStatus.BAD_REQUEST).send('Item return not requested'); }
 
     const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
     const updateQuery = {};
@@ -149,7 +150,7 @@ const approveReturn = async (req, res) => {
     res.redirect(`/admin/order-details/${orderId}`);
   } catch (err) {
     console.error('Error approving return:', err);
-    res.status(500).send('Internal server error');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send('Internal server error');
   }
 };
 
@@ -159,11 +160,11 @@ const rejectReturn = async (req, res) => {
     const { productId } = req.query;
 
     const order = await Orders.findById(orderId);
-    if (!order) {return res.status(404).send('Order not found');}
+    if (!order) { return res.status(HttpStatus.NOT_FOUND).send('Order not found'); }
 
     const item = order.Items.find(item => item.product?._id.toString() === productId);
-    if (!item) {return res.status(404).send('Item not found in order');}
-    if (item.returnStatus !== 'Return Requested') {return res.status(400).send('Item return not requested');}
+    if (!item) { return res.status(HttpStatus.NOT_FOUND).send('Item not found in order'); }
+    if (item.returnStatus !== 'Return Requested') { return res.status(HttpStatus.BAD_REQUEST).send('Item return not requested'); }
 
     item.returnStatus = 'Request Denied';
     item.status = 'Delivered';
@@ -172,7 +173,7 @@ const rejectReturn = async (req, res) => {
     res.redirect(`/admin/order-details/${orderId}`);
   } catch (err) {
     console.error('Error rejecting return:', err);
-    res.status(500).send('Internal server error');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send('Internal server error');
   }
 };
 
@@ -183,15 +184,15 @@ const cancelSingleItem = async (req, res) => {
 
     const order = await Orders.findById(orderId).populate('Items.product');
     if (!order || order.Status !== 'Pending') {
-      return res.status(400).json({ success: false, message: 'Order not found or not in Pending status' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Order not found or not in Pending status' });
     }
 
     const item = order.Items.id(itemId);
     if (!item || item.status === 'Cancelled') {
-      return res.status(400).json({ success: false, message: 'Item not found or already cancelled' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Item not found or already cancelled' });
     }
     if (item.returnStatus !== 'NotRequested') {
-      return res.status(400).json({ success: false, message: 'Item with a return request cannot be cancelled' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Item with a return request cannot be cancelled' });
     }
 
     item.status = 'Cancelled';
@@ -236,10 +237,10 @@ const cancelSingleItem = async (req, res) => {
     }
 
     await order.save();
-    return res.json({ success: true, message: 'Item cancelled successfully', orderStatus: order.Status });
+    return res.status(HttpStatus.OK).json({ success: true, message: 'Item cancelled successfully', orderStatus: order.Status });
   } catch (err) {
     console.error("Cancel Single Item Error:", err);
-    return res.status(500).json({ success: false, message: 'An error occurred while cancelling the item' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'An error occurred while cancelling the item' });
   }
 };
 
@@ -250,24 +251,24 @@ const returnSingleItem = async (req, res) => {
 
     const order = await Orders.findById(orderId).populate('Items.product');
     if (!order || order.Status !== 'Delivered') {
-      return res.status(400).json({ success: false, message: 'Order not found or not in Delivered status' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Order not found or not in Delivered status' });
     }
 
     const item = order.Items.id(itemId);
     if (!item) {
-      return res.status(400).json({ success: false, message: 'Item not found' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Item not found' });
     }
     if (item.status === 'Cancelled') {
-      return res.status(400).json({ success: false, message: 'Cancelled item cannot be returned' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Cancelled item cannot be returned' });
     }
     if (item.returnStatus !== 'NotRequested') {
-      return res.status(400).json({ success: false, message: 'Return already requested or processed' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Return already requested or processed' });
     }
 
     const deliveryDate = order.deliveryDate || new Date();
     const daysSinceDelivery = (new Date() - deliveryDate) / (1000 * 60 * 60 * 24);
     if (daysSinceDelivery > 7) {
-      return res.status(400).json({ success: false, message: 'Return window has expired' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Return window has expired' });
     }
 
     item.returnStatus = 'Return Requested';
@@ -275,10 +276,10 @@ const returnSingleItem = async (req, res) => {
     item.returnRequestedAt = new Date();
 
     await order.save();
-    return res.json({ success: true, message: 'Return request for item submitted successfully' });
+    return res.status(HttpStatus.OK).json({ success: true, message: 'Return request for item submitted successfully' });
   } catch (err) {
     console.error('Return Single Item Error:', err);
-    return res.status(500).json({ success: false, message: 'An error occurred while requesting return for the item' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'An error occurred while requesting return for the item' });
   }
 };
 
@@ -289,23 +290,23 @@ const updateItemStatus = async (req, res) => {
 
     const validStatuses = ['Pending', 'Shipped', 'OutForDelivery', 'Delivered', 'Cancelled'];
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ success: false, message: 'Invalid status' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Invalid status' });
     }
 
     const order = await Orders.findById(orderId).populate('Items.product');
     if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
+      return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'Order not found' });
     }
 
     const item = order.Items.id(itemId);
     if (!item) {
-      return res.status(404).json({ success: false, message: 'Item not found' });
+      return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'Item not found' });
     }
     if (item.status === 'Cancelled' || item.status === 'Returned') {
-      return res.status(400).json({ success: false, message: 'Cannot update status of cancelled or returned item' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Cannot update status of cancelled or returned item' });
     }
     if (item.returnStatus === 'Return Requested' || item.returnStatus === 'Request Approved') {
-      return res.status(400).json({ success: false, message: 'Cannot update status of item with active return request' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Cannot update status of item with active return request' });
     }
 
     if (status === 'Cancelled') {
@@ -351,10 +352,10 @@ const updateItemStatus = async (req, res) => {
     }
 
     await order.save();
-    return res.json({ success: true, message: 'Item status updated successfully', orderStatus: order.Status });
+    return res.status(HttpStatus.OK).json({ success: true, message: 'Item status updated successfully', orderStatus: order.Status });
   } catch (err) {
     console.error('Error updating item status:', err);
-    return res.status(500).json({ success: false, message: 'An error occurred while updating the item status' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'An error occurred while updating the item status' });
   }
 };
 

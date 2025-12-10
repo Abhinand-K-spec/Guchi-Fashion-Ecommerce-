@@ -1,4 +1,5 @@
 const Coupon = require('../../model/couponsSchema');
+const HttpStatus = require('../../config/httpStatus');
 const User = require('../../model/userSchema');
 const Product = require('../../model/productSchema');
 const Order = require('../../model/ordersSchema');
@@ -47,7 +48,7 @@ const addCoupon = async (req, res) => {
 
         const existingCoupon = await Coupon.findOne({ CouponCode });
         if (existingCoupon) {
-            return res.status(400).json({
+            return res.status(HttpStatus.BAD_REQUEST).json({
                 error: "Coupon code already exists"
             });
 
@@ -59,14 +60,14 @@ const addCoupon = async (req, res) => {
         today.setHours(0, 0, 0, 0);
 
         if (start < today) {
-            return res.status(400).json({
+            return res.status(HttpStatus.BAD_REQUEST).json({
                 success: false,
                 error: 'Start Date cannot be in the past'
             });
         }
 
         if (start > end) {
-            return res.status(400).json({
+            return res.status(HttpStatus.BAD_REQUEST).json({
                 success: false,
                 error: 'Start Date cannot be later than End Date'
             });
@@ -75,7 +76,7 @@ const addCoupon = async (req, res) => {
 
         const discountValue = parseFloat(Discount);
         if (isNaN(discountValue) || discountValue < 0 || discountValue >= 90) {
-            return res.status(400).json({ success: false, error: 'Discount must be between 0 and 90' });
+            return res.status(HttpStatus.BAD_REQUEST).json({ success: false, error: 'Discount must be between 0 and 90' });
         }
 
 
@@ -97,10 +98,10 @@ const addCoupon = async (req, res) => {
         const savedCoupon = await newCoupon.save();
 
 
-        res.status(201).json({ success: true, coupon: savedCoupon });
+        res.status(HttpStatus.CREATED).json({ success: true, coupon: savedCoupon });
     } catch (error) {
         console.error('Error in addCoupon:', error);
-        res.status(500).json({ success: false, error: 'Failed to create coupon' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, error: 'Failed to create coupon' });
     }
 };
 
@@ -109,13 +110,13 @@ const unlist = async (req, res) => {
         const couponId = req.params.couponId;
         const coupon = await Coupon.findById(couponId);
         if (!coupon) {
-            return res.status(404).json({ error: 'Coupon not found' });
+            return res.status(HttpStatus.NOT_FOUND).json({ error: 'Coupon not found' });
         }
         await Coupon.findByIdAndUpdate(couponId, { IsListed: false });
-        res.status(200).json({ message: 'Coupon unlisted successfully' });
+        res.status(HttpStatus.OK).json({ message: 'Coupon unlisted successfully' });
     } catch (error) {
         console.error('Error in unlist:', error);
-        res.status(500).json({ error: 'Failed to unlist coupon' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Failed to unlist coupon' });
     }
 };
 
@@ -124,13 +125,13 @@ const list = async (req, res) => {
         const couponId = req.params.couponId;
         const coupon = await Coupon.findById(couponId);
         if (!coupon) {
-            return res.status(404).json({ error: 'Coupon not found' });
+            return res.status(HttpStatus.NOT_FOUND).json({ error: 'Coupon not found' });
         }
         await Coupon.findByIdAndUpdate(couponId, { IsListed: true });
-        res.status(200).json({ message: 'Coupon listed successfully' });
+        res.status(HttpStatus.OK).json({ message: 'Coupon listed successfully' });
     } catch (error) {
         console.error('Error in list:', error);
-        res.status(500).json({ error: 'Failed to list coupon' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Failed to list coupon' });
     }
 };
 

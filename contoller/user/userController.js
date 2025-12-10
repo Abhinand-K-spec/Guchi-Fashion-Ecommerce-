@@ -8,6 +8,7 @@ const Orders = require('../../model/ordersSchema');
 const Address = require('../../model/addressSchema');
 const Coupon = require('../../model/couponsSchema');
 const mongoose = require('mongoose');
+const HttpStatus = require('../../config/httpStatus');
 
 
 const securePassword = async (password) => {
@@ -66,7 +67,7 @@ function generateReferralCode() {
 
 const pageNotFound = async (req, res) => {
   try {
-    return res.status(404).render('page-404');
+    return res.status(HttpStatus.NOT_FOUND).render('page-404');
   } catch (error) {
     res.redirect('/pageNotFound');
   }
@@ -136,7 +137,7 @@ const verifyForgotOtp = async (req, res) => {
 
 
     if (req.session.otp !== otp) {
-      return res.status(400).json({ error: 'Please enter a valid OTP' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Please enter a valid OTP' });
     }
 
     const email = req.session.email;
@@ -159,7 +160,7 @@ const verifyForgotOtp = async (req, res) => {
 
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ error: 'Something went wrong' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Something went wrong' });
   }
 };
 
@@ -247,7 +248,7 @@ const loadHomePage = async (req, res) => {
     });
   } catch (error) {
     console.log('Home page error:', error);
-    res.status(500).json({ 'error': 'Server error' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 'error': 'Server error' });
   }
 };
 
@@ -257,7 +258,7 @@ const logout = async (req, res) => {
     res.redirect('/login')
   } catch (error) {
     console.log('error session destroy user');
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -266,7 +267,7 @@ const loadSignup = async (req, res) => {
     return res.render('signup');
   } catch (err) {
     console.log('error occurred');
-    res.status(500).json({ 'error': 'Server error' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 'error': 'Server error' });
   }
 };
 
@@ -341,7 +342,7 @@ const signup = async (req, res) => {
     console.log('OTP sent:', otp);
   } catch (error) {
     console.error('Error signing up:', error);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -350,14 +351,14 @@ const verifyOtp = async (req, res) => {
   try {
     const userOtp = req.body.otp?.trim();
     if (!userOtp || !/^\d{6}$/.test(userOtp)) {
-      return res.status(400).json({ success: false, message: 'Please enter a valid 6-digit OTP.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Please enter a valid 6-digit OTP.' });
     }
     if (!req.session.userData || !req.session.otp) {
-      return res.status(400).json({ error: 'Session expired. Please sign up again.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Session expired. Please sign up again.' });
     }
 
     if (req.session.otp !== req.body.otp) {
-      return res.status(400).json({ error: 'Invalid OTP. Please try again.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid OTP. Please try again.' });
     }
 
     if (userOtp === req.session.otp) {
@@ -430,14 +431,14 @@ const verifyOtp = async (req, res) => {
       delete req.session.userData;
       req.session.save((err) => {
         if (err) console.error('Session save error:', err);
-        return res.status(200).json({ success: true, message: 'OTP verified successfully.', redirect: '/login' });
+        return res.status(HttpStatus.OK).json({ success: true, message: 'OTP verified successfully.', redirect: '/login' });
       });
     } else {
-      return res.status(400).json({ success: false, message: 'Invalid OTP. Please try again.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Invalid OTP. Please try again.' });
     }
   } catch (error) {
     console.error('Error verifying OTP:', error);
-    return res.status(500).json({ success: false, message: 'An error occurred while verifying OTP. Please try again.' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'An error occurred while verifying OTP. Please try again.' });
   }
 };
 
@@ -466,7 +467,7 @@ const getOrderSuccess = async (req, res) => {
     const orderId = req.params.orderId;
     const order = await Orders.findById(orderId).populate('Items.product').lean();
     if (!order) {
-      return res.status(404).render('page-404');
+      return res.status(HttpStatus.NOT_FOUND).render('page-404');
     }
     const userId = req.session.user;
     const user = await User.findById(userId).lean();
@@ -477,7 +478,7 @@ const getOrderSuccess = async (req, res) => {
     });
   } catch (err) {
     console.error('Order success page error:', err);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -491,7 +492,7 @@ const getOrderFailure = async (req, res) => {
     });
   } catch (err) {
     console.error('Order failure page error:', err);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -508,31 +509,31 @@ const getChangePassword = async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading change password page:', error);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
 const changePassword = async (req, res) => {
   try {
     const userId = req.session.user;
-    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!userId) return res.status(HttpStatus.UNAUTHORIZED).json({ success: false, message: 'Unauthorized' });
     const { currentPassword, newPassword, confirmPassword } = req.body;
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      return res.status(400).json({ success: false, message: 'All fields are required' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'All fields are required' });
     }
     if (newPassword !== confirmPassword) {
-      return res.status(400).json({ success: false, message: 'New password and confirm password do not match' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'New password and confirm password do not match' });
     }
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'User not found' });
     }
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Current password is incorrect' });
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -542,10 +543,10 @@ const changePassword = async (req, res) => {
 
     const updatedUser = await User.findById(userId);
 
-    return res.status(200).json({ success: true });
+    return res.status(HttpStatus.OK).json({ success: true });
   } catch (error) {
     console.error('Password change error:', error);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -570,7 +571,7 @@ const getOrders = async (req, res) => {
     });
   } catch (err) {
     console.error('Get orders error:', err);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -640,16 +641,16 @@ const verifyForgotOtpAndReset = async (req, res) => {
     const { otp, password } = req.body;
 
     if (!req.session.forgotOtp || !req.session.forgotEmail) {
-      return res.status(400).json({ error: "Session expired. Please try again." });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: "Session expired. Please try again." });
     }
 
     if (Date.now() > req.session.otpExpiry) {
       clearForgotSession(req);
-      return res.status(400).json({ error: "OTP expired. Please request a new one." });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: "OTP expired. Please request a new one." });
     }
 
     if (otp !== req.session.forgotOtp) {
-      return res.status(400).json({ error: "Invalid OTP" });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: "Invalid OTP" });
     }
 
     const hashedPassword = await securePassword(password);
@@ -662,13 +663,13 @@ const verifyForgotOtpAndReset = async (req, res) => {
     clearForgotSession(req);
     if (isProfileReset) {
       delete req.session.isProfileReset;
-      return res.status(200).json({ success: true, message: "Password reset successfully!", redirect: '/profile' });
+      return res.status(HttpStatus.OK).json({ success: true, message: "Password reset successfully!", redirect: '/profile' });
     }
-    return res.status(200).json({ success: true, message: "Password reset successfully!", redirect: '/login' });
+    return res.status(HttpStatus.OK).json({ success: true, message: "Password reset successfully!", redirect: '/login' });
 
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Something went wrong" });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: "Something went wrong" });
   }
 };
 

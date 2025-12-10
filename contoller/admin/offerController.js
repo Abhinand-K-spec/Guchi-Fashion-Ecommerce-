@@ -1,6 +1,7 @@
 const Offers = require('../../model/offersSchema');
 const Category = require('../../model/categorySchema');
 const Product = require('../../model/productSchema');
+const HttpStatus = require('../../config/httpStatus');
 
 const addCategoryOffer = async (req, res) => {
   try {
@@ -8,7 +9,7 @@ const addCategoryOffer = async (req, res) => {
     const { OfferName, StartDate, EndDate, Discount } = req.body;
 
     if (!OfferName || !StartDate || !EndDate || !Discount) {
-      return res.status(400).json({ error: 'Offer name, start date, end date, and discount are required.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Offer name, start date, end date, and discount are required.' });
     }
 
     const start = new Date(StartDate);
@@ -17,22 +18,22 @@ const addCategoryOffer = async (req, res) => {
     today.setHours(0, 0, 0, 0);
 
     if (isNaN(start) || isNaN(end)) {
-      return res.status(400).json({ error: 'Invalid date format.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid date format.' });
     }
     if (start < today) {
-      return res.status(400).json({ error: 'Start date cannot be in the past.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Start date cannot be in the past.' });
     }
     if (start > end) {
-      return res.status(400).json({ error: 'Start date cannot be later than end date.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Start date cannot be later than end date.' });
     }
 
     if (isNaN(Discount) || Discount < 0 || Discount >= 90) {
-      return res.status(400).json({ error: 'Discount must be between 0 and 90.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Discount must be between 0 and 90.' });
     }
 
     const category = await Category.findById(id);
     if (!category) {
-      return res.status(404).json({ error: 'Category not found.' });
+      return res.status(HttpStatus.NOT_FOUND).json({ error: 'Category not found.' });
     }
 
     const now = new Date();
@@ -43,7 +44,7 @@ const addCategoryOffer = async (req, res) => {
       EndDate: { $gte: now }
     });
     if (existingOffer) {
-      return res.status(400).json({ error: 'An active offer already exists for this category.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'An active offer already exists for this category.' });
     }
 
     const newOffer = new Offers({
@@ -59,7 +60,7 @@ const addCategoryOffer = async (req, res) => {
     res.redirect(`/admin/category?page=${req.query.page || 1}`);
   } catch (error) {
     console.error('Error in addCategoryOffer:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Server error' });
   }
 };
 
@@ -71,19 +72,19 @@ const removeCategoryOffer = async (req, res) => {
 
     const category = await Category.findById(id);
     if (!category) {
-      return res.status(404).json({ error: 'Category not found.' });
+      return res.status(HttpStatus.NOT_FOUND).json({ error: 'Category not found.' });
     }
 
     const offer = await Offers.findOne({ _id: offerId, Category: id });
     if (!offer) {
-      return res.status(404).json({ error: 'Offer not found.' });
+      return res.status(HttpStatus.NOT_FOUND).json({ error: 'Offer not found.' });
     }
 
     await Offers.findByIdAndDelete(offerId);
     res.redirect(`/admin/category?page=${req.query.page || 1}`);
   } catch (error) {
     console.error('Error in removeCategoryOffer:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Server error' });
   }
 };
 
@@ -94,7 +95,7 @@ const addProductOffer = async (req, res) => {
     const { OfferName, StartDate, EndDate, Discount } = req.body;
 
     if (!OfferName || !StartDate || !EndDate || !Discount) {
-      return res.status(400).json({ error: 'Offer name, start date, end date, and discount are required.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Offer name, start date, end date, and discount are required.' });
     }
 
     const start = new Date(StartDate);
@@ -103,22 +104,22 @@ const addProductOffer = async (req, res) => {
     today.setHours(0, 0, 0, 0);
 
     if (isNaN(start) || isNaN(end)) {
-      return res.status(400).json({ error: 'Invalid date format.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid date format.' });
     }
     if (start < today) {
-      return res.status(400).json({ error: 'Start date cannot be in the past.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Start date cannot be in the past.' });
     }
     if (start > end) {
-      return res.status(400).json({ error: 'Start date cannot be later than end date.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Start date cannot be later than end date.' });
     }
 
     if (isNaN(Discount) || Discount < 0 || Discount >= 90) {
-      return res.status(400).json({ error: 'Discount must be between 0 and 90.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Discount must be between 0 and 90.' });
     }
 
     const product = await Product.findById(id);
     if (!product) {
-      return res.status(404).json({ error: 'Product not found.' });
+      return res.status(HttpStatus.NOT_FOUND).json({ error: 'Product not found.' });
     }
 
     const now = new Date();
@@ -129,7 +130,7 @@ const addProductOffer = async (req, res) => {
       EndDate: { $gte: now }
     });
     if (existingOffer) {
-      return res.status(400).json({ error: 'An active offer already exists for this product.' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'An active offer already exists for this product.' });
     }
 
     const newOffer = new Offers({
@@ -148,7 +149,7 @@ const addProductOffer = async (req, res) => {
     const regularPrice = variant.Price || 0;
     const newSalePrice = Math.round(variant.Price * (1 - Discount / 100));
 
-    res.json({
+    res.status(HttpStatus.OK).json({
       success: true,
       message: 'Offer added successfully',
       offer: newOffer,
@@ -157,7 +158,7 @@ const addProductOffer = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in addProductOffer:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Server error' });
   }
 };
 
@@ -169,12 +170,12 @@ const removeProductOffer = async (req, res) => {
 
     const product = await Product.findById(id);
     if (!product) {
-      return res.status(404).json({ error: 'Product not found.' });
+      return res.status(HttpStatus.NOT_FOUND).json({ error: 'Product not found.' });
     }
 
     const offer = await Offers.findOne({ _id: offerId, Product: id });
     if (!offer) {
-      return res.status(404).json({ error: 'Offer not found.' });
+      return res.status(HttpStatus.NOT_FOUND).json({ error: 'Offer not found.' });
     }
 
     await Offers.findByIdAndDelete(offerId);
@@ -183,7 +184,7 @@ const removeProductOffer = async (req, res) => {
     const regularPrice = variant.Price || 0;
     const salePrice = variant.OfferPrice || variant.Price || 0;
 
-    res.json({
+    res.status(HttpStatus.OK).json({
       success: true,
       message: 'Offer removed successfully',
       regularPrice,
@@ -191,7 +192,7 @@ const removeProductOffer = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in removeProductOffer:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Server error' });
   }
 };
 

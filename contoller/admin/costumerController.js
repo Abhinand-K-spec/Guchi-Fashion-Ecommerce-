@@ -1,5 +1,6 @@
 const User = require('../../model/userSchema');
 const mongoose = require('mongoose')
+const HttpStatus = require('../../config/httpStatus');
 
 
 const customerinfo = async (req, res) => {
@@ -34,7 +35,7 @@ const customerinfo = async (req, res) => {
 
   } catch (error) {
     console.error('Error in customerinfo:', error);
-    res.render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -44,25 +45,25 @@ const costumerBlocked = async (req, res) => {
   try {
     const { id } = req.body;
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: 'Invalid user ID' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Invalid user ID' });
     }
     const user = await User.findById(id);
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'User not found' });
     }
     if (user.isBlocked) {
       console.log(`User already blocked: ${id}`);
-      return res.status(400).json({ success: false, message: 'User is already blocked' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'User is already blocked' });
     }
     const result = await User.updateOne({ _id: id }, { $set: { isBlocked: true } });
     if (result.modifiedCount === 0) {
       console.log(`Failed to block user: ${id}`);
-      return res.status(500).json({ success: false, message: 'Failed to block user' });
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to block user' });
     }
-    res.json({ success: true, message: 'User blocked successfully' });
+    res.status(HttpStatus.OK).json({ success: true, message: 'User blocked successfully' });
   } catch (error) {
     console.error(`Error in costumerBlocked for ID: ${req.body.id}`, error);
-    res.status(500).json({ success: false, message: 'Error blocking user' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Error blocking user' });
   }
 };
 
@@ -71,25 +72,25 @@ const costumerUnBlocked = async (req, res) => {
     const { id } = req.body;
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       console.log(`Invalid ObjectId: ${id}`);
-      return res.status(400).json({ success: false, message: 'Invalid user ID' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Invalid user ID' });
     }
     const user = await User.findById(id);
     if (!user) {
       console.log(`User not found for ID: ${id}`);
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'User not found' });
     }
     if (!user.isBlocked) {
-      return res.status(400).json({ success: false, message: 'User is already unblocked' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'User is already unblocked' });
     }
     const result = await User.updateOne({ _id: id }, { $set: { isBlocked: false } });
     if (result.modifiedCount === 0) {
       console.log(`Failed to unblock user: ${id}`);
-      return res.status(500).json({ success: false, message: 'Failed to unblock user' });
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to unblock user' });
     }
-    res.json({ success: true, message: 'User unblocked successfully' });
+    res.status(HttpStatus.OK).json({ success: true, message: 'User unblocked successfully' });
   } catch (error) {
     console.error(`Error in costumerUnBlocked for ID: ${req.body.id}`, error);
-    res.status(500).json({ success: false, message: 'Error unblocking user' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Error unblocking user' });
   }
 };
 
@@ -99,7 +100,7 @@ const clearSearch = (req, res) => {
     res.redirect('/admin/users');
   } catch (error) {
     console.error('Error in clearSearch:', error);
-    res.render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 

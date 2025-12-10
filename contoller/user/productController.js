@@ -11,6 +11,7 @@ const Coupon = require('../../model/couponsSchema');
 const Wishlist = require('../../model/wishlistSchema');
 const Wallet = require('../../model/walletSchema');
 const mongoose = require('mongoose');
+const HttpStatus = require('../../config/httpStatus');
 
 const getProductOffer = async (product, variantIndex = 0) => {
   try {
@@ -57,7 +58,7 @@ const getProductDetails = async (req, res) => {
     const user = await User.findById(userId);
     const productId = req.params.id;
     const product = await Products.findById(productId).populate('Category').lean();
-    if (!product) { return res.status(404).render('page-404'); }
+    if (!product) { return res.status(HttpStatus.NOT_FOUND).render('page-404'); }
     if (!product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
       return res.render('product-details', {
         product: {
@@ -100,7 +101,7 @@ const getProductDetails = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in getProductDetails:', error);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 
@@ -229,7 +230,7 @@ const getShopPage = async (req, res) => {
 
   } catch (err) {
     console.error('Shop page error:', err);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
 };
 

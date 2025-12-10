@@ -1,6 +1,7 @@
 const Address = require('../../model/addressSchema');
 const mongoose = require('mongoose');
 const User = require('../../model/userSchema');
+const HttpStatus = require('../../config/httpStatus');
 
 
 
@@ -19,7 +20,7 @@ const getAddAddress = async (req, res) => {
   } catch (error) {
 
     console.log('Error loading add-address : ', error.message);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
 
   }
 };
@@ -40,7 +41,7 @@ const getAddAddressFromCheckout = async (req, res) => {
   } catch (error) {
 
     console.log('Error loading add-address : ', error.message);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
 
   }
 };
@@ -65,7 +66,7 @@ const addAddress = async (req, res) => {
     } = req.body;
 
     if (!name || name.trim().length < 3) {
-      return res.status(400).json({ success: false, message: 'Name must be at least 3 characters long' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Name must be at least 3 characters long' });
     }
 
     const newAddress = new Address({
@@ -80,12 +81,12 @@ const addAddress = async (req, res) => {
     });
 
     newAddress.save();
-    res.status(200).json({ success: true, message: 'Address added successfully' });
+    res.status(HttpStatus.OK).json({ success: true, message: 'Address added successfully' });
 
   } catch (error) {
 
     console.log('error adding address : ', error.message);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
 
   }
 };
@@ -114,7 +115,7 @@ const getEditAddress = async (req, res) => {
   } catch (error) {
 
     console.log('error loading edit address page :', error.message);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
 
   }
 };
@@ -140,7 +141,7 @@ const getEditAddressCheckout = async (req, res) => {
   } catch (error) {
 
     console.log('error loading edit address page :', error.message);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
 
   }
 };
@@ -155,11 +156,11 @@ const editAddress = async (req, res) => {
 
 
     if (!name || !phone || !postCode) {
-      return res.status(400).json({ error: 'Please fill all required fields' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Please fill all required fields' });
     }
 
     if (name.trim().length < 3) {
-      return res.status(400).json({ error: 'Name must be at least 3 characters long' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Name must be at least 3 characters long' });
     }
 
 
@@ -179,14 +180,14 @@ const editAddress = async (req, res) => {
 
 
     if (!updatedAddress) {
-      return res.status(404).json({ error: 'Address not found or not authorized' });
+      return res.status(HttpStatus.NOT_FOUND).json({ error: 'Address not found or not authorized' });
     }
 
 
-    return res.status(200).json({ message: 'Address updated successfully', redirect: '/edit-profile' });
+    return res.status(HttpStatus.OK).json({ message: 'Address updated successfully', redirect: '/edit-profile' });
   } catch (error) {
     console.error('Error updating address:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
   }
 };
 
@@ -205,7 +206,7 @@ const deleteAddress = async (req, res) => {
   } catch (error) {
 
     console.log('Error while deleting address: ', error.message);
-    res.status(500).render('page-404');
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
 
   }
 };
@@ -217,12 +218,12 @@ const setDefaultAddress = async (req, res) => {
     const { addressId } = req.body;
 
     if (!userId || !addressId) {
-      return res.status(400).json({ success: false, message: "Invalid request" });
+      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: "Invalid request" });
     }
 
     const address = await Address.findOne({ _id: addressId, userId });
     if (!address) {
-      return res.status(404).json({ success: false, message: "Address not found" });
+      return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: "Address not found" });
     }
 
     await Address.updateMany(
@@ -233,14 +234,14 @@ const setDefaultAddress = async (req, res) => {
     address.isDefault = true;
     await address.save();
 
-    return res.status(200).json({
+    return res.status(HttpStatus.OK).json({
       success: true,
       message: "Default address updated"
     });
 
   } catch (err) {
     console.error("Set default address error:", err);
-    return res.status(500).json({
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Server error"
     });
