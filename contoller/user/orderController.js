@@ -460,13 +460,20 @@ const placeOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid address selected.' });
     }
 
-    const hasOutOfStock = cart.Items.some(item => {
+    const outOfStockItems = [];
+    cart.Items.forEach(item => {
       const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
       const variant = item.product?.Variants?.[variantIndex];
-      return !variant || variant.Stock === 0 || variant.Stock < item.quantity;
+      if (!variant || variant.Stock === 0 || variant.Stock < item.quantity) {
+        outOfStockItems.push(item.product?.productName || 'Unknown Product');
+      }
     });
-    if (hasOutOfStock) {
-      return res.status(400).json({ success: false, message: 'Some items are out of stock.' });
+
+    if (outOfStockItems.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `The following items are out of stock or have insufficient quantity: ${outOfStockItems.join(', ')}`
+      });
     }
 
     let subtotal = 0;

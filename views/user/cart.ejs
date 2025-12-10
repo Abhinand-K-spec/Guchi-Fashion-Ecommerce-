@@ -334,123 +334,148 @@
     <div class="container">
       <div class="row">
         <div class="col-lg-12">
-          <% if (cartItems.length===0) { %>
-            <div class="typing-indicator" class="text-center">
-              <div class="typing-circle"></div>
-              <div class="typing-circle"></div>
-              <div class="typing-circle"></div>
-              <div class="typing-shadow"></div>
-              <div class="typing-shadow"></div>
-              <div class="typing-shadow"></div>
+          <% if (typeof stockAlerts !=='undefined' && stockAlerts.length> 0) { %>
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+              <% stockAlerts.forEach(alert=> { %>
+                <p class="mb-1">
+                  <%= alert %>
+                </p>
+                <% }) %>
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            <tr>
-              <td>
-                <h4>Your cart is empty or The item is already ordered</h4>
-              </td>
-            </tr>
-            <% } else { %>
-              <div class="cart__table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th>Price</th>
-                      <th>Quantity</th>
-                      <th>Total</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-
-
-                    <% cartItems.forEach(item=> { %>
-                      <tr data-product-id="<%= item._id %>" data-variant-index="<%= item.variantIndex %>">
-                        <td class="cart__product__item" data-label="Product">
-                          <img src="<%= item.image %>" alt="Product Image" />
-                          <h6>
-                            <%= item.name %>
-                          </h6>
-                          <% if (item.size) { %>
-                            <p class="mb-0 text-muted small">Size: <%= item.size %>
-                            </p>
-                            <% } %>
-                        </td>
-                        <td class="cart__price" data-label="Price">
-                          <% if (item.offer && item.originalPrice> item.price) { %>
-                            <div class="price-container flex-column">
-                              <span class="product-price">₹<%= item.price.toFixed(2) %></span>
-                              <div class="small">
-                                <span class="text-muted text-decoration-line-through me-1">₹<%=
-                                    item.originalPrice.toFixed(2) %></span>
-                                <span class="text-success">
-                                  <%= item.offer %>% OFF
-                                </span>
-                              </div>
-                            </div>
-                            <% } else { %>
-                              <span class="product-price">₹<%= item.price.toFixed(2) %></span>
-                              <% } %>
-                        </td>
-                        <td class="cart__quantity" data-label="Quantity">
-                          <% if (!item.isListed) { %>
-                            <span class="text-danger">Unavailable</span>
-                            <% } else if (item.stock> 0) { %>
-                              <div class="pro-qty" data-stock="<%= item.stock %>">
-                                <button class="dec qtybtn" data-id="<%= item._id %>"
-                                  data-variant="<%= item.variantIndex %>">-</button>
-                                <input type="text" value="<%= item.quantity %>" readonly />
-                                <button class="inc qtybtn" data-id="<%= item._id %>"
-                                  data-variant="<%= item.variantIndex %>">+</button>
-                              </div>
-                              <% } else { %>
-                                <span class="text-danger">Out of Stock</span>
-                                <% } %>
-                        </td>
-                        <td class="cart__total" data-label="Total">₹<%= item.itemTotal.toFixed(2) %>
-                        </td>
-                        <td class="cart__close" data-label="Remove">
-                          <button class="remove-from-cart" data-id="<%= item._id %>"
-                            data-variant="<%= item.variantIndex %>">
-                            <i class="fa fa-close"></i>
-                          </button>
-
-                        </td>
-                      </tr>
-                      <% }) %>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="row mt-4">
-                <div class="col-lg-6">
-                  <div class="cart__btn">
-                    <a href="/shopnow">Continue Shopping</a>
-                  </div>
+            <% } %>
+              <% if (cartItems.length===0) { %>
+                <div class="typing-indicator" class="text-center">
+                  <div class="typing-circle"></div>
+                  <div class="typing-circle"></div>
+                  <div class="typing-circle"></div>
+                  <div class="typing-shadow"></div>
+                  <div class="typing-shadow"></div>
+                  <div class="typing-shadow"></div>
                 </div>
-                <div class="col-lg-6 text-right">
-                  <div class="cart__total">
-                    <h6>Cart total</h6>
-                    <ul>
+                <tr>
+                  <td>
+                    <h4>Your cart is empty or The item is already ordered</h4>
+                  </td>
+                </tr>
+                <% } else { %>
+                  <div class="cart__table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Product</th>
+                          <th>Price</th>
+                          <th>Quantity</th>
+                          <th>Total</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
 
-                      <li>Subtotal <span class="subtotal">₹<%= totalPrice.toFixed(2) %></span></li>
 
-                    </ul>
-                    <% const hasOutOfStock=cartItems.some(item=> item.stock === 0 || item.stock < item.quantity); %>
-                        <% const hasUnlisted=cartItems.some(item=> !item.isListed); %>
-                          <% if (hasOutOfStock) { %>
-                            <p class="text-danger">Please remove the out-of-stock product to proceed.</p>
-                            <% } %>
-                              <% if (hasUnlisted) { %>
-                                <p class="text-danger">Some items are currently unavailable. Please remove them to
-                                  proceed.</p>
+                        <% cartItems.forEach(item=> { %>
+                          <tr data-product-id="<%= item._id %>" data-variant-index="<%= item.variantIndex %>">
+                            <td class="cart__product__item" data-label="Product">
+                              <img src="<%= item.image %>" alt="Product Image" />
+                              <h6>
+                                <%= item.name %>
+                              </h6>
+                              <% if (item.size) { %>
+                                <p class="mb-0 text-muted small">Size: <%= item.size %>
+                                </p>
                                 <% } %>
-                                  <a href="/checkout"
-                                    class="primary-btn <%= hasOutOfStock || hasUnlisted ? 'hide' : '' %>">Proceed to
-                                    checkout</a>
+                            </td>
+                            <td class="cart__price" data-label="Price">
+                              <% if (item.offer && item.originalPrice> item.price) { %>
+                                <div class="price-container flex-column">
+                                  <span class="product-price">₹<%= item.price.toFixed(2) %></span>
+                                  <div class="small">
+                                    <span class="text-muted text-decoration-line-through me-1">₹<%=
+                                        item.originalPrice.toFixed(2) %></span>
+                                    <span class="text-success">
+                                      <%= item.offer %>% OFF
+                                    </span>
+                                  </div>
+                                </div>
+                                <% } else { %>
+                                  <span class="product-price">₹<%= item.price.toFixed(2) %></span>
+                                  <% } %>
+                            </td>
+                            <td class="cart__quantity" data-label="Quantity">
+                              <% if (!item.isListed) { %>
+                                <span class="text-danger">Unavailable</span>
+                                <% } else if (item.stock> 0) { %>
+                                  <div class="pro-qty" data-stock="<%= item.stock %>">
+                                    <button class="dec qtybtn" data-id="<%= item._id %>"
+                                      data-variant="<%= item.variantIndex %>">-</button>
+                                    <input type="text" value="<%= item.quantity %>" readonly />
+                                    <button class="inc qtybtn" data-id="<%= item._id %>"
+                                      data-variant="<%= item.variantIndex %>">+</button>
+                                  </div>
+                                  <% } else { %>
+                                    <span class="text-danger">Out of Stock</span>
+                                    <% } %>
+                            </td>
+                            <td class="cart__total" data-label="Total">₹<%= item.itemTotal.toFixed(2) %>
+                            </td>
+                            <td class="cart__close" data-label="Remove">
+                              <button class="remove-from-cart" data-id="<%= item._id %>"
+                                data-variant="<%= item.variantIndex %>">
+                                <i class="fa fa-close"></i>
+                              </button>
+
+                            </td>
+                          </tr>
+                          <% }) %>
+                      </tbody>
+                    </table>
                   </div>
-                </div>
-              </div>
-              <% } %>
+
+                  <div class="row mt-4">
+                    <div class="col-lg-6">
+                      <div class="cart__btn">
+                        <a href="/shopnow">Continue Shopping</a>
+                      </div>
+                    </div>
+                    <div class="col-lg-6 text-right">
+                      <div class="cart__total">
+                        <h6>Cart total</h6>
+                        <ul>
+
+                          <li>Subtotal <span class="subtotal">₹<%= totalPrice.toFixed(2) %></span></li>
+
+                        </ul>
+                        <% const outOfStockItems=cartItems.filter(item=> item.stock === 0 || item.stock <
+                            item.quantity); %>
+                            <% const hasOutOfStock=outOfStockItems.length> 0; %>
+
+                              <% const hasUnlisted=cartItems.some(item=> !item.isListed); %>
+                                <% if (outOfStockItems.length> 0) { %>
+                                  <div class="text-danger mb-2">
+                                    <p class="mb-1 fw-bold">The following items are out of stock:</p>
+                                    <ul class="mb-0 ps-3">
+                                      <% outOfStockItems.forEach(item=> { %>
+                                        <li>
+                                          <%= item.name %>
+                                            <% if (item.stock> 0) { %> (Only <%= item.stock %> left) <% } %>
+                                        </li>
+                                        <% }) %>
+                                    </ul>
+                                    <p class="mt-1 small">Please remove or adjust them to proceed.</p>
+                                  </div>
+                                  <% } %>
+                                    <% if (hasUnlisted) { %>
+                                      <p class="text-danger">Some items are currently unavailable. Please remove them to
+                                        proceed.</p>
+                                      <% } %>
+                                        <a href="/checkout"
+                                          class="primary-btn <%= hasOutOfStock || hasUnlisted ? 'hide' : '' %>">Proceed
+                                          to
+                                          checkout</a>
+                      </div>
+                    </div>
+                  </div>
+                  <% } %>
         </div>
       </div>
     </div>
@@ -620,6 +645,9 @@
             .then(data => {
               if (data.success) {
                 updateCartUI(data.cartItems, data.totalPrice);
+                if (data.message) {
+                  showQtyModal(data.message);
+                }
               } else {
                 showQtyModal(data.message || "Failed to update quantity.");
                 // Refresh cart data to ensure UI is in sync with server

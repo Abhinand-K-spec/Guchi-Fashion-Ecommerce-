@@ -81,6 +81,7 @@ const cart = async (req, res) => {
     let totalPrice = 0;
     const cartItems = [];
     const validItems = [];
+    const stockAlerts = [];
     for (const item of cartData.Items) {
       const product = item.product;
       if (!product || !product.productName) {
@@ -101,7 +102,7 @@ const cart = async (req, res) => {
       const { offer, salePrice } = await getProductOffer(product, variantIndex);
       const price = salePrice || variant?.Price || 0;
       const quantity = item.quantity;
-      const itemTotal = price * quantity;
+      let itemTotal = price * quantity;
 
       let imagePath = 'images/default.jpg';
       if (variant?.Image?.length) {
@@ -130,9 +131,21 @@ const cart = async (req, res) => {
         originalPrice: variant?.Price || 0
       });
 
-      if (variant?.Stock >= item.quantity && isProductListed && isCategoryListed) {
-        totalPrice += itemTotal;
-        validItems.push(item);
+      if (isProductListed && isCategoryListed) {
+        if (variant?.Stock > 0 && item.quantity > variant.Stock) {
+          stockAlerts.push(`Quantity for ${product.productName} adjusted to ${variant.Stock} due to stock availability.`);
+          item.quantity = variant.Stock;
+          itemTotal = price * item.quantity; // Update item total
+          cartItems[cartItems.length - 1].quantity = variant.Stock; // Update display item
+          cartItems[cartItems.length - 1].itemTotal = itemTotal;
+          validItems.push(item);
+        } else {
+          validItems.push(item);
+        }
+
+        if (variant?.Stock >= item.quantity) {
+          totalPrice += itemTotal;
+        }
       }
     }
 
@@ -145,7 +158,8 @@ const cart = async (req, res) => {
       cartItems,
       totalPrice,
       user,
-      activePage: 'cart'
+      activePage: 'cart',
+      stockAlerts
     });
   } catch (error) {
     console.error('Error rendering cart page:', error);
@@ -158,7 +172,7 @@ const cart = async (req, res) => {
 const getCartData = async (req, res) => {
   try {
     const userId = req.session.user;
-    if (!userId) {return res.json({ success: false, message: 'User not logged in' });}
+    if (!userId) { return res.json({ success: false, message: 'User not logged in' }); }
 
     const cartData = await Cart.findOne({ user: userId })
       .populate({
@@ -234,7 +248,7 @@ const addToCart = async (req, res) => {
     }
 
     const product = await Products.findById(productId);
-    if (!product) {return res.redirect('/shop');}
+    if (!product) { return res.redirect('/shop'); }
 
     const validVariantIndex = Math.max(0, Math.min(variantIndex, (product.Variants?.length || 1) - 1));
     const selectedVariant = product.Variants[validVariantIndex];
@@ -329,6 +343,8 @@ const updateCartQuantity = async (req, res) => {
       return res.json({ success: false, message: 'Invalid action.' });
     }
 
+    let stockMessage = null;
+
     if (action === 'increment') {
       const itemVariantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
       const stock = item.product?.Variants?.[itemVariantIndex]?.Stock || 0;
@@ -338,6 +354,7 @@ const updateCartQuantity = async (req, res) => {
       }
       if (item.quantity > stock) {
         item.quantity = stock;
+        stockMessage = `Quantity updated to maximum available stock (${stock}).`;
       }
     } else if (action === 'decrement') {
       if (item.quantity < 1) {
@@ -385,11 +402,14 @@ const updateCartQuantity = async (req, res) => {
         stock: variant?.Stock || 0,
         itemTotal,
         variantIndex: variantIndex,
-        isListed: isProductListed && isCategoryListed
+        isListed: isProductListed && isCategoryListed,
+        size: variant?.Size || '',
+        originalPrice: variant?.Price || 0,
+        offer: offer ? offer.Discount : null
       };
     }));
 
-    res.json({ success: true, cartItems, totalPrice });
+    res.json({ success: true, cartItems, totalPrice, message: stockMessage });
   } catch (err) {
     console.error('Update quantity error:', err);
     res.json({ success: false, message: 'Error updating quantity' });
@@ -506,12 +526,14 @@ const checkout = async (req, res) => {
       if (variant.Stock >= item.quantity) {
         subtotal += itemTotal;
         totalItemDiscount += itemDiscount;
-        validCartItems.push(item);
       }
+      // Always keep listed items in checkout view, DO NOT remove them from DB here.
+      validCartItems.push(item);
     }
     if (!cartItems.length) {
       return res.redirect('/cart');
     }
+    // Only remove unlisted items (which are skipped in the loop above)
     await Cart.findOneAndUpdate(
       { user: userId },
       { $set: { Items: validCartItems } }

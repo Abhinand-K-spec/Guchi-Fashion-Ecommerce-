@@ -213,24 +213,27 @@ const retryPayment = async (req, res) => {
       });
     }
 
+    const outOfStockItems = [];
     for (const item of existingOrder.Items) {
       const product = item.product;
       const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
       const variant = product?.Variants?.[variantIndex];
 
       if (!product || !variant) {
-        return res.status(400).json({
-          success: false,
-          message: `Product info missing for item ${item.product?._id || ''}`
-        });
+        outOfStockItems.push(`Product info missing for item ${item.product?._id || ''}`);
+        continue;
       }
 
       if (variant.Stock < item.quantity) {
-        return res.status(400).json({
-          success: false,
-          message: `Insufficient stock . Available: ${variant.Stock}`
-        });
+        outOfStockItems.push(`${product.productName} (Available: ${variant.Stock})`);
       }
+    }
+
+    if (outOfStockItems.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `The following items are out of stock: ${outOfStockItems.join(', ')}`
+      });
     }
 
     const finalAmount = existingOrder.orderAmount || 0;
