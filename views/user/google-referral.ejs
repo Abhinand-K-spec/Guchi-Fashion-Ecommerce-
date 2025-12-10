@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enter Referral Code</title>
+    <link rel="stylesheet" href="/css/signup.css" />
+    <style>
+        .google-referral-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f7f7f7;
+        }
+
+        .referral-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .referral-box h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .referral-box input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .referral-box button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #000;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .referral-box button:hover {
+            background-color: #333;
+        }
+
+        .skip-link {
+            color: #666;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        .skip-link:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="google-referral-container">
+        <div class="referral-box">
+            <h2>Do you have a referral code?</h2>
+            <p style="margin-bottom: 20px; color: #666;">Enter it below to claim your reward!</p>
+
+            <% if (locals.msg) { %>
+                <div class="alert alert-danger">
+                    <%= msg %>
+                </div>
+                <% } %>
+
+                    <form action="/auth/google-referral" method="POST">
+                        <input type="text" name="referralCode" placeholder="Enter referral code" maxlength="15">
+                        <button type="submit">Apply Code</button>
+                    </form>
+
+                    <form action="/auth/google-referral" method="POST" style="margin-top: 10px;">
+                        <!-- Hidden input to indicate skip -->
+                        <input type="hidden" name="skip" value="true">
+                        <button type="submit"
+                            style="background-color: transparent; color: #666; border: 1px solid #ddd;">No, I don't have
+                            one</button>
+                    </form>
+        </div>
+    </div>
+</body>
+
+</html>

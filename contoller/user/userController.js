@@ -80,8 +80,28 @@ const googleCallbackHandler = async (req, res) => {
     });
   } else {
     req.session.user = req.user._id;
+
+    const isNewUser = (Date.now() - new Date(req.user.createdAt).getTime()) < 60 * 1000;
+
+    if (!req.user.referalCode) {
+      try {
+        let referralCode = generateReferralCode();
+        let existingUser = await User.findOne({ referalCode: referralCode });
+        while (existingUser) {
+          referralCode = generateReferralCode();
+          existingUser = await User.findOne({ referalCode: referralCode });
+        }
+        await User.findByIdAndUpdate(req.user._id, { referalCode: referralCode });
+      } catch (e) {
+        console.error("Error generating referral for google user", e);
+      }
+    }
+
     req.session.save((err) => {
       if (err) console.error('Session save error:', err);
+      if (isNewUser) {
+        return res.redirect('/auth/google-referral');
+      }
       res.redirect('/');
     });
   }
@@ -597,7 +617,6 @@ const sendForgotOtp = async (req, res) => {
     if (!sent) {
       return res.render('forgot-password', { error: "Failed to send OTP. Try again." });
     }
-
     req.session.forgotEmail = email;
     req.session.forgotOtp = otp;
     req.session.otpExpiry = Date.now() + 5 * 60 * 1000;
@@ -678,6 +697,83 @@ function clearForgotSession(req) {
   delete req.session.otpExpiry;
 }
 
+const loadGoogleReferral = (req, res) => {
+  res.render('google-referral');
+};
+
+const applyGoogleReferral = async (req, res) => {
+  try {
+    const { referralCode, skip } = req.body;
+    const userId = req.session.user;
+
+    if (skip) {
+      return res.redirect('/');
+    }
+
+    if (!referralCode || referralCode.trim() === "") {
+      return res.render('google-referral', { msg: "Please enter a valid code" });
+    }
+
+    const referrer = await User.findOne({ referalCode: referralCode.toUpperCase(), isBlocked: false });
+
+    if (!referrer) {
+      return res.render('google-referral', { msg: "Invalid referral code" });
+    }
+
+    if (referrer._id.toString() === userId.toString()) {
+      return res.render('google-referral', { msg: "You cannot refer yourself" });
+    }
+
+    const currentUser = await User.findById(userId);
+    if (currentUser.referedBy) {
+      return res.redirect('/');
+    }
+
+    currentUser.referedBy = referrer._id;
+
+    await User.findByIdAndUpdate(referrer._id, { $set: { referals: currentUser._id } });
+
+    const referrerCoupon = new Coupon({
+      CouponCode: `REF-${referrer._id}-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
+      CouponName: `${referrer.name}'s 50% Referral Reward`,
+      Discount: 50,
+      MinCartValue: 500,
+      StartDate: new Date(),
+      ExpiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+      IsListed: true,
+      UserId: referrer._id,
+      UsageLimit: 1,
+      UsedBy: [],
+      CreatedAt: new Date()
+    });
+    await referrerCoupon.save();
+
+
+    const newUserCoupon = new Coupon({
+      CouponCode: `REF-${currentUser._id}-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
+      CouponName: `${currentUser.name}'s 20% Referral Welcome`,
+      Discount: 20,
+      MinCartValue: 500,
+      StartDate: new Date(),
+      ExpiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+      IsListed: true,
+      UserId: currentUser._id,
+      UsageLimit: 1,
+      UsedBy: [],
+      CreatedAt: new Date()
+    });
+    await newUserCoupon.save();
+
+    await currentUser.save();
+
+    res.redirect('/');
+
+  } catch (error) {
+    console.error("Error applying google referral:", error);
+    res.render('google-referral', { msg: "Something went wrong" });
+  }
+};
+
 module.exports = {
   loadHomePage,
   pageNotFound,
@@ -701,5 +797,7 @@ module.exports = {
   resendForgotOtp,
   verifyForgotOtpAndReset,
   getForgotOtpPage,
-  sendForgotOtp
+  sendForgotOtp,
+  loadGoogleReferral,
+  applyGoogleReferral
 };

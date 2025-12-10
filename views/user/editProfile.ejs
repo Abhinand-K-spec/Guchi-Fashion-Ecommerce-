@@ -131,7 +131,9 @@
                 <i class="fas fa-pen edit-icon ms-2" data-bs-toggle="modal" data-bs-target="#editEmailModal"></i>
             </p>
             <!-- Change Password Button -->
-            <a href="/change-password" class="btn btn-sm btn-outline-primary mt-3">Change Password</a>
+            <% if (!user.googleId) { %>
+              <a href="/change-password" class="btn btn-sm btn-outline-primary mt-3">Change Password</a>
+              <% } %>
           </div>
 
           <!-- Right Side -->

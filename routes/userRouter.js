@@ -74,6 +74,9 @@ router.get(
   userController.googleCallbackHandler
 );
 
+router.get('/auth/google-referral', userAuth, userController.loadGoogleReferral);
+router.post('/auth/google-referral', userAuth, userController.applyGoogleReferral);
+
 router.get('/product-details/:id', productController.getProductDetails);
 
 router.post('/addToCart/:productId', cartController.addToCart);
