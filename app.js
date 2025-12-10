@@ -1,23 +1,24 @@
 const express = require('express');
 const app = express();
 
-        app.use((req, res, next) => {
-          res.setHeader("Access-Control-Allow-Origin", "https://ec31749df6df.ngrok-free.app");
-          next();
-        });
-    
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "https://ec31749df6df.ngrok-free.app");
+  next();
+});
+
 const path = require('path');
 const env = require('dotenv').config();
 const passport = require('passport');
 require('./config/passport');
 const session = require('express-session');
-const nocache = require('nocache'); 
+const nocache = require('nocache');
 const userRouter = require('./routes/userRouter');
 const adminRouter = require('./routes/adminRouter');
 const db = require('./config/db');
 const flash = require('connect-flash');
 const MongoStore = require('connect-mongo');
 const morgan = require('morgan');
+const AppError = require('./utils/AppError');
 db();
 
 app.use(express.json());
@@ -36,7 +37,7 @@ app.use(session({
     mongoUrl: process.env.Mongodb_uri,
     collectionName: 'sessions'
   }),
-  
+
   cookie: {
     secure: false,
     httpOnly: true,
@@ -56,7 +57,7 @@ app.use((req, res, next) => {
 app.use(flash());
 
 app.use((req, res, next) => {
-  res.locals.msg = req.flash('msg'); 
+  res.locals.msg = req.flash('msg');
   next();
 });
 
@@ -65,11 +66,31 @@ app.set('view engine', 'ejs');
 app.set('views', [path.join(__dirname, 'views/user'), path.join(__dirname, 'views/admin')]);
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms',{
-  skip: (req, res) => req.url.includes(".js") || req.url.includes(".css") || req.url.includes(".png") || res.statusCode < 400 
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms', {
+  skip: (req, res) => req.url.includes(".js") || req.url.includes(".css") || req.url.includes(".png") || res.statusCode < 400
 }));
 app.use('/', userRouter);
 app.use('/admin', adminRouter);
+
+app.use((req, res, next) => {
+  if (req.originalUrl.startsWith('/admin')) {
+    res.status(404).render(path.join(__dirname, 'views/admin/page-404'));
+  } else {
+    res.status(404).render(path.join(__dirname, 'views/user/page-404'));
+  }
+});
+
+app.use((err, req, res, next) => {
+  console.error("ERROR ➜", err);
+
+  const message = err.message || "Something went wrong! Please try again later.";
+
+  if (req.originalUrl.startsWith('/admin')) {
+    return res.status(err.statusCode || 500).render(path.join(__dirname, 'views/admin/page-500'), { msg: message });
+  }
+
+  return res.status(err.statusCode || 500).render(path.join(__dirname, 'views/user/page-500'), { msg: message });
+});
 
 app.listen(3003, () => {
   console.log("Server is running on port 3003");

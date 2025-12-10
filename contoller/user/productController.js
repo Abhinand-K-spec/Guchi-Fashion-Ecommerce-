@@ -12,6 +12,8 @@ const Wishlist = require('../../model/wishlistSchema');
 const Wallet = require('../../model/walletSchema');
 const mongoose = require('mongoose');
 const HttpStatus = require('../../config/httpStatus');
+const catchAsync = require('../../utils/catchAsync');
+const AppError = require('../../utils/AppError');
 
 const getProductOffer = async (product, variantIndex = 0) => {
   try {
@@ -52,187 +54,176 @@ const getProductOffer = async (product, variantIndex = 0) => {
   }
 };
 
-const getProductDetails = async (req, res) => {
-  try {
-    const userId = req.session.user;
-    const user = await User.findById(userId);
-    const productId = req.params.id;
-    const product = await Products.findById(productId).populate('Category').lean();
-    if (!product) { return res.status(HttpStatus.NOT_FOUND).render('page-404'); }
-    if (!product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
-      return res.render('product-details', {
-        product: {
-          user,
-          ...product,
-          Variants: [{ Price: 0, salePrice: 0, Stock: 0, Size: '' }],
-          offer: null,
-          activePage: 'shopnow'
-        },
-        recommendedProducts: []
-      });
-    }
-    const { offer } = await getProductOffer(product, 0);
-
-    const formattedProduct = {
-      ...product,
-      Variants: product.Variants.map(variant => {
-        const variantPrice = variant.Price || 0;
-        let salePrice = variantPrice;
-        if (offer) {
-          salePrice = variantPrice * (1 - offer.Discount / 100);
-        }
-        return {
-          ...variant,
-          salePrice: salePrice
-        };
-      }),
-      offer
-    };
-    const recommendedProducts = await Products.find({
-      _id: { $ne: productId },
-      Category: product.Category._id,
-      IsListed: true
-    }).limit(4).lean();
-    res.render('product-details', {
-      activePage: 'shopnow',
-      product: formattedProduct,
-      recommendedProducts,
-      user
+const getProductDetails = catchAsync(async (req, res, next) => {
+  const userId = req.session.user;
+  const user = await User.findById(userId);
+  const productId = req.params.id;
+  const product = await Products.findById(productId).populate('Category').lean();
+  if (!product) { return next(new AppError('Product not found', HttpStatus.NOT_FOUND)); }
+  if (!product.Variants || !Array.isArray(product.Variants) || product.Variants.length === 0) {
+    return res.render('product-details', {
+      product: {
+        user,
+        ...product,
+        Variants: [{ Price: 0, salePrice: 0, Stock: 0, Size: '' }],
+        offer: null,
+        activePage: 'shopnow'
+      },
+      recommendedProducts: []
     });
-  } catch (error) {
-    console.error('Error in getProductDetails:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
-};
+  const { offer } = await getProductOffer(product, 0);
+
+  const formattedProduct = {
+    ...product,
+    Variants: product.Variants.map(variant => {
+      const variantPrice = variant.Price || 0;
+      let salePrice = variantPrice;
+      if (offer) {
+        salePrice = variantPrice * (1 - offer.Discount / 100);
+      }
+      return {
+        ...variant,
+        salePrice: salePrice
+      };
+    }),
+    offer
+  };
+  const recommendedProducts = await Products.find({
+    _id: { $ne: productId },
+    Category: product.Category._id,
+    IsListed: true
+  }).limit(4).lean();
+  res.render('product-details', {
+    activePage: 'shopnow',
+    product: formattedProduct,
+    recommendedProducts,
+    user
+  });
+});
 
 
 
 
-const getShopPage = async (req, res) => {
-  try {
-    const limit = 6;
-    const page = parseInt(req.query.page) || 1;
-    const search = req.query.search?.trim() || '';
-    const sort = req.query.sort || '';
-    const categoryId = req.query.category;
-    const minPrice = req.query.minPrice;
-    const maxPrice = req.query.maxPrice;
-    const userId = req.session.user;
+const getShopPage = catchAsync(async (req, res, next) => {
+  const limit = 6;
+  const page = parseInt(req.query.page) || 1;
+  const search = req.query.search?.trim() || '';
+  const sort = req.query.sort || '';
+  const categoryId = req.query.category;
+  const minPrice = req.query.minPrice;
+  const maxPrice = req.query.maxPrice;
+  const userId = req.session.user;
 
-    const user = userId ? await User.findById(userId).lean() : null;
-
-
-    let matchStage = { IsListed: true };
+  const user = userId ? await User.findById(userId).lean() : null;
 
 
-    if (search) {
-      matchStage.productName = { $regex: search, $options: 'i' };
-    }
+  let matchStage = { IsListed: true };
 
 
-    if (categoryId) {
-      matchStage.Category = new mongoose.Types.ObjectId(categoryId);
-    }
-
-    if (minPrice || maxPrice) {
-      matchStage['Variants.0.Price'] = {};
-      const min = parseFloat(minPrice);
-      const max = parseFloat(maxPrice);
-      if (!isNaN(min)) { matchStage['Variants.0.Price'].$gte = min; }
-      if (!isNaN(max)) { matchStage['Variants.0.Price'].$lte = max; }
-    }
+  if (search) {
+    matchStage.productName = { $regex: search, $options: 'i' };
+  }
 
 
-    const pipeline = [
+  if (categoryId) {
+    matchStage.Category = new mongoose.Types.ObjectId(categoryId);
+  }
+
+  if (minPrice || maxPrice) {
+    matchStage['Variants.0.Price'] = {};
+    const min = parseFloat(minPrice);
+    const max = parseFloat(maxPrice);
+    if (!isNaN(min)) { matchStage['Variants.0.Price'].$gte = min; }
+    if (!isNaN(max)) { matchStage['Variants.0.Price'].$lte = max; }
+  }
+
+
+  const pipeline = [
+    { $match: matchStage },
+
+
+    {
+      $lookup: {
+        from: 'categories',
+        localField: 'Category',
+        foreignField: '_id',
+        as: 'categoryData'
+      }
+    },
+
+
+    {
+      $match: {
+        $and: [
+          { 'categoryData.0': { $exists: true } },
+          { 'categoryData.0.isListed': true }
+        ]
+      }
+    },
+
+    {
+      $addFields: {
+        Category: { $arrayElemAt: ['$categoryData', 0] }
+      }
+    },
+
+
+    { $sort: getSortOption(sort) },
+
+    { $skip: (page - 1) * limit },
+    { $limit: limit }
+  ];
+
+
+  const [products, totalDocs] = await Promise.all([
+    Products.aggregate(pipeline).exec(),
+    Products.aggregate([
       { $match: matchStage },
+      { $lookup: { from: 'categories', localField: 'Category', foreignField: '_id', as: 'cat' } },
+      { $match: { 'cat.0.isListed': true } },
+      { $count: 'total' }
+    ]).then(res => res[0]?.total || 0)
+  ]);
 
 
-      {
-        $lookup: {
-          from: 'categories',
-          localField: 'Category',
-          foreignField: '_id',
-          as: 'categoryData'
-        }
-      },
+  const productsWithOffers = await Promise.all(
+    products.map(async (product) => {
+      if (!product.Variants?.length) {
+        return { ...product, Variants: [{ Price: 0, salePrice: 0, Stock: 0 }], offer: null };
+      }
 
+      const { offer, salePrice } = await getProductOffer(product, 0);
+      const variant = product.Variants[0];
 
-      {
-        $match: {
-          $and: [
-            { 'categoryData.0': { $exists: true } },
-            { 'categoryData.0.isListed': true }
-          ]
-        }
-      },
+      return {
+        ...product,
+        Variants: [{
+          Price: variant.Price || 0,
+          salePrice: salePrice ?? variant.Price ?? 0,
+          Stock: variant.Stock || 0
+        }],
+        offer
+      };
+    })
+  );
 
-      {
-        $addFields: {
-          Category: { $arrayElemAt: ['$categoryData', 0] }
-        }
-      },
+  const categories = await category.find({ isListed: true }).lean();
 
-
-      { $sort: getSortOption(sort) },
-
-      { $skip: (page - 1) * limit },
-      { $limit: limit }
-    ];
-
-
-    const [products, totalDocs] = await Promise.all([
-      Products.aggregate(pipeline).exec(),
-      Products.aggregate([
-        { $match: matchStage },
-        { $lookup: { from: 'categories', localField: 'Category', foreignField: '_id', as: 'cat' } },
-        { $match: { 'cat.0.isListed': true } },
-        { $count: 'total' }
-      ]).then(res => res[0]?.total || 0)
-    ]);
-
-
-    const productsWithOffers = await Promise.all(
-      products.map(async (product) => {
-        if (!product.Variants?.length) {
-          return { ...product, Variants: [{ Price: 0, salePrice: 0, Stock: 0 }], offer: null };
-        }
-
-        const { offer, salePrice } = await getProductOffer(product, 0);
-        const variant = product.Variants[0];
-
-        return {
-          ...product,
-          Variants: [{
-            Price: variant.Price || 0,
-            salePrice: salePrice ?? variant.Price ?? 0,
-            Stock: variant.Stock || 0
-          }],
-          offer
-        };
-      })
-    );
-
-    const categories = await category.find({ isListed: true }).lean();
-
-    res.render('shop-page', {
-      products: productsWithOffers,
-      categories,
-      currentPage: page,
-      totalPages: Math.ceil(totalDocs / limit),
-      categoryId,
-      search,
-      sort,
-      minPrice,
-      maxPrice,
-      user,
-      activePage: 'shopnow'
-    });
-
-  } catch (err) {
-    console.error('Shop page error:', err);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
-  }
-};
+  res.render('shop-page', {
+    products: productsWithOffers,
+    categories,
+    currentPage: page,
+    totalPages: Math.ceil(totalDocs / limit),
+    categoryId,
+    search,
+    sort,
+    minPrice,
+    maxPrice,
+    user,
+    activePage: 'shopnow'
+  });
+});
 
 
 function getSortOption(sort) {

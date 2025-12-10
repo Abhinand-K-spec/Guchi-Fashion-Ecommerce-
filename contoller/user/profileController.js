@@ -2,8 +2,8 @@ const User = require('../../model/userSchema');
 const Address = require('../../model/addressSchema');
 const nodemailer = require('nodemailer');
 const HttpStatus = require('../../config/httpStatus');
-
-
+const catchAsync = require('../../utils/catchAsync');
+const AppError = require('../../utils/AppError');
 
 
 function generateOtp() {
@@ -42,111 +42,82 @@ async function sendVerification(email, otp) {
 
 
 
-const profile = async (req, res) => {
+const profile = catchAsync(async (req, res, next) => {
+  const userId = req.session.user;
 
-  try {
-
-    const userId = req.session.user;
-
-    if (!userId) {
-      return res.render('/login', { msg: 'Please Login to get profile page' });
-    }
-
-    const userData = await User.findById(userId).lean();
-    if (!userData) { return res.status(HttpStatus.BAD_REQUEST).render('page - 404'); }
-
-    const userAddresses = await Address.find({ userId }).lean();
-
-    res.render('profile', {
-      user: {
-        ...userData,
-        addresses: userAddresses
-      },
-      activePage: 'profile'
-    });
-  } catch (error) {
-
-    console.log('error while loading profile', error.message);
-    res.status(HttpStatus.BAD_REQUEST).render('page-404');
-
+  if (!userId) {
+    return res.render('/login', { msg: 'Please Login to get profile page' });
   }
-};
 
-
-
-
-const getEditProfile = async (req, res) => {
-
-  try {
-
-    const userId = req.session.user;
-    const userData = await User.findById(userId).lean();
-    const userAddresses = await Address.find({ userId });
-
-    res.render('editProfile', {
-      user: {
-        ...userData,
-        addresses: userAddresses
-      },
-      activePage: 'profile'
-    });
-
-  } catch (error) {
-
-    console.log('error while loading editProfile page', error.message);
-    res.status(HttpStatus.BAD_REQUEST).render('page - 404');
-
+  const userData = await User.findById(userId).lean();
+  if (!userData) {
+    return next(new AppError('User not found', HttpStatus.NOT_FOUND));
   }
-};
+
+  const userAddresses = await Address.find({ userId }).lean();
+
+  res.render('profile', {
+    user: {
+      ...userData,
+      addresses: userAddresses
+    },
+    activePage: 'profile'
+  });
+});
 
 
-const updateEmailRequestOtp = async (req, res) => {
-  try {
 
 
-    const { email } = req.body;
+const getEditProfile = catchAsync(async (req, res, next) => {
+  const userId = req.session.user;
+  const userData = await User.findById(userId).lean();
+  const userAddresses = await Address.find({ userId });
 
-    const userId = req.session.user;
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    req.session.emailOTP = otp;
-    req.session.newEmail = email;
-    const emailSent = await sendVerification(email, otp);
-    if (!emailSent) {
-      req.flash('msg', 'Failed to send OTP');
-      return res.redirect('/profile');
-    }
-    console.log('OTP sent successfully:', otp);
-    res.redirect('/verify-email-otp');
-  } catch (err) {
-    console.error('OTP send error:', err);
-    res.redirect('/profile');
+  res.render('editProfile', {
+    user: {
+      ...userData,
+      addresses: userAddresses
+    },
+    activePage: 'profile'
+  });
+});
+
+
+const updateEmailRequestOtp = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+
+  const userId = req.session.user;
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  req.session.emailOTP = otp;
+  req.session.newEmail = email;
+  const emailSent = await sendVerification(email, otp);
+  if (!emailSent) {
+    req.flash('msg', 'Failed to send OTP');
+    return res.redirect('/profile');
   }
-};
+  console.log('OTP sent successfully:', otp);
+  res.redirect('/verify-email-otp');
+});
 
 
 
 
 
-const getVerifyEmailOtpPage = async (req, res) => {
-  try {
-    const userId = req.session.user;
-    if (!req.session.newEmail) {
-      return res.redirect('/profile');
-    }
-
-    res.render('verify-email-otp', {
-      msg: req.flash('msg'),
-      email: req.session.newEmail
-    });
-  } catch (err) {
-    console.error('Error loading OTP verification page:', err);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
+const getVerifyEmailOtpPage = catchAsync(async (req, res, next) => {
+  const userId = req.session.user;
+  if (!req.session.newEmail) {
+    return res.redirect('/profile');
   }
-};
+
+  res.render('verify-email-otp', {
+    msg: req.flash('msg'),
+    email: req.session.newEmail
+  });
+});
 
 
 
-const verifyEmailOtp = async (req, res) => {
+const verifyEmailOtp = catchAsync(async (req, res, next) => {
   const { otp } = req.body;
   const userId = req.session.user;
 
@@ -160,76 +131,60 @@ const verifyEmailOtp = async (req, res) => {
     req.flash('msg', 'Invalid OTP');
     return res.redirect('/verify-email-otp');
   }
-};
+});
 
 
 
 
-const uploadProfileImage = async (req, res) => {
-  try {
-    const userId = req.session.user;
+const uploadProfileImage = catchAsync(async (req, res, next) => {
+  const userId = req.session.user;
 
-    if (!userId || !req.file) { return res.redirect('/profile'); }
+  if (!userId || !req.file) { return res.redirect('/profile'); }
 
-    const cloudinaryUrl = req.file.path;
-    const publicId = req.file.filename;
+  const cloudinaryUrl = req.file.path;
+  const publicId = req.file.filename;
 
-    const updateResult = await User.findByIdAndUpdate(userId, {
-      profileImage: cloudinaryUrl,
-      profileImagePublicId: publicId
-    });
+  const updateResult = await User.findByIdAndUpdate(userId, {
+    profileImage: cloudinaryUrl,
+    profileImagePublicId: publicId
+  });
 
-    res.redirect('/editProfile');
+  res.redirect('/editProfile');
+});
 
-  } catch (err) {
-    console.error('Profile image upload failed:', err);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
+
+
+
+
+const saveProfile = catchAsync(async (req, res, next) => {
+  return res.redirect('/profile');
+});
+
+
+
+
+
+
+const updateUsername = catchAsync(async (req, res, next) => {
+  const userId = req.session.user;
+  const { username } = req.body;
+
+  if (!username || username.trim().length < 3) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Username must be at least 3 characters long' });
   }
-};
 
 
+  const updated = await User.updateOne(
+    { _id: userId },
+    { $set: { name: username.trim() } }
+  );
+
+  const updatedUser = await User.findById(userId);
+  req.session.user = updatedUser._id;
 
 
-
-const saveProfile = async (req, res) => {
-  try {
-    return res.redirect('/profile');
-  } catch (error) {
-    res.render('page-404');
-    console.error('Error :', error.message);
-  }
-};
-
-
-
-
-
-
-const updateUsername = async (req, res) => {
-  try {
-    const userId = req.session.user;
-    const { username } = req.body;
-
-    if (!username || username.trim().length < 3) {
-      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Username must be at least 3 characters long' });
-    }
-
-
-    const updated = await User.updateOne(
-      { _id: userId },
-      { $set: { name: username.trim() } }
-    );
-
-    const updatedUser = await User.findById(userId);
-    req.session.user = updatedUser._id;
-
-
-    res.status(HttpStatus.OK).json({ message: 'Username updated successfully' });
-  } catch (error) {
-    console.error('Error updating username:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
-  }
-};
+  res.status(HttpStatus.OK).json({ message: 'Username updated successfully' });
+});
 
 
 
@@ -244,5 +199,4 @@ module.exports = {
   uploadProfileImage,
   saveProfile,
   updateUsername
-
 };

@@ -6,290 +6,252 @@ const path = require('path');
 const { array } = require('../../middlewares/multer');
 const cloudinary = require('../../config/cloudinary');
 const HttpStatus = require('../../config/httpStatus');
+const catchAsync = require('../../utils/catchAsync');
+const AppError = require('../../utils/AppError');
 
-const productsinfo = async (req, res) => {
-  try {
-    return res.render('products');
-  } catch (error) {
-    console.error('Error in productsinfo:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
+const productsinfo = catchAsync(async (req, res) => {
+  return res.render('products');
+});
+
+const getAddProductPage = catchAsync(async (req, res) => {
+  const categories = await Category.find({ isListed: true });
+  res.render('add-products', { cat: categories });
+});
+
+const addProducts = catchAsync(async (req, res, next) => {
+  const {
+    productName,
+    size,
+    price,
+    stock,
+    description,
+    category,
+    croppedImage1,
+    croppedImage2,
+    croppedImage3
+  } = req.body || {};
+
+  const Colour = 'Default';
+
+  if (/[^A-Za-z]g/.test(productName)) {
+    req.flash('msg', 'Product name should not contain special characters or numbers');
+    return res.redirect('/admin/addProducts');
   }
-};
 
-const getAddProductPage = async (req, res) => {
-  try {
-    const categories = await Category.find({ isListed: true });
-    res.render('add-products', { cat: categories });
-  } catch (error) {
-    console.error('Error in getAddProductPage:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
+  if (productName.trim() == '') {
+    req.flash('msg', 'Product name cannot be empty');
+    return res.redirect('/admin/addProducts');
   }
-};
 
-const addProducts = async (req, res) => {
-  try {
-    const {
-      productName,
-      size,
-      price,
-      stock,
-      description,
-      category,
-      croppedImage1,
-      croppedImage2,
-      croppedImage3
-    } = req.body || {};
+  if (!productName || !size || !price || !stock || !description || !category) {
+    req.flash('msg', 'All fields are required');
+    return res.redirect('/admin/addProducts');
+  }
 
-    const Colour = 'Default';
+  const sizes = Array.isArray(size) ? size : [size];
+  const prices = Array.isArray(price) ? price : [price];
+  const stocks = Array.isArray(stock) ? stock : [stock];
 
-    if (/[^A-Za-z]g/.test(productName)) {
-      req.flash('msg', 'Product name should not contain special characters or numbers');
+  const existingProduct = await Product.findOne({ productName });
+  if (existingProduct) {
+    req.flash('msg', 'Product with this name already exists');
+    return res.redirect('/admin/addProducts');
+  }
+
+  const categoryDoc = await Category.findOne({ categoryName: category });
+  if (!categoryDoc) {
+    req.flash('msg', 'Invalid category name');
+    return res.redirect('/admin/addProducts');
+  }
+
+  const imagesBase64 = [croppedImage1, croppedImage2, croppedImage3];
+  const imageFilenames = [];
+
+  for (let i = 0; i < imagesBase64.length; i++) {
+    const base64 = imagesBase64[i];
+    if (!base64 || !base64.startsWith('data:image')) {
+      req.flash('msg', 'Invalid or missing image data');
       return res.redirect('/admin/addProducts');
     }
 
-    if (productName.trim() == '') {
-      req.flash('msg', 'Product name cannot be empty');
-      return res.redirect('/admin/addProducts');
-    }
-
-    if (!productName || !size || !price || !stock || !description || !category) {
-      req.flash('msg', 'All fields are required');
-      return res.redirect('/admin/addProducts');
-    }
-
-    const sizes = Array.isArray(size) ? size : [size];
-    const prices = Array.isArray(price) ? price : [price];
-    const stocks = Array.isArray(stock) ? stock : [stock];
-
-    const existingProduct = await Product.findOne({ productName });
-    if (existingProduct) {
-      req.flash('msg', 'Product with this name already exists');
-      return res.redirect('/admin/addProducts');
-    }
-
-    const categoryDoc = await Category.findOne({ categoryName: category });
-    if (!categoryDoc) {
-      req.flash('msg', 'Invalid category name');
-      return res.redirect('/admin/addProducts');
-    }
-
-    const imagesBase64 = [croppedImage1, croppedImage2, croppedImage3];
-    const imageFilenames = [];
-
-    for (let i = 0; i < imagesBase64.length; i++) {
-      const base64 = imagesBase64[i];
-      if (!base64 || !base64.startsWith('data:image')) {
-        req.flash('msg', 'Invalid or missing image data');
-        return res.redirect('/admin/addProducts');
-      }
-
-      const result = await cloudinary.uploader.upload(base64, {
-        folder: 'products',
-        format: 'jpg',
-        public_id: `product_${Date.now()}_${i}`
-      });
-
-      imageFilenames.push(result.secure_url);
-    }
-
-    const variants = [];
-    for (let i = 0; i < sizes.length; i++) {
-      const currentSize = sizes[i];
-      const currentPrice = parseFloat(prices[i]);
-      const currentStock = parseInt(stocks[i]);
-
-      if (!currentSize || isNaN(currentPrice) || isNaN(currentStock)) {
-        continue;
-      }
-
-      variants.push({
-        Colour,
-        Size: currentSize,
-        Price: currentPrice,
-        Stock: currentStock
-      });
-    }
-
-    const newProduct = new Product({
-      productName,
-      Image: imageFilenames,
-      Description: description,
-      Category: categoryDoc._id,
-      Variants: variants
+    const result = await cloudinary.uploader.upload(base64, {
+      folder: 'products',
+      format: 'jpg',
+      public_id: `product_${Date.now()}_${i}`
     });
 
-    await newProduct.save();
-    res.redirect('/admin/products');
-  } catch (error) {
-    console.error('Error in addProducts:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
+    imageFilenames.push(result.secure_url);
   }
-};
 
-const getAllProducts = async (req, res) => {
-  try {
-    const search = req.query.search || '';
-    const page = parseInt(req.query.page) || 1;
-    const limit = 6;
+  const variants = [];
+  for (let i = 0; i < sizes.length; i++) {
+    const currentSize = sizes[i];
+    const currentPrice = parseFloat(prices[i]);
+    const currentStock = parseInt(stocks[i]);
 
-    const regex = new RegExp(search, 'i');
-    const filter = search
-      ? { $or: [{ productName: regex }, { 'Category.categoryName': regex }] }
-      : {};
+    if (!currentSize || isNaN(currentPrice) || isNaN(currentStock)) {
+      continue;
+    }
 
-    const products = await Product.find(filter)
-      .populate('Category')
-      .sort({ UpdatedAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean();
-
-    const now = new Date();
-    const productsWithOffers = await Promise.all(products.map(async (product) => {
-      const offer = await Offers.findOne({
-        Product: product._id,
-        Category: null,
-        StartDate: { $lte: now },
-        EndDate: { $gte: now }
-      }).lean();
-      const variant = product.Variants[0] || {};
-      return {
-        _id: product._id,
-        name: product.productName,
-        images: product.Image,
-        category: product.Category?.categoryName || 'N/A',
-        regularPrice: variant.Price || 0,
-        salePrice: offer ? Math.round(variant.Price * (1 - offer.Discount / 100)) : (variant.OfferPrice || variant.Price || 0),
-        stock: variant.Stock ?? 0,
-        isAvailable: product.IsListed,
-        offer: offer || null
-      };
-    }));
-
-    const total = await Product.countDocuments(filter);
-    const totalPages = Math.ceil(total / limit);
-
-    res.render('products', {
-      products: productsWithOffers,
-      currentPage: page,
-      totalPages,
-      search
+    variants.push({
+      Colour,
+      Size: currentSize,
+      Price: currentPrice,
+      Stock: currentStock
     });
-  } catch (error) {
-    console.error('Error in getAllProducts:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
-};
 
-const unlist = async (req, res) => {
-  try {
-    const productId = req.params.productId;
-    await Product.findByIdAndUpdate(productId, { IsListed: false });
-    res.redirect('/admin/products');
-  } catch (error) {
-    console.error('Error in unlist:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
-  }
-};
+  const newProduct = new Product({
+    productName,
+    Image: imageFilenames,
+    Description: description,
+    Category: categoryDoc._id,
+    Variants: variants
+  });
 
-const list = async (req, res) => {
-  try {
-    const productId = req.params.productId;
-    await Product.findByIdAndUpdate(productId, { IsListed: true });
-    res.redirect('/admin/products');
-  } catch (error) {
-    console.error('Error in list:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
-  }
-};
+  await newProduct.save();
+  res.redirect('/admin/products');
+});
 
-const getEditProductPage = async (req, res) => {
-  try {
-    const productId = req.params.productId;
-    const products = await Product.find({ isListed: true }).lean();
-    const product = await Product.findById(productId).populate('Category').lean();
-    const categories = await Category.find({ isListed: true }).lean();
+const getAllProducts = catchAsync(async (req, res, next) => {
+  const search = req.query.search || '';
+  const page = parseInt(req.query.page) || 1;
+  const limit = 6;
 
-    if (!product) { return res.status(HttpStatus.NOT_FOUND).render('page-404'); }
+  const regex = new RegExp(search, 'i');
+  const filter = search
+    ? { $or: [{ productName: regex }, { 'Category.categoryName': regex }] }
+    : {};
 
-    res.render('edit-product', { product, categories, products });
-  } catch (error) {
-    console.error('Error in getEditProductPage:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
-  }
-};
+  const products = await Product.find(filter)
+    .populate('Category')
+    .sort({ UpdatedAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .lean();
 
-const postEditProduct = async (req, res) => {
-  try {
-    const { productId } = req.params;
-    const {
-      productName,
-      size,
-      price,
-      stock,
-      description,
-      category,
-      croppedImage1,
-      croppedImage2,
-      croppedImage3
-    } = req.body;
+  const now = new Date();
+  const productsWithOffers = await Promise.all(products.map(async (product) => {
+    const offer = await Offers.findOne({
+      Product: product._id,
+      Category: null,
+      StartDate: { $lte: now },
+      EndDate: { $gte: now }
+    }).lean();
+    const variant = product.Variants[0] || {};
+    return {
+      _id: product._id,
+      name: product.productName,
+      images: product.Image,
+      category: product.Category?.categoryName || 'N/A',
+      regularPrice: variant.Price || 0,
+      salePrice: offer ? Math.round(variant.Price * (1 - offer.Discount / 100)) : (variant.OfferPrice || variant.Price || 0),
+      stock: variant.Stock ?? 0,
+      isAvailable: product.IsListed,
+      offer: offer || null
+    };
+  }));
 
-    const product = await Product.findById(productId);
-    if (!product) { return res.status(HttpStatus.NOT_FOUND).render('page-404'); }
+  const total = await Product.countDocuments(filter);
+  const totalPages = Math.ceil(total / limit);
+
+  res.render('products', {
+    products: productsWithOffers,
+    currentPage: page,
+    totalPages,
+    search
+  });
+});
+
+const unlist = catchAsync(async (req, res, next) => {
+  const productId = req.params.productId;
+  await Product.findByIdAndUpdate(productId, { IsListed: false });
+  res.redirect('/admin/products');
+});
+
+const list = catchAsync(async (req, res, next) => {
+  const productId = req.params.productId;
+  await Product.findByIdAndUpdate(productId, { IsListed: true });
+  res.redirect('/admin/products');
+});
+
+const getEditProductPage = catchAsync(async (req, res, next) => {
+  const productId = req.params.productId;
+  const products = await Product.find({ isListed: true }).lean();
+  const product = await Product.findById(productId).populate('Category').lean();
+  const categories = await Category.find({ isListed: true }).lean();
+
+  if (!product) { return next(new AppError('Product not found', HttpStatus.NOT_FOUND)); }
+
+  res.render('edit-product', { product, categories, products });
+});
+
+const postEditProduct = catchAsync(async (req, res, next) => {
+  const { productId } = req.params;
+  const {
+    productName,
+    size,
+    price,
+    stock,
+    description,
+    category,
+    croppedImage1,
+    croppedImage2,
+    croppedImage3
+  } = req.body;
+
+  const product = await Product.findById(productId);
+  if (!product) { return next(new AppError('Product not found', HttpStatus.NOT_FOUND)); }
 
 
-    product.productName = productName;
-    product.Description = description;
+  product.productName = productName;
+  product.Description = description;
 
-    const categoryDoc = await Category.findOne({ categoryName: category });
-    if (!categoryDoc) { return res.status(HttpStatus.BAD_REQUEST).send('Invalid category'); }
-    product.Category = categoryDoc._id;
+  const categoryDoc = await Category.findOne({ categoryName: category });
+  if (!categoryDoc) { return res.status(HttpStatus.BAD_REQUEST).send('Invalid category'); }
+  product.Category = categoryDoc._id;
 
-    if (product.Variants.length === 0) {
+  if (product.Variants.length === 0) {
+    product.Variants.push({
+      Size: size,
+      Price: parseFloat(price),
+      Stock: parseInt(stock)
+    });
+  } else {
+    const variantIndex = product.Variants.findIndex(v => v.Size === size);
+    if (variantIndex !== -1) {
+      product.Variants[variantIndex].Price = parseFloat(price);
+      product.Variants[variantIndex].Stock = parseInt(stock);
+    } else {
       product.Variants.push({
         Size: size,
         Price: parseFloat(price),
         Stock: parseInt(stock)
       });
-    } else {
-      const variantIndex = product.Variants.findIndex(v => v.Size === size);
-      if (variantIndex !== -1) {
-        product.Variants[variantIndex].Price = parseFloat(price);
-        product.Variants[variantIndex].Stock = parseInt(stock);
-      } else {
-        product.Variants.push({
-          Size: size,
-          Price: parseFloat(price),
-          Stock: parseInt(stock)
-        });
-      }
     }
-
-    const newImages = [croppedImage1, croppedImage2, croppedImage3];
-    const updatedImages = [];
-
-    for (let i = 0; i < 3; i++) {
-      const base64 = newImages[i];
-
-      if (base64 && base64.startsWith('data:image')) {
-        const uploadResult = await cloudinary.uploader.upload(base64, {
-          folder: 'product-images'
-        });
-        updatedImages[i] = uploadResult.secure_url;
-      } else {
-        updatedImages[i] = product.Image[i] || '';
-      }
-    }
-
-    product.Image = updatedImages;
-    await product.save();
-
-    res.redirect('/admin/products');
-  } catch (error) {
-    console.error('Error in postEditProduct:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
   }
-};
+
+  const newImages = [croppedImage1, croppedImage2, croppedImage3];
+  const updatedImages = [];
+
+  for (let i = 0; i < 3; i++) {
+    const base64 = newImages[i];
+
+    if (base64 && base64.startsWith('data:image')) {
+      const uploadResult = await cloudinary.uploader.upload(base64, {
+        folder: 'product-images'
+      });
+      updatedImages[i] = uploadResult.secure_url;
+    } else {
+      updatedImages[i] = product.Image[i] || '';
+    }
+  }
+
+  product.Image = updatedImages;
+  await product.save();
+
+  res.redirect('/admin/products');
+});
 
 
 module.exports = {

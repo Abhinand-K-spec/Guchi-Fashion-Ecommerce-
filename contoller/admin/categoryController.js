@@ -1,202 +1,164 @@
 const Category = require('../../model/categorySchema');
 const Offers = require('../../model/offersSchema');
 const HttpStatus = require('../../config/httpStatus');
+const catchAsync = require('../../utils/catchAsync');
+const AppError = require('../../utils/AppError');
 
-const categoryinfo = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = 3;
-    const skip = (page - 1) * limit;
-    const now = new Date();
+const categoryinfo = catchAsync(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = 3;
+  const skip = (page - 1) * limit;
+  const now = new Date();
 
-    const categorydata = await Category
-      .find({})
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+  const categorydata = await Category
+    .find({})
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
 
 
-    const categoriesWithOffers = await Promise.all(categorydata.map(async (cat) => {
-      const offer = await Offers.findOne({
-        Category: cat._id,
-        StartDate: { $lte: now },
-        EndDate: { $gte: now }
-      }).lean();
+  const categoriesWithOffers = await Promise.all(categorydata.map(async (cat) => {
+    const offer = await Offers.findOne({
+      Category: cat._id,
+      StartDate: { $lte: now },
+      EndDate: { $gte: now }
+    }).lean();
 
-      return { ...cat, offer: offer || null };
-    }));
+    return { ...cat, offer: offer || null };
+  }));
 
-    const totalcategories = await Category.countDocuments();
-    const totalpages = Math.ceil(totalcategories / limit);
+  const totalcategories = await Category.countDocuments();
+  const totalpages = Math.ceil(totalcategories / limit);
 
-    res.render('category', {
-      currentPage: page,
-      cat: categoriesWithOffers,
-      totalCategories: totalcategories,
-      totalPages: totalpages
-    });
-  } catch (error) {
-    console.log('Error in categoryinfo:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
-  }
-};
+  res.render('category', {
+    currentPage: page,
+    cat: categoriesWithOffers,
+    totalCategories: totalcategories,
+    totalPages: totalpages
+  });
+});
 
-const addCategory = async (req, res) => {
+const addCategory = catchAsync(async (req, res, next) => {
   const { name, description } = req.body;
-  try {
-    const existingCategory = await Category.findOne({
-      categoryName: { $regex: `^${name}$`, $options: 'i' }
-    });
+  const existingCategory = await Category.findOne({
+    categoryName: { $regex: `^${name}$`, $options: 'i' }
+  });
 
-    if (existingCategory) {
-      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Category already exists' });
-    }
-
-    const newCategory = new Category({
-      categoryName: name,
-      description,
-      isListed: true
-    });
-
-    await newCategory.save();
-    return res.status(HttpStatus.OK).json({ message: 'Category added successfully' });
-  } catch (error) {
-    console.log('Error in addCategory:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
+  if (existingCategory) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Category already exists' });
   }
-};
 
-const unlist = async (req, res) => {
-  try {
-    const categoryId = req.query.id;
-    const category = await Category.findByIdAndUpdate(categoryId, { isListed: false });
-    if (!category) {
-      return res.status(HttpStatus.NOT_FOUND).render('page-404');
-    }
+  const newCategory = new Category({
+    categoryName: name,
+    description,
+    isListed: true
+  });
+
+  await newCategory.save();
+  return res.status(HttpStatus.OK).json({ message: 'Category added successfully' });
+});
+
+const unlist = catchAsync(async (req, res, next) => {
+  const categoryId = req.query.id;
+  const category = await Category.findByIdAndUpdate(categoryId, { isListed: false });
+  if (!category) {
+    return next(new AppError('Category not found', HttpStatus.NOT_FOUND));
+  }
+  res.redirect(`/admin/category?page=${req.query.page || 1}`);
+});
+
+const list = catchAsync(async (req, res, next) => {
+  const categoryId = req.query.id;
+  const category = await Category.findByIdAndUpdate(categoryId, { isListed: true });
+  if (!category) {
+    return next(new AppError('Category not found', HttpStatus.NOT_FOUND));
+  }
+  res.redirect(`/admin/category?page=${req.query.page || 1}`);
+});
+
+const getEditCategory = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
+  const categoryData = await Category.findById(id);
+
+  if (!categoryData) {
+    return next(new AppError('Category not found', HttpStatus.NOT_FOUND));
+  }
+
+  res.render('edit-category', { category: categoryData });
+});
+
+const editCategory = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
+  const { categoryName, description } = req.body;
+
+  const existingCategory = await Category.findOne({
+    categoryName: categoryName,
+    _id: { $ne: id }
+  });
+
+  if (existingCategory) {
+    return res.render('edit-category', {
+      category: { _id: id, categoryName, description },
+      error: 'Category with this name already exists.'
+    });
+  }
+
+  const updatedCategory = await Category.findByIdAndUpdate(
+    id,
+    { categoryName, description },
+    { new: true }
+  );
+
+  if (updatedCategory) {
     res.redirect(`/admin/category?page=${req.query.page || 1}`);
-  } catch (error) {
-    console.error('Error unlisting category:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
+  } else {
+    return next(new AppError('Category not found', HttpStatus.NOT_FOUND));
   }
-};
+});
 
-const list = async (req, res) => {
-  try {
-    const categoryId = req.query.id;
-    const category = await Category.findByIdAndUpdate(categoryId, { isListed: true });
-    if (!category) {
-      return res.status(HttpStatus.NOT_FOUND).render('page-404');
-    }
-    res.redirect(`/admin/category?page=${req.query.page || 1}`);
-  } catch (error) {
-    console.error('Error listing category:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
-  }
-};
+const searchCategory = catchAsync(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = 4;
+  const skip = (page - 1) * limit;
+  const search = req.query.search || '';
+  const now = new Date();
 
-const getEditCategory = async (req, res) => {
-  try {
-    const id = req.params.id;
-    const categoryData = await Category.findById(id);
+  const query = {
+    categoryName: { $regex: new RegExp(search, 'i') }
+  };
 
-    if (!categoryData) {
-      return res.status(HttpStatus.NOT_FOUND).render('page-404');
-    }
+  const categorydata = await Category
+    .find(query)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
 
-    res.render('edit-category', { category: categoryData });
-  } catch (error) {
-    console.log('Error in getEditCategory:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
-  }
-};
+  const categoriesWithOffers = await Promise.all(categorydata.map(async (cat) => {
+    const offer = await Offers.findOne({
+      Category: cat._id,
+      StartDate: { $lte: now },
+      EndDate: { $gte: now }
+    }).lean();
+    return { ...cat, offer: offer || null };
+  }));
 
-const editCategory = async (req, res) => {
-  try {
-    const id = req.params.id;
-    const { categoryName, description } = req.body;
+  const totalcategories = await Category.countDocuments(query);
+  const totalpages = Math.ceil(totalcategories / limit);
 
-    const existingCategory = await Category.findOne({
-      categoryName: categoryName,
-      _id: { $ne: id }
-    });
+  res.render('category', {
+    currentPage: page,
+    cat: categoriesWithOffers,
+    totalCategories: totalcategories,
+    totalPages: totalpages,
+    search
+  });
+});
 
-    if (existingCategory) {
-      return res.render('edit-category', {
-        category: { _id: id, categoryName, description },
-        error: 'Category with this name already exists.'
-      });
-    }
-
-    const updatedCategory = await Category.findByIdAndUpdate(
-      id,
-      { categoryName, description },
-      { new: true }
-    );
-
-    if (updatedCategory) {
-      res.redirect(`/admin/category?page=${req.query.page || 1}`);
-    } else {
-      res.status(HttpStatus.NOT_FOUND).render('page-404');
-    }
-  } catch (error) {
-    console.error('Error updating category:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
-  }
-};
-
-const searchCategory = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = 4;
-    const skip = (page - 1) * limit;
-    const search = req.query.search || '';
-    const now = new Date();
-
-    const query = {
-      categoryName: { $regex: new RegExp(search, 'i') }
-    };
-
-    const categorydata = await Category
-      .find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    const categoriesWithOffers = await Promise.all(categorydata.map(async (cat) => {
-      const offer = await Offers.findOne({
-        Category: cat._id,
-        StartDate: { $lte: now },
-        EndDate: { $gte: now }
-      }).lean();
-      return { ...cat, offer: offer || null };
-    }));
-
-    const totalcategories = await Category.countDocuments(query);
-    const totalpages = Math.ceil(totalcategories / limit);
-
-    res.render('category', {
-      currentPage: page,
-      cat: categoriesWithOffers,
-      totalCategories: totalcategories,
-      totalPages: totalpages,
-      search
-    });
-  } catch (error) {
-    console.error('Error in searchCategory:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
-  }
-};
-
-const clearSearch = async (req, res) => {
-  try {
-    res.redirect('/admin/category');
-  } catch (error) {
-    console.error('Error in clearSearch:', error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('page-404');
-  }
-};
+const clearSearch = catchAsync(async (req, res) => {
+  res.redirect('/admin/category');
+});
 
 module.exports = {
   categoryinfo,
