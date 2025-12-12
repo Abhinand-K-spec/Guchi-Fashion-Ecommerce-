@@ -6,7 +6,7 @@ const AppError = require('../../utils/AppError');
 
 const categoryinfo = catchAsync(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = 3;
+  const limit = 8;
   const skip = (page - 1) * limit;
   const now = new Date();
 

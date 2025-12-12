@@ -1,465 +1,452 @@
 <%- include('../partials/admin/header') %>
+  <!DOCTYPE html>
+  <html lang="en">
 
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Details - Admin</title>
-    <!-- Bootstrap & Font Awesome -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Axios -->
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+      body {
+        background-color: #1a1b26;
+        font-family: 'Inter', sans-serif;
+        color: #eaeaea;
+      }
+
+      .card {
+        background-color: #242531;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+      }
+
+      .text-white-50 {
+        color: rgba(255, 255, 255, 0.5) !important;
+      }
+
+      .form-control,
+      .form-select {
+        background-color: #2c2e3e;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #e5e7eb;
+      }
+
+      .form-control:focus,
+      .form-select:focus {
+        background-color: #2c2e3e;
+        border-color: #3b82f6;
+        color: #ffffff;
+        box-shadow: none;
+      }
+
+      .btn-outline-light {
+        border-color: rgba(255, 255, 255, 0.2);
+        color: #e5e7eb;
+      }
+
+      .btn-outline-light:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      .img-fluid {
+        max-height: 80px;
+        object-fit: cover;
+        border-radius: 6px;
+      }
+
+      .price-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        padding-bottom: 0.25rem;
+      }
+
+      .price-row:last-child {
+        border-bottom: none;
+      }
+
+      .badge {
+        font-weight: 500;
+      }
+      #ct{
+        padding-top: 10vh;
+      }
+    </style>
   </head>
 
-  <style>
-    body {
-      background-color: #1e1e1e;
-      color: #ffffff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .container {
-      background-color: #2a2a2a;
-      border-radius: 10px;
-      padding: 30px;
-      margin-top: 30px;
-    }
-
-    .card {
-      background-color: #333;
-      border: none;
-      color: #fff;
-      border-radius: 8px;
-    }
-
-    .badge {
-      font-size: 0.9rem;
-    }
-
-    .img-fluid {
-      max-height: 100px;
-      object-fit: cover;
-      border-radius: 8px;
-    }
-
-    .btn-sm {
-      border-radius: 20px;
-    }
-
-    .text-muted {
-      color: #bbb !important;
-    }
-
-    hr {
-      border-color: #444;
-    }
-
-    .alert-container {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 1000;
-      max-width: 400px;
-    }
-
-    .form-control-sm {
-      background-color: #3a3a3a;
-      color: white;
-      border: 1px solid #555;
-    }
-
-    .admin-content-scroll {
-      width: 100%;
-      height: 100vh;
-      overflow-y: auto;
-    }
-
-    .price-row {
-      margin-top: 0.8rem;
-    }
-
-    .price-row p {
-      margin-bottom: 0.5rem;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      font-size: 0.95rem;
-      line-height: 1.6;
-      color: #e0e0e0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px dashed #444;
-      padding-bottom: 0.25rem;
-    }
-
-    .price-row p:last-child {
-      border-bottom: none;
-    }
-
-    .price-row strong {
-      font-weight: 500;
-      color: #fff;
-      margin-right: 0.5rem;
-    }
-  </style>
-
   <body>
-    <div class="alert-container"></div>
 
-    <div class="admin-content-scroll">
-      <div class="container">
+    <div class="container py-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="text-white mb-0 fs-4">Order Details</h3>
+        <a href="/admin/orders" class="btn btn-outline-light btn-sm">
+          <i class="fas fa-arrow-left me-2"></i>Back
+        </a>
+      </div>
 
-        <h3 class="mb-4 text-white">Order Details</h3>
-
-        <% if (order) { %>
-          <div class="card p-4 mb-4">
-            <div class="row">
-              <div class="col-md-6">
-                <p><strong>Order ID:</strong>
-                  <%= order.OrderId %>
-                </p>
-                <p><strong>User Name:</strong>
-                  <%= order.UserId?.name || 'N/A' %>
-                </p>
-                <p><strong>Email:</strong>
-                  <%= order.UserId?.email || 'N/A' %>
-                </p>
-                <p><strong>Order Date:</strong>
-                  <%= new Date(order.OrderDate).toLocaleString() %>
-                </p>
-
-                <% if (order.CancelReason) { %>
-                  <p class="text-muted"><strong>Cancel Reason:</strong>
-                    <%= order.CancelReason %>
-                  </p>
-                  <% } %>
+      <% if (order) { %>
+        <div id="ct" class="row g-3">
+          <!-- Order Info -->
+          <div class="col-lg-8">
+            <div class="card mb-3 text-white border-0" style="background-color: #242531;">
+              <div class="card-header bg-transparent border-bottom border-secondary py-3">
+                <h5 class="mb-0 text-white fs-5 mt-1">Order #<%= order.OrderId %>
+                </h5>
               </div>
-              <div class="col-md-6">
-                <p><strong>Address:</strong>
-                  <%= order.Address?.name || 'N/A' %>,
-                    <%= order.Address?.line1 || '' %>,
-                      <%= order.Address?.city || '' %>,
-                        <%= order.Address?.state || '' %> -
-                          <%= order.Address?.postCode || 'N/A' %>
-                </p>
-                <p><strong>Phone:</strong>
-                  <%= order.Address?.phone || 'N/A' %>
-                </p>
-                <% if (order.Address?.alternativePhone) { %>
-                  <p><strong>Alternative Phone:</strong>
-                    <%= order.Address?.alternativePhone %>
-                  </p>
-                  <% } %>
+              <div class="card-body p-3">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <h6 class="text-secondary text-uppercase small fw-bold mb-2"
+                      style="font-size: 0.75rem; letter-spacing: 0.5px;">Customer Details</h6>
+                    <p class="mb-0 fw-bold fs-6">
+                      <%= order.UserId?.name || 'N/A' %>
+                    </p>
+                    <p class="mb-0 text-white-50 small">
+                      <%= order.UserId?.email || 'N/A' %>
+                    </p>
+                    <p class="mb-0 text-white-50 small">Placed on: <%= new Date(order.OrderDate).toLocaleString() %>
+                    </p>
+                    <% if (order.CancelReason) { %>
+                      <p class="text-danger mt-1 small"><strong>Cancelled:</strong>
+                        <%= order.CancelReason %>
+                      </p>
+                      <% } %>
+                  </div>
+                  <div class="col-md-6">
+                    <h6 class="text-secondary text-uppercase small fw-bold mb-2"
+                      style="font-size: 0.75rem; letter-spacing: 0.5px;">Shipping Address</h6>
+                    <p class="mb-0 small text-white">
+                      <%= order.Address?.name || 'N/A' %><br>
+                        <%= order.Address?.line1 || '' %>, <%= order.Address?.city || '' %><br>
+                            <%= order.Address?.state || '' %> - <%= order.Address?.postCode || '' %>
+                    </p>
+                    <p class="mb-0 small text-white">Phone: <%= order.Address?.phone || 'N/A' %>
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <hr>
-
-            <h6 class="text-success"><strong>Payment method: <%=order.PaymentMethod%></strong></h6>
-            <h5 class="mb-3">Ordered Items:</h5>
-            <% order.Items.forEach(item=> {const product = item.product || {}; const variantIndex = item.variantIndex
-              !== undefined ? item.variantIndex : 0; const variant = product.Variants?.[variantIndex] || {}; %>
-              <div class="row border rounded p-2 mb-3" style="background-color:#3a3a3a;" id="item-<%= item._id %>">
-                <div class="col-md-2 d-flex align-items-center justify-content-center">
-                  <img src="<%= item.product?.Image?.[0] || 'default.jpg' %>" class="img-fluid" alt="Product Image">
-                </div>
-                <div class="col-md-7">
-                  <h6><strong>
-                      <%= item.product?.productName || 'Unknown Product' %>
-                    </strong></h6>
-                  <p>Quantity: <%= item.quantity %>
-                  </p>
-                  <p>Size: <%=variant.Size%>
-                  </p>
-                  <div class="price-row">
-                    <strong>Original Price:</strong>
-                    <span>₹<%= (item.originalPrice || 0).toFixed(2) %> × <%= item.quantity %> = ₹<%=
-                            ((item.originalPrice || 0) * item.quantity).toFixed(2) %></span>
-                  </div>
-                  <% if ((item.offerDiscountAmount || 0)> 0) { %>
-                    <div class="price-row text-success">
-                      <strong>Offer Discount:</strong>
-                      <span>-₹<%= (item.offerDiscountAmount || 0).toFixed(2) %></span>
-                    </div>
-                    <% } %>
-                      <% if ((item.couponDiscountAmount || 0)> 0) { %>
-                        <div class="price-row text-success">
-                          <strong>Coupon Discount:</strong>
-                          <span>-₹<%= (item.couponDiscountAmount || 0).toFixed(2) %></span>
-                        </div>
-                        <% } %>
-                          <div class="price-row">
-                            <strong>Tax (0.05%):</strong>
-                            <span>₹<%= (item.taxAmount || 0).toFixed(2) %></span>
-                          </div>
-                          <div class="price-row text-success">
-                            <strong>Item Total:</strong>
-                            <strong>₹<%= (item.finalPayableAmount || ((item.originalPrice || 0) *
-                                item.quantity)).toFixed(2) %></strong>
-                          </div>
-                          <p>Status:
+            <!-- Items -->
+            <div class="card text-white border-0" style="background-color: #242531;">
+              <div class="card-header bg-transparent border-bottom border-secondary py-2">
+                <h5 class="mb-0 text-white fs-5">Ordered Items</h5>
+                <div class="small text-success mt-1">Payment: <strong>
+                    <%= order.PaymentMethod %>
+                  </strong></div>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-dark table-borderless align-middle mb-0"
+                    style="--bs-table-bg: transparent;">
+                    <thead class="border-bottom border-secondary" style="background-color: rgba(255,255,255,0.02);">
+                      <tr class="text-white-50 small text-uppercase">
+                        <th class="ps-3 py-2 fw-medium">Product</th>
+                        <th class="py-2 fw-medium text-center">Price/Qty</th>
+                        <th class="py-2 fw-medium text-center">Total</th>
+                        <th class="py-2 fw-medium text-center">Status</th>
+                        <th class="text-end pe-3 py-2 fw-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="text-white">
+                      <% order.Items.forEach(item=> {
+                        const product = item.product || {};
+                        const variantIndex = item.variantIndex !== undefined ? item.variantIndex : 0;
+                        const variant = product.Variants?.[variantIndex] || {};
+                        %>
+                        <tr class="border-bottom border-secondary" id="item-<%= item._id %>">
+                          <td class="ps-3 py-3">
+                            <div class="d-flex align-items-center">
+                              <img src="<%= item.product?.Image?.[0] || 'default.jpg' %>" class="img-fluid me-3"
+                                style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;" alt="Product">
+                              <div>
+                                <div class="fw-bold text-white mb-0" style="font-size: 0.9rem;">
+                                  <%= item.product?.productName || 'Unknown' %>
+                                </div>
+                                <div class="text-white-50 small">Size: <%= variant.Size || 'N/A' %>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td class="py-3 text-center">
+                            <div class="small text-white">₹<%= (item.originalPrice || 0).toFixed(2) %>
+                            </div>
+                            <div class="small text-white-50">x <%= item.quantity %>
+                            </div>
+                          </td>
+                          <td class="py-3 text-center">
+                            <div class="fw-bold text-white small">₹<%= (item.finalPayableAmount || ((item.originalPrice
+                                || 0) * item.quantity)).toFixed(2) %>
+                            </div>
+                            <% if ((item.offerDiscountAmount || 0)> 0) { %>
+                              <div class="small text-success" style="font-size: 0.75rem;">-₹<%=
+                                  item.offerDiscountAmount.toFixed(2) %>
+                              </div>
+                              <% } %>
+                          </td>
+                          <td class="py-3 text-center">
                             <% if(order.PaymentMethod==='Online' && order.PaymentStatus!=='Completed' &&
                               order.Status==='Pending' ) { %>
-                              <h3 class="text-danger">Payment failed</h3>
+                              <span class="badge bg-danger">Payment Failed</span>
                               <% } else { %>
                                 <span class="badge 
-                  <% if(item.status === 'Delivered') { %> bg-success
-                  <% } else if(item.status === 'Cancelled') { %> bg-danger
-                  <% } else if(item.status === 'Shipped') { %> bg-primary
-                  <% } else if(item.status === 'OutForDelivery') { %> bg-info text-dark
-                  <% } else if(item.status === 'Returned') { %> bg-warning text-dark
-                  <% } else { %> bg-secondary <% } %>" id="item-status-<%= item._id %>">
+                                              <% if(item.status === 'Delivered') { %> bg-success
+                                              <% } else if(item.status === 'Cancelled') { %> bg-danger
+                                              <% } else if(item.status === 'Shipped') { %> bg-primary
+                                              <% } else if(item.status === 'OutForDelivery') { %> bg-info text-dark
+                                              <% } else if(item.status === 'Returned') { %> bg-warning text-dark
+                                              <% } else { %> bg-secondary <% } %>" id="item-status-<%= item._id %>">
                                   <%= item.status %>
                                 </span>
+                                <% } %>
 
-                          </p>
-
-                          <% if (item.status !=='Cancelled' && item.status !=='Delivered' && item.status !=='Returned'
-                            && item.returnStatus !=='Return Requested' && item.returnStatus !=='Request Approved' ) { %>
-                            <form class="update-item-status-form mt-2" data-item-id="<%= item._id %>"
-                              action="/admin/order-details/<%= order._id %>/update-item-status/<%= item._id %>"
-                              method="POST">
-                              <select name="status" class="form-control form-control-sm">
-                                <option value="Pending" <%=item.status==='Pending' ? 'selected' : '' %>>Pending</option>
-                                <option value="Shipped" <%=item.status==='Shipped' ? 'selected' : '' %>>Shipped</option>
-                                <option value="OutForDelivery" <%=item.status==='OutForDelivery' ? 'selected' : '' %>
-                                  >Out for Delivery</option>
-                                <option value="Delivered" <%=item.status==='Delivered' ? 'selected' : '' %>>Delivered
-                                </option>
-                                <option value="Cancelled" <%=item.status==='Cancelled' ? 'selected' : '' %>>Cancelled
-                                </option>
-                              </select>
-                            </form>
-                            <% } %>
+                                  <% if (item.returnStatus !=='NotRequested' ) { %>
+                                    <div class="mt-1">
+                                      <span class="badge 
+                                                    <% if(item.returnStatus === 'Return Requested') { %> bg-warning text-dark
+                                                    <% } else if(item.returnStatus === 'Request Approved') { %> bg-success
+                                                    <% } else if(item.returnStatus === 'Request Denied') { %> bg-danger
+                                                    <% } %>">
+                                        <%= item.returnStatus %>
+                                      </span>
+                                    </div>
+                                    <% } %>
+                          </td>
+                          <td class="text-end pe-4">
+                            <% if (item.status !=='Cancelled' && item.status !=='Delivered' && item.status !=='Returned'
+                              && item.returnStatus !=='Return Requested' && item.returnStatus !=='Request Approved' ) {
+                              %>
+                              <form class="update-item-status-form d-inline-block mb-1" data-item-id="<%= item._id %>"
+                                action="/admin/order-details/<%= order._id %>/update-item-status/<%= item._id %>"
+                                method="POST">
+                                <select name="status" class="form-select form-select-sm d-inline-block w-auto"
+                                  style="min-width: 120px;">
+                                  <option value="Pending" <%=item.status==='Pending' ? 'selected' : '' %>>Pending
+                                  </option>
+                                  <option value="Shipped" <%=item.status==='Shipped' ? 'selected' : '' %>>Shipped
+                                  </option>
+                                  <option value="OutForDelivery" <%=item.status==='OutForDelivery' ? 'selected' : '' %>
+                                    >Out for Delivery</option>
+                                  <option value="Delivered" <%=item.status==='Delivered' ? 'selected' : '' %>>Delivered
+                                  </option>
+                                  <option value="Cancelled" <%=item.status==='Cancelled' ? 'selected' : '' %>>Cancelled
+                                  </option>
+                                </select>
+                              </form>
                               <% } %>
-                                <% if (item.cancelReason) { %>
-                                  <p class="text-muted"><strong>Cancel Reason:</strong>
-                                    <%= item.cancelReason %>
-                                  </p>
+
+                                <% if (order.Status==='Pending' && item.status !=='Cancelled' &&
+                                  item.returnStatus==='NotRequested' && item.status !=='Delivered' &&
+                                  order.paymentStatus==='Confirmed' ) { %>
+                                  <form class="cancel-item-form d-inline-block" data-item-id="<%= item._id %>"
+                                    action="/admin/order-details/<%= order._id %>/cancel-item/<%= item._id %>"
+                                    method="POST">
+                                    <button type="button" class="btn btn-outline-danger btn-sm"
+                                      onclick="showCancelModal(this)">Cancel</button>
+                                    <!-- Hidden input populated by modal -->
+                                    <input type="hidden" name="reason" class="cancel-reason-input">
+                                  </form>
                                   <% } %>
-                                    <% if (item.returnReason) { %>
-                                      <p class="text-muted"><strong>Return Reason:</strong>
-                                        <%= item.returnReason %>
-                                      </p>
+
+                                    <% if (item.returnStatus==='Return Requested' && item.status !=='Cancelled' ) { %>
+                                      <div class="d-flex flex-column gap-1 align-items-end">
+                                        <form
+                                          action="/admin/approve-return/<%= order._id %>?productId=<%= item.product?._id %>"
+                                          method="POST">
+                                          <button class="btn btn-success btn-sm w-100">Approve</button>
+                                        </form>
+                                        <form
+                                          action="/admin/reject-return/<%= order._id %>?productId=<%= item.product?._id %>"
+                                          method="POST">
+                                          <button class="btn btn-danger btn-sm w-100">Reject</button>
+                                        </form>
+                                      </div>
                                       <% } %>
-                                        <% if (item.returnRequestedAt) { %>
-                                          <p class="text-muted"><strong>Return Requested At:</strong>
-                                            <%= new Date(item.returnRequestedAt).toLocaleString() %>
-                                          </p>
+
+                                        <% if (item.cancelReason) { %>
+                                          <div class="small text-danger mt-1">Reason: <%= item.cancelReason %>
+                                          </div>
                                           <% } %>
-                </div>
-                <div class="col-md-3 text-end">
-                  <% if (order.Status==='Pending' && item.status !=='Cancelled' && item.returnStatus==='NotRequested' &&
-                    item.status !=='Delivered' && order.paymentStatus==='Confirmed' ) { %>
-                    <form class="cancel-item-form mb-2" data-item-id="<%= item._id %>"
-                      action="/admin/order-details/<%= order._id %>/cancel-item/<%= item._id %>" method="POST">
-                      <input type="text" name="reason" class="form-control form-control-sm mb-2"
-                        placeholder="Reason for cancellation (optional)">
-                      <button type="submit" class="btn btn-sm btn-danger">Cancel Item</button>
-                    </form>
-                    <% } %>
-                      <% if (item.returnStatus==='Return Requested' && item.status !=='Cancelled' ) { %>
-                        <form action="/admin/approve-return/<%= order._id %>?productId=<%= item.product?._id %>"
-                          method="POST" class="d-inline">
-                          <button class="btn btn-success btn-sm">Approve Return</button>
-                        </form>
-                        <form action="/admin/reject-return/<%= order._id %>?productId=<%= item.product?._id %>"
-                          method="POST" class="d-inline">
-                          <button class="btn btn-danger btn-sm">Reject Return</button>
-                        </form>
-                        <% } %>
-                          <% if (item.returnStatus !=='NotRequested' ) { %>
-                            <p><strong>Return Status:</strong>
-                              <span class="badge 
-                    <% if(item.returnStatus === 'Return Requested') { %> bg-warning text-dark
-                    <% } else if(item.returnStatus === 'Request Approved') { %> bg-success
-                    <% } else if(item.returnStatus === 'Request Denied') { %> bg-danger
-                    <% } %>">
-                                <%= item.returnStatus %>
-                              </span>
-                            </p>
-                            <% } %>
+                                            <% if (item.returnReason) { %>
+                                              <div class="small text-warning mt-1">Return Reason: <%= item.returnReason
+                                                  %>
+                                              </div>
+                                              <% } %>
+                          </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                  </table>
                 </div>
               </div>
-              <% }) %>
-
-                <!-- Order Summary Section -->
-                <div class="card p-4 mt-4">
-                  <h5>Order Summary</h5>
-                  <div class="row">
-                    <div class="col-md-6">
-                      <% const itemsTotal=order.Items.reduce((sum, item)=> sum + (item.finalPayableAmount || 0), 0);
-                        const totalOfferDiscount = order.totalOfferDiscount || 0;
-                        const totalCouponDiscount = order.totalCouponDiscount || 0;
-                        const totalSavings = totalOfferDiscount + totalCouponDiscount;
-                        const totalTax = order.totalTax || 0;
-                        const deliveryCharge = order.totalDeliveryCharge || 40;
-                        const orderTotal = order.orderAmount || (itemsTotal + deliveryCharge);
-                        %>
-                        <div class="price-row">
-                          <strong>Items Total:</strong>
-                          <span>₹<%= itemsTotal.toFixed(2) %></span>
-                        </div>
-                        <div class="price-row">
-                          <strong>Delivery Charge:</strong>
-                          <span>₹<%= deliveryCharge.toFixed(2) %></span>
-                        </div>
-                        <hr>
-                        <div class="price-row">
-                          <h5><strong>Order Total:</strong></h5>
-                          <h5>₹<%= orderTotal.toFixed(2) %>
-                          </h5>
-                        </div>
-                        <% if (totalSavings> 0) { %>
-                          <div class="price-row text-success mt-2">
-                            <strong>💰 Customer Saved:</strong>
-                            <strong>₹<%= totalSavings.toFixed(2) %></strong>
-                          </div>
-                          <% } %>
-                    </div>
-                  </div>
-                </div>
+            </div>
           </div>
-          <% } else { %>
-            <p class="text-danger">Order not found.</p>
-            <% } %>
+
+          <!-- Summary Sidebar -->
+          <div class="col-lg-4">
+            <div class="card sticky-top text-white" style="top: 20px; z-index: 1;">
+              <div class="card-header bg-transparent border-bottom border-secondary py-3">
+                <h5 class="mb-0 text-white">Summary</h5>
+              </div>
+              <div class="card-body">
+                <% const itemsTotal=order.Items.reduce((sum, item)=> sum + (item.finalPayableAmount || 0), 0);
+                  const totalOfferDiscount = order.totalOfferDiscount || 0;
+                  const totalCouponDiscount = order.totalCouponDiscount || 0;
+                  const totalSavings = totalOfferDiscount + totalCouponDiscount;
+                  const deliveryCharge = order.totalDeliveryCharge || 40;
+                  const orderTotal = order.orderAmount || (itemsTotal + deliveryCharge);
+                  %>
+                  <div class="price-row">
+                    <span class="text-white-50">Items Total</span>
+                    <span>₹<%= itemsTotal.toFixed(2) %></span>
+                  </div>
+                  <div class="price-row">
+                    <span class="text-white-50">Delivery Charge</span>
+                    <span>₹<%= deliveryCharge.toFixed(2) %></span>
+                  </div>
+
+                  <% if (totalSavings> 0) { %>
+                    <div class="price-row text-success">
+                      <span>Total Savings</span>
+                      <span>-₹<%= totalSavings.toFixed(2) %></span>
+                    </div>
+                    <% } %>
+
+                      <div class="price-row border-0 mt-3 pt-2 border-top border-secondary">
+                        <strong class="fs-5">Order Total</strong>
+                        <strong class="fs-5">₹<%= orderTotal.toFixed(2) %></strong>
+                      </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <% } else { %>
+          <div class="alert alert-danger">Order not found.</div>
+          <% } %>
+
+    </div>
+
+    <!-- Cancel Reason Modal -->
+    <div class="modal fade" id="cancelReasonModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Cancel Item</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <label class="form-label text-white-50">Reason for Cancellation</label>
+            <input type="text" id="modalCancelReason" class="form-control" placeholder="Enter reason...">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-danger" onclick="submitCancelForm()">Confirm Cancel</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Bootstrap JS -->
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
-    <script>document.addEventListener('DOMContentLoaded', () => {
-        // Handle item cancellation
-        document.querySelectorAll('.cancel-item-form').forEach(form => {
-          form.addEventListener('submit', async e => {
-            e.preventDefault();
-            const formElement = e.target;
-            const itemId = formElement.dataset.itemId;
-            const url = formElement.getAttribute('action');
-            const data = new FormData(formElement);
-            const formData = Object.fromEntries(data.entries());
+    <script>
+      function toast(msg, type = 'error') {
+        Toastify({
+          text: msg,
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          style: {
+            background: type === 'success' ? "#10b981" : "#ef4444",
+          }
+        }).showToast();
+      }
 
-            try {
-              const response = await axios.post(url, formData);
-              if (response.data.success) {
-                const itemCard = document.querySelector(`#item-${itemId}`);
-                itemCard.querySelector('.cancel-item-form')?.remove();
-                itemCard.querySelector('.update-item-status-form')?.remove();
-                const badge = itemCard.querySelector('.badge');
-                badge.classList.remove('bg-success', 'bg-warning', 'bg-primary', 'bg-info', 'text-dark');
-                badge.classList.add('bg-danger');
-                badge.textContent = 'Cancelled';
-                const reason = formElement.querySelector('input[name="reason"]').value;
-                if (reason) {
-                  itemCard.querySelector('.col-md-7').insertAdjacentHTML('beforeend', `<p class="text-muted"><strong>Cancel Reason:</strong> ${reason}</p>`);
-                }
-                if (response.data.orderStatus === 'Cancelled') {
-                  const orderStatus = document.querySelector('#order-status');
-                  orderStatus.classList.remove('bg-info', 'bg-warning', 'bg-primary', 'bg-success', 'text-dark');
-                  orderStatus.classList.add('bg-danger');
-                  orderStatus.textContent = 'Cancelled';
-                }
-                showAlert('success', response.data.message);
-              } else {
-                showAlert('danger', response.data.message);
-              }
-            } catch (error) {
-              showAlert('danger', error.response?.data?.message || 'An error occurred while cancelling the item');
-            }
-          });
-        });
+      let activeCancelForm = null;
 
-        // Handle item status update
-        document.querySelectorAll('.update-item-status-form select[name="status"]').forEach(select => {
-          select.addEventListener('change', async e => {
-            e.preventDefault();
-            const formElement = e.target.closest('form');
-            const itemId = formElement.dataset.itemId;
-            const url = formElement.getAttribute('action');
+      function showCancelModal(btn) {
+        activeCancelForm = btn.closest('form');
+        const modal = new bootstrap.Modal(document.getElementById('cancelReasonModal'));
+        modal.show();
+      }
+
+      function submitCancelForm() {
+        if (!activeCancelForm) return;
+        const reason = document.getElementById('modalCancelReason').value;
+        const input = activeCancelForm.querySelector('.cancel-reason-input');
+        input.value = reason;
+
+        // Trigger submit handler
+        activeCancelForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('cancelReasonModal'));
+        modal.hide();
+        document.getElementById('modalCancelReason').value = '';
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+
+        // Handle Status Update
+        document.querySelectorAll('.update-item-status-form select').forEach(select => {
+          select.addEventListener('change', async (e) => {
+            const form = e.target.closest('form');
+            const itemId = form.dataset.itemId;
+            const url = form.action;
             const status = e.target.value;
 
-            console.log('Updating status:', { itemId, url, status }); // Debug log
-
             try {
-              const response = await axios.post(url, { status }, {
-                headers: { 'Content-Type': 'application/json' }
-              });
-
-              console.log('Response:', response.data); // Debug log
-
+              const response = await axios.post(url, { status });
               if (response.data.success) {
-                const itemCard = document.querySelector(`#item-${itemId}`);
-                if (!itemCard) {
-                  console.error('Item card not found for ID:', itemId);
-                  showAlert('danger', 'Item card not found');
-                  return;
-                }
-                const badge = itemCard.querySelector(`#item-status-${itemId}`);
-                if (!badge) {
-                  console.error('Badge not found for ID:', itemId);
-                  showAlert('danger', 'Status badge not found');
-                  return;
-                }
-                badge.classList.remove('bg-success', 'bg-warning', 'bg-primary', 'bg-info', 'bg-danger', 'text-dark');
-                if (status === 'Delivered') {
-                  badge.classList.add('bg-success');
-                  badge.textContent = 'Delivered';
-                  itemCard.querySelector('.update-item-status-form')?.remove();
-                  itemCard.querySelector('.cancel-item-form')?.remove();
-                } else if (status === 'Cancelled') {
-                  badge.classList.add('bg-danger');
-                  badge.textContent = 'Cancelled';
-                  itemCard.querySelector('.update-item-status-form')?.remove();
-                  itemCard.querySelector('.cancel-item-form')?.remove();
-                } else if (status === 'Shipped') {
-                  badge.classList.add('bg-primary');
-                  badge.textContent = 'Shipped';
-                } else if (status === 'OutForDelivery') {
-                  badge.classList.add('bg-info', 'text-dark');
-                  badge.textContent = 'Out for Delivery';
-                } else {
-                  badge.classList.add('bg-secondary');
-                  badge.textContent = 'Pending';
-                }
-                showAlert('success', response.data.message || 'Item status updated successfully');
+                toast(response.data.message || 'Updated successfully', 'success');
+                setTimeout(() => window.location.reload(), 1000); // Reload to reflect changes reliably
               } else {
-                console.error('Update failed:', response.data.message);
-                showAlert('danger', response.data.message || 'Failed to update item status');
+                toast(response.data.message || 'Update failed');
               }
-            } catch (error) {
-              console.error('Status update error:', {
-                message: error.message,
-                response: error.response?.data,
-                status: error.response?.status,
-                url
-              });
-              showAlert('danger', error.response?.data?.message || 'An error occurred while updating the item status');
+            } catch (err) {
+              console.error(err);
+              toast(err.response?.data?.message || 'Server error');
             }
           });
         });
 
-        function showAlert(type, message) {
-          console.log('Showing alert:', { type, message }); // Debug log
-          const alertHtml = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-          ${message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      `;
-          const alertContainer = document.querySelector('.alert-container');
-          alertContainer.insertAdjacentHTML('beforeend', alertHtml);
-          setTimeout(() => {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-              alert.classList.add('fade');
-              setTimeout(() => alert.remove(), 500);
-            });
-          }, 3000);
-        }
+        // Handle Cancellation
+        document.querySelectorAll('.cancel-item-form').forEach(form => {
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const itemId = form.dataset.itemId;
+            const url = form.action;
+            const reason = form.querySelector('.cancel-reason-input').value;
+
+            try {
+              // Need to send as JSON or FormData depending on backend expectations. 
+              // Previous implementation used FormData, let's stick to standard JSON for clearer API usage if possible, 
+              // but matching previous:
+              const formData = { reason: reason };
+
+              const response = await axios.post(url, formData);
+
+              if (response.data.success) {
+                toast(response.data.message || 'Item cancelled', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+              } else {
+                toast(response.data.message || 'Cancellation failed');
+              }
+            } catch (err) {
+              console.error(err);
+              toast(err.response?.data?.message || 'Server error');
+            }
+          });
+        });
       });
     </script>
 
     <%- include('../partials/admin/footer') %>
   </body>
+
+  </html>

@@ -9,7 +9,7 @@ const AppError = require('../../utils/AppError');
 
 const getAdminOrders = catchAsync(async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = 8;
+  const limit = 12;
   const search = req.query.search || '';
   const statusFilter = req.query.status || '';
 

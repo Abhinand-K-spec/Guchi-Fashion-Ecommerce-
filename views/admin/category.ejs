@@ -1,291 +1,234 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Category Management</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <%- include("../partials/admin/header") %>
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(145deg, #1c1c1e, #131314);
-      color: #eaeaea;
-    }
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #1a1b26;
+        color: #eaeaea;
+      }
 
-    .admin-panel {
-      width: 100%;
-      max-width: 1000px;
-      margin: 4px auto;
-      background: #212124;
-      padding: 40px;
-      border-radius: 16px;
-      box-shadow: 0 15px 45px rgba(0, 0, 0, 0.9);
-    }
+      .card {
+        background-color: #242531;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+      }
 
-    h2 {
-      font-weight: 700;
-      font-size: 28px;
-      margin-bottom: 25px;
-      color: #ffffff;
-    }
+      .form-control,
+      .form-select {
+        background-color: #2c2e3e;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #e5e7eb;
+      }
 
-    input[type="text"], input[type="date"], input[type="number"], textarea, .form-control {
-      width: 100%;
-      background-color: #2c2c2e;
-      border: 1px solid #3a3a3c;
-      color: #dddddd;
-      padding: 12px 15px;
-      border-radius: 10px;
-      font-size: 15px;
-    }
+      .form-control:focus,
+      .form-select:focus {
+        background-color: #2c2e3e;
+        border-color: #3b82f6;
+        color: #ffffff;
+        box-shadow: none;
+      }
 
-    input[type="text"]::placeholder,
-    input[type="date"]::placeholder,
-    input[type="number"]::placeholder,
-    textarea::placeholder {
-      color: #999;
-    }
+      .form-control::placeholder {
+        color: #9ca3af;
+      }
 
-    input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, textarea:focus {
-      border-color: #0a84ff;
-      outline: none;
-      color: #fff;
-    }
+      .btn-primary {
+        background-color: #0a84ff;
+        border: none;
+      }
 
-    textarea {
-      resize: none;
-    }
+      .btn-primary:hover {
+        background-color: #0066cc;
+      }
 
-    .btn-primary {
-      background-color: #0a84ff;
-      color: white;
-      padding: 10px 24px;
-      border: none;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 15px;
-      cursor: pointer;
-    }
+      .table-dark-custom {
+        background-color: transparent !important;
+        --bs-table-bg: transparent;
+        color: #e5e7eb;
+      }
 
-    .btn-primary:hover {
-      background-color: #0066cc;
-    }
+      .table-dark-custom td,
+      .table-dark-custom th {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 12px 16px;
+        vertical-align: middle;
+        color: #e5e7eb;
+      }
 
-    .btn-secondary {
-      background: transparent;
-      border: 1px solid #444;
-      color: #aaa;
-      padding: 8px 18px;
-      border-radius: 8px;
-      font-weight: 500;
-    }
+      .pagination .active .page-link {
+        background-color: #0a84ff;
+        border-color: #0a84ff;
+        color: white;
+      }
 
-    .btn-secondary:hover {
-      background-color: #2e2e2e;
-    }
+      .page-link {
+        background-color: #2c2e3e;
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #e5e7eb;
+      }
 
-    .btn-outline-secondary {
-      border-color: #555 !important;
-      color: #ccc;
-    }
+      .page-link:hover {
+        background-color: #3a3b4c;
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #fff;
+      }
 
-    .action-btn {
-      background-color: #dc2626;
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 500;
-    }
+      .error {
+        color: #ff6b6b;
+        font-size: 14px;
+        display: none;
+      }
 
-    .action-btn:hover {
-      background-color: #b91c1c;
-    }
+      /* Modal Dark Theme */
+      .modal-content {
+        background-color: #242531;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #fff;
+      }
 
-    table {
-      width: 100%;
-      margin-top: 10px;
-      border-collapse: collapse;
-      background-color: #1f1f1f;
-      color: #e0e0e0;
-      border-radius: 10px;
-      overflow: hidden;
-    }
+      .modal-header,
+      .modal-footer {
+        border-color: rgba(255, 255, 255, 0.08);
+      }
 
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #444;
-    }
-
-    th {
-      background-color: #2c2c2e;
-      font-weight: 600;
-      color: #ffffff;
-    }
-
-    .pagination {
-      display: flex;
-      justify-content: center;
-      margin-top: 6px;
-    }
-
-    .pagination a {
-      padding: 8px 12px;
-      margin: 0 5px;
-      text-decoration: none;
-      border-radius: 6px;
-      border: 1px solid #444;
-      color: #0a84ff;
-      background-color: #2e2e2e;
-    }
-
-    .pagination .active {
-      background-color: #0a84ff;
-      color: white;
-      border-color: #0a84ff;
-    }
-
-    .error {
-      color: #ff6b6b;
-      font-size: 14px;
-      display: none;
-    }
-
-    .d-flex {
-      display: flex;
-      flex-wrap: wrap;
-    }
-
-    #clearbtn {
-      height: 42px;
-    }
-
-    .gap-2 {
-      gap: 10px;
-    }
-
-    .offer-input {
-      width: 100%;
-      margin-bottom: 10px;
-    }
-
-    .offer-submit {
-      padding: 6px 12px;
-      font-size: 14px;
-    }
-
-    .offer-display {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    /* Modal styling */
-    .modal-content {
-      background-color: #212124;
-      color: #eaeaea;
-      border: 1px solid #3a3a3c;
-      border-radius: 10px;
-    }
-
-    .modal-header {
-      background-color: #2c2c2e;
-      border-bottom: 1px solid #444;
-    }
-
-    .modal-title {
-      color: #ffffff;
-      font-weight: 600;
-    }
-
-    .modal-body {
-      padding: 20px;
-    }
-
-    .modal-footer {
-      border-top: 1px solid #444;
-    }
-
-    .btn-close {
-      background-color: #444;
-      opacity: 1;
-    }
-
-    .btn-close:hover {
-      background-color: #555;
-    }
-
-    #offer-error {
-      margin-bottom: 15px;
-    }
-  </style>
+      .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+      }
+    </style>
 </head>
+
 <body>
   <div id="category-data" data-cat='<%= JSON.stringify(cat.map(c => c.categoryName.toLowerCase())) %>'></div>
 
-  <div class="admin-panel">
-    <h2>Add New Category</h2>
-    <form onsubmit="return handleFormSubmit(event)">
-      <input type="text" name="name" placeholder="Category name" />
-      <span id="name-error" class="error"></span>
-      <textarea id="descriptionId" name="description" placeholder="Category description"></textarea>
-      <span id="description-error" class="error"></span>
-      <button type="submit" class="btn-primary">Create Category</button>
-    </form>
+  <div class="container-fluid py-4">
 
-    <h2 class="mt-5">Category Management</h2>
-    <form method="GET" action="/admin/category/search" class="d-flex gap-2 mb-4">
-      <input type="text" name="search" placeholder="Search categories" value="<%= typeof search !== 'undefined' ? search : '' %>" class="form-control" />
-      <button type="submit" class="btn btn-primary">Search</button>
-      <a id="clearbtn" href="/admin/category/clear" class="btn btn-outline-secondary">Clear</a>
-    </form>
+    <!-- Add Category Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-transparent border-bottom border-secondary py-3">
+        <h5 class="mb-0 text-white">Add New Category</h5>
+      </div>
+      <div class="card-body">
+        <form onsubmit="return handleFormSubmit(event)">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label text-white-50 small text-uppercase fw-bold">Name</label>
+              <input type="text" name="name" class="form-control" placeholder="Category name" />
+              <span id="name-error" class="error"></span>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-white-50 small text-uppercase fw-bold">Description</label>
+              <textarea id="descriptionId" name="description" class="form-control" placeholder="Category description"
+                rows="1"></textarea>
+              <span id="description-error" class="error"></span>
+            </div>
+            <div class="col-12 text-end mt-4">
+              <button type="submit" class="btn btn-primary px-4">Create Category</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Description</th>
-          <th>Status</th>
-          <th>Offer</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% cat.forEach(category => { %>
-          <tr>
-            <td><%= category.categoryName %></td>
-            <td><%= category.description %></td>
-            <td><%= category.isListed ? 'Listed' : 'Unlisted' %></td>
-            <td>
-              <div id="offer-<%= category._id %>" class="offer-display">
-                <% if (category.offer && category.offer.Discount !== undefined) { %>
-                  <span><%= category.offer.Discount %>%</span>
-                  <button class="action-btn btn-sm" onclick="removeOffer('<%= category._id %>', '<%= category.offer._id %>', '<%= currentPage %>')">Remove</button>
-                <% } else { %>
-                  <button class="btn btn-primary btn-sm offer-btn" data-bs-toggle="modal" data-bs-target="#offerModal" onclick="showOfferInput('<%= category._id %>')">Add Offer</button>
-                <% } %>
-              </div>
-            </td>
-            <td>
-              <form action="/admin/<%= category.isListed ? 'unlistCategory' : 'listCategory' %>?id=<%= category._id %>&page=<%= currentPage %>" method="POST" style="display: inline;">
-                <button class="action-btn btn-sm"><%= category.isListed ? 'Unlist' : 'List' %></button>
-              </form>
-              <form action="/admin/editCategory/<%= category._id %>?page=<%= currentPage %>" method="GET" style="display: inline;">
-                <button class="btn btn-primary btn-sm">Edit</button>
-              </form>
-            </td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
+    <!-- Management Section -->
+    <div class="card">
+      <div
+        class="card-header bg-transparent border-bottom border-secondary py-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <h5 class="mb-0 text-white">Category Management</h5>
 
-    <div class="pagination">
-      <% for (let i = 1; i <= totalPages; i++) { %>
-        <a href="?page=<%= i %>" class="<%= i === currentPage ? 'active' : '' %>"><%= i %></a>
-      <% } %>
+        <form method="GET" action="/admin/category/search" class="d-flex gap-2">
+          <input type="text" name="search" placeholder="Search categories"
+            value="<%= typeof search !== 'undefined' ? search : '' %>" class="form-control form-control-sm"
+            style="width: 200px;" />
+          <button type="submit" class="btn btn-sm btn-outline-primary">Search</button>
+          <a id="clearbtn" href="/admin/category/clear" class="btn btn-sm btn-outline-secondary">Clear</a>
+        </form>
+      </div>
+
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-dark-custom table-hover mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase small text-white-50">Name</th>
+                <th class="text-uppercase small text-white-50">Description</th>
+                <th class="text-uppercase small text-white-50">Status</th>
+                <th class="text-uppercase small text-white-50">Offer</th>
+                <th class="text-uppercase small text-white-50 text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% cat.forEach(category=> { %>
+                <tr>
+                  <td class="fw-bold">
+                    <%= category.categoryName %>
+                  </td>
+                  <td class="text-truncate" style="max-width: 200px;">
+                    <%= category.description %>
+                  </td>
+                  <td>
+                    <% if(category.isListed) { %>
+                      <span class="badge bg-success bg-opacity-25 text-success">Listed</span>
+                      <% } else { %>
+                        <span class="badge bg-danger bg-opacity-25 text-danger">Unlisted</span>
+                        <% } %>
+                  </td>
+                  <td>
+                    <div id="offer-<%= category._id %>" class="offer-display">
+                      <% if (category.offer && category.offer.Discount !==undefined) { %>
+                        <span class="badge bg-info bg-opacity-25 text-info me-2">
+                          <%= category.offer.Discount %>% Off
+                        </span>
+                        <button class="btn btn-sm btn-outline-danger"
+                          style="font-size: 0.75rem; padding: 0.1rem 0.4rem;"
+                          onclick="removeOffer('<%= category._id %>', '<%= category.offer._id %>', '<%= currentPage %>')">Remove</button>
+                        <% } else { %>
+                          <button class="btn btn-sm btn-outline-primary"
+                            style="font-size: 0.75rem; padding: 0.1rem 0.4rem;" data-bs-toggle="modal"
+                            data-bs-target="#offerModal" onclick="showOfferInput('<%= category._id %>')">Add
+                            Offer</button>
+                          <% } %>
+                    </div>
+                  </td>
+                  <td class="text-end">
+                    <form
+                      action="/admin/<%= category.isListed ? 'unlistCategory' : 'listCategory' %>?id=<%= category._id %>&page=<%= currentPage %>"
+                      method="POST" style="display: inline;">
+                      <button class="btn btn-sm <%= category.isListed ? 'btn-danger' : 'btn-success' %> me-1">
+                        <%= category.isListed ? 'Unlist' : 'List' %>
+                      </button>
+                    </form>
+                    <form action="/admin/editCategory/<%= category._id %>?page=<%= currentPage %>" method="GET"
+                      style="display: inline;">
+                      <button class="btn btn-sm btn-primary">Edit</button>
+                    </form>
+                  </td>
+                </tr>
+                <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card-footer bg-transparent border-top border-secondary py-3">
+        <nav aria-label="Page navigation">
+          <ul class="pagination justify-content-center mb-0">
+            <% for (let i=1; i <=totalPages; i++) { %>
+              <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                <a class="page-link" href="?page=<%= i %>">
+                  <%= i %>
+                </a>
+              </li>
+              <% } %>
+          </ul>
+        </nav>
+      </div>
     </div>
   </div>
 
@@ -299,7 +242,7 @@
         </div>
         <div class="modal-body">
           <span id="offer-error" class="error"></span>
-          <div id="offerFormContainer" class="offer-form">
+          <div id="offerFormContainer" class="offer-form d-flex flex-column gap-3">
             <!-- Form will be dynamically inserted here -->
           </div>
         </div>
@@ -328,16 +271,16 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, description })
       })
-      .then(res => {
-        if (!res.ok) {
-          return res.json().then(err => { throw new Error(err.error); });
-        }
-        return res.json();
-      })
-      .then(() => location.reload())
-      .catch(error => {
-        alert(error.message || 'An error occurred');
-      });
+        .then(res => {
+          if (!res.ok) {
+            return res.json().then(err => { throw new Error(err.error); });
+          }
+          return res.json();
+        })
+        .then(() => location.reload())
+        .catch(error => {
+          alert(error.message || 'An error occurred');
+        });
     }
 
     function valid() {
@@ -391,10 +334,22 @@
       currentCategoryId = categoryId;
       const offerFormContainer = document.getElementById('offerFormContainer');
       offerFormContainer.innerHTML = `
-        <input type="text" class="offer-input" id="offerName-${categoryId}" placeholder="Offer Name" />
-        <input type="date" class="offer-input" id="startDate-${categoryId}" />
-        <input type="date" class="offer-input" id="endDate-${categoryId}" />
-        <input type="number" class="offer-input" id="discount-${categoryId}" placeholder="Discount %" min="0" max="100" />
+        <div class="mb-2">
+            <label class="form-label text-white-50 small">Offer Name</label>
+            <input type="text" class="form-control" id="offerName-${categoryId}" placeholder="e.g. Summer Sale" />
+        </div>
+        <div class="mb-2">
+            <label class="form-label text-white-50 small">Start Date</label>
+            <input type="date" class="form-control" id="startDate-${categoryId}" />
+        </div>
+        <div class="mb-2">
+            <label class="form-label text-white-50 small">End Date</label>
+            <input type="date" class="form-control" id="endDate-${categoryId}" />
+        </div>
+        <div class="mb-2">
+             <label class="form-label text-white-50 small">Discount %</label>
+            <input type="number" class="form-control" id="discount-${categoryId}" placeholder="0-90" min="0" max="90" />
+        </div>
       `;
     }
 
@@ -430,8 +385,9 @@
         return;
       }
 
-      if (isNaN(discount) || discount < 0 || discount > 100) {
-        displayErrorMessage('offer-error', 'Discount must be between 0 and 100.');
+      const discountVal = parseFloat(discount);
+      if (isNaN(discountVal) || discountVal < 0 || discountVal > 90) {
+        displayErrorMessage('offer-error', 'Discount must be between 0 and 90.');
         return;
       }
 
@@ -450,19 +406,19 @@
           Discount: discount,
         })
       })
-      .then(res => {
-        console.log('Fetch response status:', res.status); // Debugging
-        if (!res.ok) {
-          return res.json().then(err => { throw new Error(err.error); });
-        }
-        const modal = bootstrap.Modal.getInstance(document.getElementById('offerModal'));
-        modal.hide();
-        location.reload();
-      })
-      .catch(error => {
-        console.error('Fetch error:', error); // Debugging
-        displayErrorMessage('offer-error', error.message || 'Failed to add offer');
-      });
+        .then(res => {
+          console.log('Fetch response status:', res.status); // Debugging
+          if (!res.ok) {
+            return res.json().then(err => { throw new Error(err.error); });
+          }
+          const modal = bootstrap.Modal.getInstance(document.getElementById('offerModal'));
+          modal.hide();
+          location.reload();
+        })
+        .catch(error => {
+          console.error('Fetch error:', error); // Debugging
+          displayErrorMessage('offer-error', error.message || 'Failed to add offer');
+        });
     }
 
     function removeOffer(categoryId, offerId, page) {
@@ -472,19 +428,20 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ offerId })
       })
-      .then(res => {
-        console.log('Remove offer response status:', res.status); // Debugging
-        if (!res.ok) {
-          return res.json().then(err => { throw new Error(err.error); });
-        }
-        location.reload();
-      })
-      .catch(error => {
-        console.error('Remove offer error:', error); // Debugging
-        alert(error.message || 'Failed to remove offer');
-      });
+        .then(res => {
+          console.log('Remove offer response status:', res.status); // Debugging
+          if (!res.ok) {
+            return res.json().then(err => { throw new Error(err.error); });
+          }
+          location.reload();
+        })
+        .catch(error => {
+          console.error('Remove offer error:', error); // Debugging
+          alert(error.message || 'Failed to remove offer');
+        });
     }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

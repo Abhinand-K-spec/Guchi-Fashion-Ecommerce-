@@ -8,7 +8,7 @@ const AppError = require('../../utils/AppError');
 
 const coupon = catchAsync(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
-    const limit = 4;
+    const limit = 6;
     const skip = (page - 1) * limit;
 
     const coupons = await Coupon.find().sort({ CreatedAt: -1 })

@@ -1,213 +1,212 @@
 <%- include("../partials/admin/header") %>
 
+
     <head>
         <title>Coupon Management - Admin Panel</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-
         <style>
             body {
-                font-family: Arial, sans-serif;
-                background-color: #1a1a1a;
-                color: #fff;
-                padding: 20px;
-                margin: 0;
-            }
-
-            .container {
-                max-width: 1000px;
-                margin: 0 auto;
-                background: #2c2c2c;
-                padding: 20px;
-                border-radius: 8px;
-            }
-
-            .form-group {
-                margin-bottom: 10px;
-                width: 30%;
-                display: inline-block;
-                margin-right: 3%;
-            }
-
-            .form-group:nth-child(3n) {
-                margin-right: 0;
-            }
-
-            .form-row {
-                margin-bottom: 10px;
-            }
-
-            label {
-                display: block;
-                margin-bottom: 3px;
-                color: #bbb;
-            }
-
-            input {
-                width: 100%;
-                padding: 6px;
-                border: 1px solid #444;
-                border-radius: 4px;
-                background: #333;
+                background-color: #1a1b26;
                 color: #fff;
             }
 
-            .btn {
-                background-color: #007bff;
-                color: white;
-                padding: 7px 12px;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                margin-right: 5px;
+            .card {
+                background-color: #242531;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 10px;
             }
 
-            .btn-danger {
-                background-color: #dc3545;
+            .form-control {
+                background-color: #2c2e3e;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: #e5e7eb;
             }
 
-            .btn:hover {
-                background-color: #0056b3;
+            .form-control:focus {
+                background-color: #2c2e3e;
+                border-color: #3b82f6;
+                color: #ffffff;
+                box-shadow: none;
             }
 
-            .btn-danger:hover {
-                background-color: #c82333;
+            .form-control::placeholder {
+                color: #9ca3af;
             }
 
-            th,
-            td {
-                padding: 10px;
-                border-bottom: 1px solid #444;
+            .table-dark-custom {
+                background-color: transparent !important;
+                --bs-table-bg: transparent;
+                color: #e5e7eb;
+            }
+
+            .table-dark-custom td,
+            .table-dark-custom th {
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                padding: 12px 16px;
+                vertical-align: middle;
+                color: #e5e7eb;
             }
 
             .error {
-                color: #ff4d4d !important;
-                font-size: 12px;
-                margin-top: 3px;
+                color: #ef4444;
+                font-size: 0.875rem;
+                margin-top: 0.25rem;
                 display: none;
             }
         </style>
     </head>
 
     <body>
-        <div class="container">
+        <div class="container-fluid py-4">
 
-            <h2>Add New Coupon</h2>
+            <div class="card mb-4">
+                <div class="card-header bg-transparent border-bottom border-secondary py-3">
+                    <h5 class="mb-0 text-white">Add New Coupon</h5>
+                </div>
+                <div class="card-body">
+                    <form id="couponForm" onsubmit="handleCouponSubmit(event)">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label text-white-50 small text-uppercase fw-bold">Coupon Name</label>
+                                <input type="text" class="form-control" id="couponName" name="CouponName"
+                                    placeholder="e.g. Summer Sale">
+                                <span class="error" id="couponNameError">Coupon Name is required</span>
+                            </div>
 
-            <!-- FORM IS COMPLETELY SEPARATE FROM TABLE -->
-            <form id="couponForm" onsubmit="handleCouponSubmit(event)">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Coupon Name</label>
-                        <input type="text" id="couponName" name="CouponName">
-                        <span class="error" id="couponNameError">Coupon Name is required</span>
-                    </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-white-50 small text-uppercase fw-bold">Coupon Code</label>
+                                <input type="text" class="form-control" id="couponCode" name="CouponCode"
+                                    placeholder="e.g. SUMMER2024">
+                                <span class="error" id="couponCodeError">Enter 4+ alphanumeric characters</span>
+                            </div>
 
-                    <div class="form-group">
-                        <label>Coupon Code</label>
-                        <input type="text" id="couponCode" name="CouponCode">
-                        <span class="error" id="couponCodeError">Enter 4+ alphanumeric characters</span>
+                            <div class="col-md-4">
+                                <label class="form-label text-white-50 small text-uppercase fw-bold">Discount
+                                    (%)</label>
+                                <input type="number" class="form-control" id="discount" name="Discount"
+                                    placeholder="0-90">
+                                <span class="error" id="discountError">0 - 90 only</span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label text-white-50 small text-uppercase fw-bold">Start Date</label>
+                                <input type="date" class="form-control" id="startDate" name="StartDate">
+                                <span class="error" id="startDateError">Required</span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label text-white-50 small text-uppercase fw-bold">End Date</label>
+                                <input type="date" class="form-control" id="endDate" name="EndDate">
+                                <span class="error" id="endDateError">Required</span>
+                            </div>
+
+                            <div class="col-12 mt-4 text-end">
+                                <button type="submit" class="btn btn-primary px-4">Create Coupon</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Managment Section -->
+            <div class="card">
+                <div
+                    class="card-header bg-transparent border-bottom border-secondary py-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <h5 class="mb-0 text-white">Coupon Management</h5>
+
+                    <div class="d-flex gap-2">
+                        <input type="text" class="form-control form-control-sm" id="searchCoupons"
+                            placeholder="Search coupons..." style="width: 200px;">
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                            onclick="searchCoupons()">Search</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                            onclick="clearSearch()">Clear</button>
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Start Date</label>
-                        <input type="date" id="startDate" name="StartDate">
-                        <span class="error" id="startDateError">Required</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label>End Date</label>
-                        <input type="date" id="endDate" name="EndDate">
-                        <span class="error" id="endDateError">Required</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Discount (%)</label>
-                        <input type="number" id="discount" name="Discount">
-                        <span class="error" id="discountError">0 - 100 only</span>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark-custom table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase small text-white-50">Name</th>
+                                    <th class="text-uppercase small text-white-50">Code</th>
+                                    <th class="text-uppercase small text-white-50">Discount</th>
+                                    <th class="text-uppercase small text-white-50">Start</th>
+                                    <th class="text-uppercase small text-white-50">End</th>
+                                    <th class="text-uppercase small text-white-50">Status</th>
+                                    <th class="text-uppercase small text-white-50 text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="couponTable">
+                                <% coupons.forEach(coupon=> { %>
+                                    <tr id="coupon-<%= coupon._id %>">
+                                        <td class="fw-bold">
+                                            <%= coupon.CouponName %>
+                                        </td>
+                                        <td><span class="badge bg-secondary bg-opacity-25 text-secondary">
+                                                <%= coupon.CouponCode %>
+                                            </span></td>
+                                        <td>
+                                            <%= coupon.Discount %>%
+                                        </td>
+                                        <td>
+                                            <%= new Date(coupon.StartDate).toLocaleDateString() %>
+                                        </td>
+                                        <td>
+                                            <%= new Date(coupon.ExpiryDate).toLocaleDateString() %>
+                                        </td>
+                                        <td class="status">
+                                            <% if(coupon.IsListed) { %>
+                                                <span class="badge bg-success bg-opacity-25 text-success">Listed</span>
+                                                <% } else { %>
+                                                    <span
+                                                        class="badge bg-danger bg-opacity-25 text-danger">Unlisted</span>
+                                                    <% } %>
+                                        </td>
+                                        <td class="text-end">
+                                            <button type="button"
+                                                class="btn btn-sm <%= coupon.IsListed ? 'btn-danger' : 'btn-success' %>"
+                                                onclick="toggleCouponStatus('<%= coupon._id %>', <%= coupon.IsListed %>)">
+                                                <%= coupon.IsListed ? "Unlist" : "List" %>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+                <div class="card-footer bg-transparent border-top border-secondary py-3">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mb-0">
+                            <% if (hasPrevPage) { %>
+                                <li class="page-item">
+                                    <button class="page-link bg-dark border-secondary text-white"
+                                        onclick="window.location.href='/admin/coupons?page=<%= currentPage - 1 %>'">Previous</button>
+                                </li>
+                                <% } %>
 
-                <button type="submit" class="btn">Create Coupon</button>
-            </form>
+                                    <% for (let i=1; i<=totalPages; i++) { %>
+                                        <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                            <button
+                                                class="page-link <%= currentPage === i ? 'bg-primary border-primary' : 'bg-dark border-secondary' %> text-white"
+                                                onclick="window.location.href='/admin/coupons?page=<%= i %>'">
+                                                <%= i %>
+                                            </button>
+                                        </li>
+                                        <% } %>
 
-            <!-- ❗ NOTHING BELOW IS INSIDE FORM -->
-            <hr>
-
-            <h2>Coupon Management</h2>
-
-            <div style="margin-bottom: 10px;">
-                <input type="text" id="searchCoupons" placeholder="Search..." style="padding: 6px;">
-                <button type="button" class="btn" onclick="searchCoupons()">Search</button>
-                <button type="button" class="btn" onclick="clearSearch()">Clear</button>
+                                            <% if (hasNextPage) { %>
+                                                <li class="page-item">
+                                                    <button class="page-link bg-dark border-secondary text-white"
+                                                        onclick="window.location.href='/admin/coupons?page=<%= currentPage + 1 %>'">Next</button>
+                                                </li>
+                                                <% } %>
+                        </ul>
+                    </nav>
+                </div>
             </div>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Code</th>
-                        <th>Discount</th>
-                        <th>Start</th>
-                        <th>End</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody id="couponTable">
-                    <% coupons.forEach(coupon=> { %>
-                        <tr id="coupon-<%= coupon._id %>">
-                            <td>
-                                <%= coupon.CouponName %>
-                            </td>
-                            <td>
-                                <%= coupon.CouponCode %>
-                            </td>
-                            <td>
-                                <%= coupon.Discount %>
-                            </td>
-                            <td>
-                                <%= new Date(coupon.StartDate).toLocaleDateString() %>
-                            </td>
-                            <td>
-                                <%= new Date(coupon.ExpiryDate).toLocaleDateString() %>
-                            </td>
-                            <td class="status">
-                                <%= coupon.IsListed ? "Listed" : "Unlisted" %>
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-danger"
-                                    onclick="toggleCouponStatus('<%= coupon._id %>', <%= coupon.IsListed %>)">
-                                    <%= coupon.IsListed ? "Unlist" : "List" %>
-                                </button>
-                            </td>
-                        </tr>
-                        <% }) %>
-                </tbody>
-            </table>
-
-            <!-- pagination stays normal -->
-            <div class="pagination">
-                <% if (hasPrevPage) { %>
-                    <button type="button" class="btn"
-                        onclick="window.location.href='/admin/coupons?page=<%= currentPage - 1 %>'">Previous</button>
-                    <% } %>
-
-                        <% for (let i=1; i<=totalPages; i++) { %>
-                            <button type="button" class="btn"
-                                onclick="window.location.href='/admin/coupons?page=<%= i %>'">
-                                <%= i %>
-                            </button>
-                            <% } %>
-
-                                <% if (hasNextPage) { %>
-                                    <button type="button" class="btn"
-                                        onclick="window.location.href='/admin/coupons?page=<%= currentPage + 1 %>'">Next</button>
-                                    <% } %>
-            </div>
-
         </div>
 
 
@@ -242,7 +241,7 @@
                 if (!couponCode.value.trim() || couponCode.value.length < 4) ok = showErr("couponCodeError");
                 if (!startDate.value) ok = showErr("startDateError");
                 if (!endDate.value) ok = showErr("endDateError");
-                if (discount.value < 0 || discount.value > 100) ok = showErr("discountError");
+                if (discount.value < 0 || discount.value > 90) ok = showErr("discountError");
 
                 return ok;
             }

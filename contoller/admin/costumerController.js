@@ -7,7 +7,7 @@ const AppError = require('../../utils/AppError');
 const customerinfo = catchAsync(async (req, res) => {
   const search = req.query.search || '';
   const page = parseInt(req.query.page) || 1;
-  const limit = 8;
+  const limit = 12;
   const skip = (page - 1) * limit;
 
   const searchQuery = {
