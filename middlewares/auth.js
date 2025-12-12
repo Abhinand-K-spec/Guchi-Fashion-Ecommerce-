@@ -27,6 +27,7 @@ const adminAuth = async (req, res, next) => {
         }
 
         const adminId = req.session.admin;
+        
 
         const admin = await user.findById(adminId);
 
@@ -37,7 +38,7 @@ const adminAuth = async (req, res, next) => {
         return res.redirect('/admin/login');
     } catch (error) {
         console.log('Error in admin auth middleware:', error);
-        return res.status(500).send('Internal server error');
+        return res.status(500).render('page-404');
     }
 };
 
