@@ -5,7 +5,7 @@ require('dotenv').config();
 
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENTID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET ,
     callbackURL: 'https://guchi.space/auth/google/callback' 
 },
 async (accessToken, refreshToken, profile, done) => {
