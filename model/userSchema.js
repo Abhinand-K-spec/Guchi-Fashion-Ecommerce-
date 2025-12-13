@@ -21,7 +21,7 @@ const userSchema = new Schema({
     googleId: {
         type: String,
         unique: true,
-        // sparse: true // if not all users have this
+        sparse: true
     },
     password: {
         type: String,
